@@ -208,8 +208,8 @@ install_trento_server_chart() {
     local web_image=${TRENTO_WEB_IMAGE:-"ghcr.io/$repo_owner/trento-web"}
     local private_key=${PRIVATE_KEY:-"./id_rsa_runner"}
     local trento_source_zip="${TRENTO_VERSION}"
-    local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/packaging/helm/trento-server"}
-    local trento_packages_url="https://github.com/${repo_owner}/trento/archive/refs/tags"
+    local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/charts/trento-server"}
+    local trento_packages_url="https://github.com/${repo_owner}/helm-charts/archive/refs/tags"
 
     if [[ "$download_chart" == true ]]; then
         echo "Downloading trento-server chart..."
