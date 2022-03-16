@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trento-runner.fullname" . }}
+  labels:
+    {{- include "trento-runner.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "trento-runner.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "trento-runner.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "trento-runner.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          env:
+            - name: TRENTO_RUNNER_LOG_LEVEL
+              value: "{{ .Values.global.logLevel }}"
+            - name: TRENTO_RUNNER_API_HOST
+              value: "{{ .Release.Name }}-{{ .Values.global.trentoWeb.name }}"
+            - name: TRENTO_RUNNER_API_PORT
+              value: "{{ .Values.global.trentoWeb.servicePort }}"
+            - name: TRENTO_RUNNER_INTERVAL
+              value: "{{ .Values.checkIntervalMins }}"
+          args:
+            - start
+          # tty is required to allow a correct ansible execution
+          tty: true
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: sshconfig
+            mountPath: "/root/.ssh"
+            readOnly: true
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: sshconfig
+        secret:
+          secretName: {{ include "trento-runner.fullname" . }}-privatekey
+          defaultMode: 0400
+          items:
+          - key: privatekey
+            path: id_rsa

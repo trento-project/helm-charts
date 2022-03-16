@@ -1,0 +1,18 @@
+dependencies:
+- name: trento-web
+  repository: ""
+  version: '>0.0.0'
+- name: trento-runner
+  repository: ""
+  version: '>0.0.0'
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami/
+  version: 10.1.4
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts/
+  version: 15.1.3
+- name: grafana
+  repository: https://grafana.github.io/helm-charts/
+  version: 6.21.8
+digest: sha256:75045d54dd223b86272928f8325d12a989fe57f0ad84acd0623421a46fda7176
+generated: "2022-02-25T10:43:18.004150494+01:00"
