@@ -208,7 +208,7 @@ install_trento_server_chart() {
     local web_image=${TRENTO_WEB_IMAGE:-"ghcr.io/$repo_owner/trento-web"}
     local private_key=${PRIVATE_KEY:-"./id_rsa_runner"}
     local trento_source_zip="${TRENTO_VERSION}"
-    local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/charts/trento-server"}
+    local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/helm-charts-${trento_source_zip}/charts/trento-server"}
     local trento_packages_url="https://github.com/${repo_owner}/helm-charts/archive/refs/tags"
 
     if [[ "$download_chart" == true ]]; then
@@ -217,7 +217,7 @@ install_trento_server_chart() {
         rm -rf trento-"${trento_source_zip}"
         rm -f ${trento_source_zip}.zip
         curl -f -sS -O -L "${trento_packages_url}/${trento_source_zip}.zip" >/dev/null
-        unzip -o "${trento_source_zip}.zip" >/dev/null
+        unzip -o "${trento_source_zip}.zip" -d trento-"${trento_source_zip}" >/dev/null
         popd >/dev/null
 
         echo "Updating chart dependencies..."
