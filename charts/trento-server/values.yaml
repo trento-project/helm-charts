@@ -19,7 +19,7 @@ trento-web:
 
 trento-runner:
   nameOverride: runner
-  enabled: true
+  enabled: false
 
 postgresql:
   enabled: true
@@ -28,6 +28,9 @@ postgresql:
   postgresqlUsername: "postgres"
   postgresqlPassword: "postgres"
   postgresqlDatabase: "trento"
+  initdbScripts:
+    init.sql: |
+      CREATE DATABASE trento_event_store;
 
 prometheus:
   enabled: true
