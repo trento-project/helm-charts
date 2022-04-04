@@ -41,40 +41,29 @@ spec:
       serviceAccountName: {{ include "trento-web.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init
+          env:
+            - name: SECRET_KEY_BASE
+              value: CFp7S2zf66OCok0GOv8co2AGxBkHdsYBZcqpkMQfcJH6si2PNOVgS0hix0cW1/Ya
+            - name: DATABASE_URL
+              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
+            - name: EVENTSTORE_URL
+              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ['eval', 'Trento.Release.init()']
       containers:
         - name: {{ .Chart.Name }}
           env:
-            - name: TRENTO_LOG_LEVEL
-              value: "{{ .Values.global.logLevel }}"
-            - name: TRENTO_DB_HOST
-              value: "{{ .Release.Name }}-{{ .Values.global.postgresql.name }}"
-            - name: TRENTO_DB_PORT
-              value: "{{ .Values.global.postgresql.servicePort }}"
-            - name: TRENTO_PORT
-              value: "{{ .Values.webService.port }}"
-            - name: TRENTO_COLLECTOR_PORT
-              value: "{{ .Values.collectorService.port }}"
-            - name: TRENTO_GRAFANA_PUBLIC_URL
-              value: /grafana
-            - name: TRENTO_GRAFANA_API_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}"
-            - name: TRENTO_GRAFANA_PASSWORD
-              value: {{ $grafanaSecret | b64dec }}
-            {{ if .Values.mTLS.enabled }}
-            - name: TRENTO_ENABLE_MTLS
-              value: true
-            - name: TRENTO_CERT
-              value: /certs/cert.pem
-            - name: TRENTO_KEY
-              value: /certs/cert.pem
-            - name: TRENTO_CA
-              value: /certs/ca.pem
-            {{ end }}
-            - name: TRENTO_PROMETHEUS_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
+            - name: SECRET_KEY_BASE
+              value: CFp7S2zf66OCok0GOv8co2AGxBkHdsYBZcqpkMQfcJH6si2PNOVgS0hix0cW1/Ya
+            - name: DATABASE_URL
+              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
+            - name: EVENTSTORE_URL
+              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
           args:
-            - web
-            - serve
+            - start
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -83,17 +72,17 @@ spec:
             - name: http
               containerPort: {{ .Values.webService.port }}
               protocol: TCP
-            - name: collector
-              containerPort: {{ .Values.collectorService.port }}
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /api/ping
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /api/ping
-              port: http
+          #   - name: collector
+          #     containerPort: {{ .Values.collectorService.port }}
+          #     protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /api/ping
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /api/ping
+          #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

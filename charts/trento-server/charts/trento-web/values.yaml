@@ -23,9 +23,10 @@ mTLS:
 replicaCount: 1
 
 image:
-  repository: ghcr.io/trento-project/trento-web
-  pullPolicy: IfNotPresent
-  tag: "0.9.1"
+  repository: ghcr.io/trento-project/trento-web-dev
+  # TODO switch to IfNotPresent when we release
+  pullPolicy: Always
+  tag: rolling
 
 imagePullSecrets: []
 nameOverride: ""
@@ -57,7 +58,7 @@ securityContext:
 
 webService:
   type: ClusterIP
-  port: 8080
+  port: 4000
 
 collectorService:
   type: LoadBalancer
