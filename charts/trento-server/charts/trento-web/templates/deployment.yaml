@@ -65,9 +65,10 @@ spec:
             - name: ALERT_RECIPIENT
               value: "{{ .Values.alerting.recipient }}"
             {{ end }}
-            # TODO: actual grafana integration
+            - name: GRAFANA_PUBLIC_URL
+              value: "/grafana"
             - name: GRAFANA_API_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}"
+              value: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
             - name: GRAFANA_PASSWORD
               value: {{ $grafanaSecret | b64dec }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -82,6 +83,27 @@ spec:
               value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
             - name: EVENTSTORE_URL
               value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
+            # TODO: actual runner integration
+            - name: RUNNER_URL
+              value: "http://localhost:8080"
+            {{ if .Values.alerting.enabled }}
+            - name: SMTP_SERVER
+              value: "{{ .Values.alerting.smtpServer }}"
+            - name: SMTP_PORT
+              value: "{{ .Values.alerting.smtpPort }}"
+            - name: SMTP_USER
+              value: "{{ .Values.alerting.smtpUser }}"
+            - name: SMTP_PASSWORD
+              value: "{{ .Values.alerting.smtpPassword }}"
+            - name: ALERT_RECIPIENT
+              value: "{{ .Values.alerting.recipient }}"
+            {{ end }}
+            - name: GRAFANA_PUBLIC_URL
+              value: "/grafana"
+            - name: GRAFANA_API_URL
+              value: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
+            - name: GRAFANA_PASSWORD
+              value: {{ $grafanaSecret | b64dec }}
           args:
             - start
           securityContext:
