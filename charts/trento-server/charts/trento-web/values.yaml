@@ -20,6 +20,14 @@ mTLS:
   key: ""
   ca: ""
 
+alerting:
+  enabled: false
+  smtpServer: ""
+  smtpPort: ""
+  smtpUser: ""
+  smtpPassword: ""
+  recipient: ""
+
 replicaCount: 1
 
 image:

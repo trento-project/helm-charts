@@ -13,13 +13,19 @@ usage() {
     Install Trento Server
 
     OPTIONS:
-        -p, --private-key     Private SSH key used by the runner to connect to the hosts.
-        -m, --enable-mtls     Enable mTLS secure communication between the agent and the server.
-        -c, --cert            The path to the TLS certificate file. Required if --enable-mtls is set.
-        -k, --key             The path to the TLS key file. Required if --enable-mtls is set.
-        -a, --ca              The path to the TLS CA file. Required if --enable-mtls is set.
-        -r, --rolling         Use the rolling version instead of the stable one.
-        -h, --help            Print this help.
+        -p, --private-key           Private SSH key used by the runner to connect to the hosts.
+        -m, --enable-mtls           Enable mTLS secure communication between the agent and the server.
+        -c, --cert                  The path to the TLS certificate file. Required if --enable-mtls is set.
+        -k, --key                   The path to the TLS key file. Required if --enable-mtls is set.
+        -a, --ca                    The path to the TLS CA file. Required if --enable-mtls is set.
+        -n, --enable-alerting       Enable Alerting feature.
+        -f, --smtp-server           The SMTP server designated to send alerting emails.
+        -g, --smtp-port             The port on SMT server.
+        -i, --smtp-user             Username to access SMTP server.
+        -l, --smtp-password         Password to access SMTP server.
+        -o, --alerting-recipient    Recipient email for alerting notifications.
+        -r, --rolling               Use the rolling version instead of the stable one.
+        -h, --help                  Print this help.
 
     Example:
        $PROGNAME --private-key ./id_rsa_runner
@@ -37,6 +43,12 @@ cmdline() {
         --cert) args="${args}-c " ;;
         --key) args="${args}-k " ;;
         --ca) args="${args}-a " ;;
+        --enable-alerting) args="${args}-n " ;;
+        --smtp-server) args="${args}-f " ;;
+        --smtp-port) args="${args}-g " ;;
+        --smtp-user) args="${args}-i " ;;
+        --smtp-password) args="${args}-l " ;;
+        --alerting-recipient) args="${args}-o " ;;
         --help) args="${args}-h " ;;
 
         # pass through anything else
@@ -49,7 +61,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "p:c:k:a:mrh" OPTION; do
+    while getopts "p:c:k:a:f:g:i:l:o:mnrh" OPTION; do
         case $OPTION in
         h)
             usage
@@ -76,6 +88,30 @@ cmdline() {
             CA=$OPTARG
             ;;
 
+        n)
+            ENABLE_ALERTING=true
+            ;;
+
+        f)
+            SMTP_SERVER=$OPTARG
+            ;;
+
+        g)
+            SMTP_PORT=$OPTARG
+            ;;
+
+        i)
+            SMTP_USER=$OPTARG
+            ;;
+        
+        l)
+            SMTP_PASSWORD=$OPTARG
+            ;;
+        
+        o)
+            ALERTING_RECIPIENT=$OPTARG
+            ;;
+
         r)
             ROLLING=true
             ;;
@@ -97,6 +133,7 @@ cmdline() {
     }
 
     configure_mtls
+    configure_alerting
 
     if [[ "$ROLLING" == "true" ]]; then
         TRENTO_VERSION="rolling"
@@ -139,6 +176,30 @@ function configure_mtls() {
             echo "Path to the TLS CA file does not exist, please try again."
             exit 1
         }
+    fi
+}
+
+function configure_alerting() {
+    if [[ -n "$ENABLE_ALERTING" ]]; then
+        if [[ -z "$SMTP_SERVER" ]]; then
+            read -rp "Please provide the SMTP server host: " SMTP_SERVER </dev/tty
+        fi
+
+        if [[ -z "$SMTP_PORT" ]]; then
+            read -rp "Please provide the Port of the SMTP server: " SMTP_PORT </dev/tty
+        fi
+
+        if [[ -z "$SMTP_USER" ]]; then
+            read -rp "Please provide the SMTP user: " SMTP_USER </dev/tty
+        fi
+        
+        if [[ -z "$SMTP_PASSWORD" ]]; then
+            read -rp "Please provide the SMTP password: " SMTP_PASSWORD </dev/tty
+        fi
+
+        if [[ -z "$ALERTING_RECIPIENT" ]]; then
+            read -rp "Please provide the recipient email for alerting notifications: " ALERTING_RECIPIENT </dev/tty
+        fi
     fi
 }
 
@@ -239,6 +300,16 @@ install_trento_server_chart() {
             --set-file trento-web.mTLS.cert="${CERT}"
             --set-file trento-web.mTLS.key="${KEY}"
             --set-file trento-web.mTLS.ca="${CA}"
+        )
+    fi
+    if [[ "$ENABLE_ALERTING" == "true" ]]; then
+        args+=(
+            --set trento-web.alerting.enabled=true
+            --set trento-web.alerting.smtpServer="${SMTP_SERVER}"
+            --set trento-web.alerting.smtpPort="${SMTP_PORT}"
+            --set trento-web.alerting.smtpUser="${SMTP_USER}"
+            --set trento-web.alerting.smtpPassword="${SMTP_PASSWORD}"
+            --set trento-web.alerting.recipient="${ALERTING_RECIPIENT}"
         )
     fi
     if [[ "$ROLLING" == "true" ]]; then
