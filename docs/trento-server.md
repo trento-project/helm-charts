@@ -16,7 +16,7 @@ Please follow the instructions in the given order.
 
 ### Trento Server installation
 
-The script installs a single node K3s cluster and uses the [trento-server Helm chart](charts/trento-server)
+The script installs a single node K3s cluster and uses the [trento-server Helm chart](../charts/trento-server)
 to bootstrap a complete Trento server component.
 
 You can `curl | bash` if you want to live on the edge.
