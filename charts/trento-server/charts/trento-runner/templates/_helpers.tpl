@@ -60,3 +60,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return Trento Runner service port
+*/}}
+{{- define "trentoRunner.port" -}}
+{{- if .Values.global.trentoRunner.servicePort }}
+    {{- .Values.global.trentoRunner.servicePort -}}
+{{- else -}}
+    {{- .Values.service.port -}}
+{{- end -}}
+{{- end -}}

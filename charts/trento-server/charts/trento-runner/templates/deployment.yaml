@@ -33,13 +33,10 @@ spec:
           env:
             - name: TRENTO_RUNNER_LOG_LEVEL
               value: "{{ .Values.global.logLevel }}"
-            - name: TRENTO_RUNNER_API_HOST
-              value: "{{ .Release.Name }}-{{ .Values.global.trentoWeb.name }}"
-            - name: TRENTO_RUNNER_API_PORT
-              value: "{{ .Values.global.trentoWeb.servicePort }}"
-            - name: TRENTO_RUNNER_INTERVAL
-              value: "{{ .Values.checkIntervalMins }}"
           args:
+            # TODO: use environment variable when runner is fixed
+            - --callbacks-url
+            - "http://{{ .Release.Name }}-{{ .Values.global.trentoWeb.name }}/api/runner/callback"
             - start
           # tty is required to allow a correct ansible execution
           tty: true
@@ -47,6 +44,10 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ template "trentoRunner.port" . }}
+              protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
