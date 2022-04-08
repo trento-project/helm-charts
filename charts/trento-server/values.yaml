@@ -3,6 +3,9 @@ global:
   logLevel: info
   trentoWeb:
     name: web
+    servicePort: 4000
+  trentoRunner:
+    name: runner
     servicePort: 8080
   postgresql:
     name: postgresql
@@ -19,7 +22,7 @@ trento-web:
 
 trento-runner:
   nameOverride: runner
-  enabled: false
+  enabled: true
 
 postgresql:
   enabled: true
