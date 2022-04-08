@@ -36,7 +36,7 @@ spec:
           args:
             # TODO: use environment variable when runner is fixed
             - --callbacks-url
-            - "http://{{ .Release.Name }}-{{ .Values.global.trentoWeb.name }}/api/runner/callback"
+            - "http://{{ .Release.Name }}-{{ .Values.global.trentoWeb.name }}:{{ .Values.global.trentoWeb.servicePort }}/api/runner/callback"
             - start
           # tty is required to allow a correct ansible execution
           tty: true
