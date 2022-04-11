@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "trento-web.fullname" . }}:{{ .Values.webService.port }}']
+      args: ['{{ include "trento-web.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never

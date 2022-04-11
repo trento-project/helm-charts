@@ -1,16 +1,3 @@
-{{ $grafanaSecret := include "trento.grafana.password" . }}
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: trento-server-grafana-secret
-type: Opaque
-data:
-  admin-user: {{ "admin" | b64enc | quote }}
-  admin-password: {{ $grafanaSecret | quote }}
-
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,80 +30,43 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
         - name: init
-          env:
-            - name: SECRET_KEY_BASE
-              value: CFp7S2zf66OCok0GOv8co2AGxBkHdsYBZcqpkMQfcJH6si2PNOVgS0hix0cW1/Ya
-            - name: DATABASE_URL
-              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
-            - name: EVENTSTORE_URL
-              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
-            # TODO: actual runner integration
-            - name: RUNNER_URL
-              value: "http://localhost:8080"
-            {{ if .Values.alerting.enabled }}
-            - name: SMTP_SERVER
-              value: "{{ .Values.alerting.smtpServer }}"
-            - name: SMTP_PORT
-              value: "{{ .Values.alerting.smtpPort }}"
-            - name: SMTP_USER
-              value: "{{ .Values.alerting.smtpUser }}"
-            - name: SMTP_PASSWORD
-              value: "{{ .Values.alerting.smtpPassword }}"
-            - name: ALERT_RECIPIENT
-              value: "{{ .Values.alerting.recipient }}"
-            {{ end }}
-            - name: GRAFANA_PUBLIC_URL
-              value: "/grafana"
-            - name: GRAFANA_API_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
-            - name: GRAFANA_PASSWORD
-              value: {{ $grafanaSecret | b64dec }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "trento-web.fullname" . }}-configmap
+            - secretRef:
+                name: {{ include "trento-web.fullname" . }}-secret
+          env:
+            - name: GRAFANA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: trento-server-grafana-secret
+                  key: admin-password
           args: ['eval', 'Trento.Release.init()']
       containers:
         - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "trento-web.fullname" . }}-configmap
+            - secretRef:
+                name: {{ include "trento-web.fullname" . }}-secret
           env:
-            - name: SECRET_KEY_BASE
-              value: CFp7S2zf66OCok0GOv8co2AGxBkHdsYBZcqpkMQfcJH6si2PNOVgS0hix0cW1/Ya
-            - name: DATABASE_URL
-              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
-            - name: EVENTSTORE_URL
-              value: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
-            # TODO: actual runner integration
-            - name: RUNNER_URL
-              value: "http://localhost:8080"
-            {{ if .Values.alerting.enabled }}
-            - name: SMTP_SERVER
-              value: "{{ .Values.alerting.smtpServer }}"
-            - name: SMTP_PORT
-              value: "{{ .Values.alerting.smtpPort }}"
-            - name: SMTP_USER
-              value: "{{ .Values.alerting.smtpUser }}"
-            - name: SMTP_PASSWORD
-              value: "{{ .Values.alerting.smtpPassword }}"
-            - name: ALERT_RECIPIENT
-              value: "{{ .Values.alerting.recipient }}"
-            {{ end }}
-            - name: GRAFANA_PUBLIC_URL
-              value: "/grafana"
-            - name: GRAFANA_API_URL
-              value: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
             - name: GRAFANA_PASSWORD
-              value: {{ $grafanaSecret | b64dec }}
+              valueFrom:
+                secretKeyRef:
+                  name: trento-server-grafana-secret
+                  key: admin-password
           args:
             - start
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.webService.port }}
+              containerPort: {{ template "trentoWeb.port" . }}
               protocol: TCP
-          #   - name: collector
-          #     containerPort: {{ .Values.collectorService.port }}
-          #     protocol: TCP
           # livenessProbe:
           #   httpGet:
           #     path: /api/ping

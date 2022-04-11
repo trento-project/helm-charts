@@ -31,7 +31,7 @@ alerting:
 replicaCount: 1
 
 image:
-  repository: ghcr.io/trento-project/trento-web-dev
+  repository: ghcr.io/trento-project/trento-web
   # TODO switch to IfNotPresent when we release
   pullPolicy: Always
   tag: rolling
@@ -64,13 +64,9 @@ securityContext:
   # runAsNonRoot: true
   # runAsUser: 1000
 
-webService:
+service:
   type: ClusterIP
   port: 4000
-
-collectorService:
-  type: LoadBalancer
-  port: 8081
 
 pruneEventsCronjobSchedule: "0 0 * * *"
 pruneChecksCronjobSchedule: "0 0 * * *"

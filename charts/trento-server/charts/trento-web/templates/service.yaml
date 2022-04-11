@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "trento-web.fullname" . }}-collector
+  name: {{ include "trento-web.fullname" . }}
   labels:
     {{- include "trento-web.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.collectorService.type }}
+  type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.collectorService.port }}
-      targetPort: collector
+    - port: {{ template "trentoWeb.port" . }}
+      targetPort: http
       protocol: TCP
-      name: collector
+      name: http
   selector:
     {{- include "trento-web.selectorLabels" . | nindent 4 }}

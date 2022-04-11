@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trento-web.fullname" . }}-configmap
+data:
+  DATABASE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
+  EVENTSTORE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
+  RUNNER_URL: "http://{{ .Release.Name }}-{{ .Values.global.trentoRunner.name }}:{{ .Values.global.trentoRunner.servicePort }}"
+  ENABLE_ALERTING: "{{ .Values.alerting.enabled }}"
+  SMTP_SERVER: "{{ .Values.alerting.smtpServer }}"
+  SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
+  SMTP_USER: "{{ .Values.alerting.smtpUser }}"
+  SMTP_PASSWORD: "{{ .Values.alerting.smtpPassword }}"
+  ALERT_RECIPIENT: "{{ .Values.alerting.recipient }}"
+  GRAFANA_PUBLIC_URL: "/grafana"
+  GRAFANA_API_URL: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
