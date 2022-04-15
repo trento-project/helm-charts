@@ -14,12 +14,6 @@ global:
   prometheus:
     name: prometheus-server
 
-mTLS:
-  enabled: false
-  cert: ""
-  key: ""
-  ca: ""
-
 alerting:
   enabled: false
   smtpServer: ""
