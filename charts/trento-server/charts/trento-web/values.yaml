@@ -22,6 +22,10 @@ alerting:
   smtpPassword: ""
   recipient: ""
 
+adminUser:
+  username: "admin"
+  password: ""
+
 replicaCount: 1
 
 image:

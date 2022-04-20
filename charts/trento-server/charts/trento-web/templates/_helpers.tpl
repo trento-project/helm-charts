@@ -95,4 +95,14 @@ Return or generate the grafana admin password
   {{- end -}}
 {{- end -}}
 
+{{- define "trento.web.adminPassword" -}}
+  {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
+  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+  {{- if $secret -}}
+    {{- index $secret "data" "ADMIN_PASSWORD" -}}
+  {{- else -}}
+    {{- (randAlphaNum 8) | b64enc -}}
+  {{- end -}}
+{{- end -}}
+
 

@@ -24,6 +24,7 @@ usage() {
         -i, --smtp-user             Username to access SMTP server.
         -l, --smtp-password         Password to access SMTP server.
         -o, --alerting-recipient    Recipient email for alerting notifications.
+        -w, --admin-password        admin user password.
         -r, --rolling               Use the rolling version instead of the stable one.
         -e, --existing-k8s    Deploy to an existing kubernetes cluster (don't deploy k3s)
         -u, --use-registry    Container registry to pull the images from
@@ -51,6 +52,7 @@ cmdline() {
         --smtp-user) args="${args}-i " ;;
         --smtp-password) args="${args}-l " ;;
         --alerting-recipient) args="${args}-o " ;;
+        --admin-password) args="${args}-w " ;;
         --use-registry) args="${args}-u " ;;
         --existing-k8s) args="${args}-e " ;;
         --help) args="${args}-h " ;;
@@ -107,13 +109,17 @@ cmdline() {
         i)
             SMTP_USER=$OPTARG
             ;;
-        
+
         l)
             SMTP_PASSWORD=$OPTARG
             ;;
-        
+
         o)
             ALERTING_RECIPIENT=$OPTARG
+            ;;
+
+        w)
+            ADMIN_PASSWORD=$OPTARG
             ;;
 
         r)
@@ -135,16 +141,9 @@ cmdline() {
         esac
     done
 
-    if [[ -z "$PRIVATE_KEY" ]]; then
-        read -rp "Please provide the path of the runner private key: " PRIVATE_KEY </dev/tty
-    fi
-
-    PRIVATE_KEY=$(normalize_path "$PRIVATE_KEY") || {
-        echo "Path to the private key file does not exist, please try again."
-        exit 1
-    }
-
-    configure_mtls
+    set_admin_password
+    confirm_admin_password
+    set_private_key
     configure_alerting
 
     if [[ "$ROLLING" == "true" ]]; then
@@ -160,6 +159,47 @@ function load_conf() {
         # shellcheck source=/dev/null
         source /etc/trento/installer.conf
     fi
+}
+
+function set_admin_password() {
+    if [[ -z "$ADMIN_PASSWORD" ]]; then
+        read -rsp "Please provide the password of the \"admin\" user (min 8 characters): " ADMIN_PASSWORD </dev/tty
+    fi
+
+    echo
+
+    if [[ ${#ADMIN_PASSWORD} -lt 8 ]]; then
+        echo "The admin password should be at least 8 characters, please try again."
+        unset ADMIN_PASSWORD
+        set_admin_password
+    fi
+}
+
+function confirm_admin_password() {
+    if [[ -z "$CONFIRM_ADMIN_PASSWORD" ]]; then
+        read -rsp "Please confirm the password: " CONFIRM_ADMIN_PASSWORD </dev/tty
+    fi
+
+    echo
+
+    if [[ $ADMIN_PASSWORD != "$CONFIRM_ADMIN_PASSWORD" ]]; then
+        echo "The password don't match, please try again."
+        unset CONFIRM_ADMIN_PASSWORD
+        confirm_admin_password
+    fi
+}
+
+function set_private_key() {
+
+    if [[ -z "$PRIVATE_KEY" ]]; then
+        read -rp "Please provide the path of the runner private key: " PRIVATE_KEY </dev/tty
+    fi
+
+    PRIVATE_KEY=$(normalize_path "$PRIVATE_KEY") || {
+        echo "Path to the private key file does not exist, please try again."
+        unset PRIVATE_KEY
+        set_private_key
+    }
 }
 
 function configure_mtls() {
@@ -204,7 +244,7 @@ function configure_alerting() {
         if [[ -z "$SMTP_USER" ]]; then
             read -rp "Please provide the SMTP user: " SMTP_USER </dev/tty
         fi
-        
+
         if [[ -z "$SMTP_PASSWORD" ]]; then
             read -rp "Please provide the SMTP password: " SMTP_PASSWORD </dev/tty
         fi
@@ -306,15 +346,8 @@ install_trento_server_chart() {
         --set trento-runner.image.tag="${TRENTO_VERSION}"
         --set trento-runner.image.repository="${runner_image}"
         --set trento-web.image.repository="${web_image}"
+        --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
     )
-    if [[ "$ENABLE_MTLS" == "true" ]]; then
-        args+=(
-            --set trento-web.mTLS.enabled=true
-            --set-file trento-web.mTLS.cert="${CERT}"
-            --set-file trento-web.mTLS.key="${KEY}"
-            --set-file trento-web.mTLS.ca="${CA}"
-        )
-    fi
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
         args+=(
             --set trento-web.alerting.enabled=true
