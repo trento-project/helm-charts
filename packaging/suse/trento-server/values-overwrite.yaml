@@ -1,0 +1,22 @@
+trento-web:
+  image:
+    repository: registry.suse.com/trento/trento-web
+    tag: latest
+
+trento-runner:
+  image:
+    repository: registry.suse.com/trento/trento-runner
+    tag: latest
+
+postgresql:
+  image:
+    registry: registry.suse.com
+    repository: trento/trento-db
+    tag: latest
+  persistence:
+    mountPath: /var/lib/postgresql/data
+  postgresqlDataDir: /var/lib/postgresql/data/trento
+  securityContext:
+    fsGroup: 26
+  containerSecurityContext:
+    runAsUser: 26
