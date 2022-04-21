@@ -11,6 +11,11 @@ on:
     types: [published]
   workflow_dispatch:
 
+env:
+  OBS_USER: ${{ secrets.OBS_USER }}
+  OBS_PASS: ${{ secrets.OBS_PASS }}
+  OBS_PROJECT: ${{ secrets.OBS_PROJECT}}
+
 jobs:
   test-helm-charts:
     runs-on: ubuntu-20.04
@@ -93,3 +98,40 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}"
+
+  obs-commit:
+    needs: [test-helm-charts]
+    runs-on: ubuntu-20.04
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    container:
+      image: ghcr.io/trento-project/continuous-delivery:master
+      env:
+        GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEST_FOLDER: "/tmp/osc_project"
+    strategy:
+      matrix:
+        charts: ["trento-server"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Configure OSC
+        # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
+        # that is used to run osc commands
+        run: |
+          /scripts/init_osc_creds.sh
+          mkdir -p $HOME/.config/osc
+          cp /root/.config/osc/oscrc $HOME/.config/osc
+      - name: Commit on OBS
+        run: |
+          echo "Installing helm and yq to run the makefile"
+          ssl_verify=host zypper in -y helm wget
+          wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
+          echo "Commiting ${{ matrix.charts }} for package ${{ matrix.charts }}-helm"
+          OBS_PACKAGE=$OBS_PROJECT/${{ matrix.charts }}-helm
+          osc checkout $OBS_PACKAGE -o $DEST_FOLDER
+          cp -r packaging/suse/${{ matrix.charts }}/* $DEST_FOLDER
+          cp -r charts/${{ matrix.charts }}/Chart.yaml $DEST_FOLDER
+          cd $DEST_FOLDER
+          make
+          osc ar
+          osc commit -m "New development version of ${{ matrix.charts }}-helm released"
