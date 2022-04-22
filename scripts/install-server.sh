@@ -67,7 +67,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "p:c:k:a:f:g:i:l:o:mnru:eh" OPTION; do
+    while getopts "p:c:k:a:f:g:i:l:o:mnrw:u:eh" OPTION; do
         case $OPTION in
         h)
             usage
@@ -120,6 +120,7 @@ cmdline() {
 
         w)
             ADMIN_PASSWORD=$OPTARG
+            CONFIRM_ADMIN_PASSWORD=$ADMIN_PASSWORD
             ;;
 
         r)
