@@ -3,7 +3,7 @@
         <param name="url">https://github.com/trento-project/helm-charts.git</param>
         <param name="scm">git</param>
         <param name="filename">trento-server-installer</param>
-        <param name="revision">main</param>
+        <param name="revision">%%REVISION%%</param>
         <param name="versionformat">%%VERSION%%</param>
     </service>
     <service name="set_version" mode="disabled">

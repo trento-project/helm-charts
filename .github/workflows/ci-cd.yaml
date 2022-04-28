@@ -159,6 +159,7 @@ jobs:
       - name: prepare _service file
         run: |
           VERSION=$(./hack/get_version_from_git.sh)
+          sed -i 's~%%REVISION%%~${{ github.sha }}~' $FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $FOLDER/_service
       - name: Commit on OBS
         run: cp -r $FOLDER/* . && /scripts/upload.sh
