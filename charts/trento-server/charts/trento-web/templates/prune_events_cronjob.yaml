@@ -14,10 +14,10 @@ spec:
           - name: {{ .Chart.Name }}
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
-            args:
-            - ctl
-            - prune-events
-            - --db-host
-            - {{ .Release.Name }}-postgresql
+            envFrom:
+              - configMapRef:
+                  name: {{ include "trento-web.fullname" . }}-configmap
+              - secretRef:
+                  name: {{ include "trento-web.fullname" . }}-secret
+            args: ['eval', 'Trento.Release.prune_events([])']
           restartPolicy: OnFailure
-
