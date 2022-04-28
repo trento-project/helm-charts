@@ -16,25 +16,30 @@
 #
 
 
-Name:           trento-server-installer
+Name:      trento-server-installer
 # Version will be processed via set_version source service
-Version:        0
-Release:        0
-License:        Apache-2.0
-Summary:        Quickstart installer for the trento-server helm chart.
-Group:          System/Monitoring
-URL:            https://github.com/trento-project/helm-charts
-Source:         %{name}-%{version}.tar.gz
-ExclusiveArch:  aarch64 x86_64 ppc64le s390x
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-Provides:       %{name} = %{version}-%{release}
-Conflicts:      trento-premium-server-installer
+Version:   0
+Release:   0
+License:   Apache-2.0
+Summary:   Quickstart installer for the trento-server helm chart
+Group:     System/Monitoring
+URL:       https://github.com/trento-project/helm-charts
+Source:    %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-build
+BuildArch: noarch
+Provides:  %{name} = %{version}-%{release}
+Conflicts: trento-premium-server-installer
 
 %description
 Quickstart installer for the trento-server helm chart.
 
+The script enables the user to get the Trento environment quickly deployed, installing all the
+dependencies on the fly.
+
 %prep
 %setup -q # unpack project sources
+
+%build
 
 %install
 
