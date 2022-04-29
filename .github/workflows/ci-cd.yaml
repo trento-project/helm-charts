@@ -137,15 +137,16 @@ jobs:
           osc commit -m "New development version of ${{ matrix.charts }}-helm released"
 
   obs-commit-installer:
-    needs: [test-helm-charts]
+    #needs: [test-helm-charts]
     runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    #if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
       image: ghcr.io/trento-project/continuous-delivery:master
       env:
         PACKAGE_NAME: trento-server-installer
         GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FOLDER: packaging/suse/trento-server-installer
+        OBS_PROJECT: home:xarbulu:branches:devel:sap:trento:factory
     steps:
       - name: Checkout
         uses: actions/checkout@v2

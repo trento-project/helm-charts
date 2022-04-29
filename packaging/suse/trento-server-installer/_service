@@ -1,5 +1,5 @@
 <services>
-    <service name="tar_scm" mode="disabled">
+    <service name="obs_scm" mode="disabled">
         <param name="url">https://github.com/trento-project/helm-charts.git</param>
         <param name="scm">git</param>
         <param name="filename">trento-server-installer</param>
@@ -9,8 +9,11 @@
     <service name="set_version" mode="disabled">
         <param name="file">trento-server-installer.spec</param>
     </service>
-    <service name="recompress" mode="disabled">
-        <param name="file">*.tar</param>
-        <param name="compression">gz</param>
+    <service name="replace_using_package_version" mode="buildtime" >
+      <param name="file">packaging/suse/config/installer.conf</param>
+      <param name="regex">%TRENTO_WEB_VERSION%</param>
+      <param name="parse-version">patch</param>
+      <param name="package">trento-web-image</param>
     </service>
+    <service name="tar" mode="buildtime"/>
 </services>
