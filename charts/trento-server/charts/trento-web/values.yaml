@@ -31,8 +31,8 @@ replicaCount: 1
 image:
   repository: ghcr.io/trento-project/trento-web
   # TODO switch to IfNotPresent when we release
-  pullPolicy: Always
-  tag: rolling
+  pullPolicy: IfNotPresent
+  tag: 1.0.0
 
 imagePullSecrets: []
 nameOverride: ""
