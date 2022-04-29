@@ -99,7 +99,7 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}"
 
-  obs-commit:
+  obs-commit-charts:
     needs: [test-helm-charts]
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
@@ -135,3 +135,31 @@ jobs:
           make
           osc ar
           osc commit -m "New development version of ${{ matrix.charts }}-helm released"
+
+  obs-commit-installer:
+    needs: [test-helm-charts]
+    runs-on: ubuntu-20.04
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    container:
+      image: ghcr.io/trento-project/continuous-delivery:master
+      env:
+        PACKAGE_NAME: trento-server-installer
+        GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FOLDER: packaging/suse/trento-server-installer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Configure OSC
+        # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
+        # that is used to run osc commands
+        run: |
+          /scripts/init_osc_creds.sh
+          mkdir -p $HOME/.config/osc
+          cp /root/.config/osc/oscrc $HOME/.config/osc
+      - name: prepare _service file
+        run: |
+          VERSION=$(./hack/get_version_from_git.sh)
+          sed -i 's~%%REVISION%%~${{ github.sha }}~' $FOLDER/_service && \
+          sed -i 's~%%VERSION%%~'"${VERSION}"'~' $FOLDER/_service
+      - name: Commit on OBS
+        run: cp -r $FOLDER/* . && /scripts/upload.sh
