@@ -134,7 +134,7 @@ jobs:
         run: |
           PACKAGE_NAME=${{ matrix.charts }}-helm
           CHANGES_FILE=${{ matrix.charts }}.changes
-          CHART_FOLDER=$FOLDER/${{ matrix.charts }
+          CHART_FOLDER=$FOLDER/${{ matrix.charts }}
           osc checkout $OBS_PROJECT $PACKAGE_NAME $CHANGES_FILE
           mv $CHANGES_FILE $CHART_FOLDER
           TAG=${{ steps.latest-tag.outputs.tag }}
