@@ -108,12 +108,18 @@ jobs:
       env:
         GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEST_FOLDER: "/tmp/osc_project"
+        FOLDER: packaging/suse
     strategy:
       matrix:
         charts: ["trento-server"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+      - uses: actions-ecosystem/action-get-latest-tag@v1
+        id: latest-tag
+        with:
+          semver_only: true
+          initial_version: 0.0.1
       - name: Configure OSC
         # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
         # that is used to run osc commands
@@ -121,6 +127,18 @@ jobs:
           /scripts/init_osc_creds.sh
           mkdir -p $HOME/.config/osc
           cp /root/.config/osc/oscrc $HOME/.config/osc
+      - name: Prepare .changes file
+        # The .changes file is updated only in release creation. This current task should be improved
+        # in order to add the current rolling release notes
+        if: github.event_name == 'release'
+        run: |
+          PACKAGE_NAME=${{ matrix.charts }}-helm
+          CHANGES_FILE=${{ matrix.charts }}.changes
+          CHART_FOLDER=$FOLDER/${{ matrix.charts }
+          osc checkout $OBS_PROJECT $PACKAGE_NAME $CHANGES_FILE
+          mv $CHANGES_FILE $CHART_FOLDER
+          TAG=${{ steps.latest-tag.outputs.tag }}
+          ./hack/gh_release_to_obs_changeset.py ${{ github.repository }} -a shap-staff@suse.de -t $TAG -f $CHART_FOLDER/$CHANGES_FILE
       - name: Commit on OBS
         run: |
           echo "Installing helm and yq to run the makefile"
@@ -148,7 +166,12 @@ jobs:
         FOLDER: packaging/suse/trento-server-installer
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+      - uses: actions-ecosystem/action-get-latest-tag@v1
+        id: latest-tag
+        with:
+          semver_only: true
+          initial_version: 0.0.1
       - name: Configure OSC
         # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
         # that is used to run osc commands
@@ -156,8 +179,22 @@ jobs:
           /scripts/init_osc_creds.sh
           mkdir -p $HOME/.config/osc
           cp /root/.config/osc/oscrc $HOME/.config/osc
+      - name: Prepare .changes file
+        # The .changes file is updated only in release creation. This current task should be improved
+        # in order to add the current rolling release notes
+        if: github.event_name == 'release'
+        run: |
+          CHANGES_FILE=$PACKAGE_NAME.changes
+          osc checkout $OBS_PROJECT $PACKAGE_NAME $CHANGES_FILE
+          mv $CHANGES_FILE $FOLDER
+          TAG=${{ steps.latest-tag.outputs.tag }}
+          hack/gh_release_to_obs_changeset.py ${{ github.repository }} -a shap-staff@suse.de -t $TAG -f $FOLDER/$CHANGES_FILE
+
       - name: prepare _service file
         run: |
+          git config --global --add safe.directory /__w/helm-charts/helm-charts
+          # Using get_version_from_git script as it creates a more meaningful version string (tag+sha) which is interesting
+          # only for rpm packages
           VERSION=$(./hack/get_version_from_git.sh)
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $FOLDER/_service
