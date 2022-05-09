@@ -26,8 +26,8 @@ usage() {
         -o, --alerting-recipient    Recipient email for alerting notifications.
         -w, --admin-password        admin user password.
         -r, --rolling               Use the rolling version instead of the stable one.
-        -e, --existing-k8s    Deploy to an existing kubernetes cluster (don't deploy k3s)
-        -u, --use-registry    Container registry to pull the images from
+        -e, --existing-k8s          Deploy to an existing kubernetes cluster (don't deploy k3s)
+        -u, --use-registry          Container registry to pull the images from
         -h, --help                  Print this help.
 
     Example:
@@ -53,6 +53,7 @@ cmdline() {
         --smtp-password) args="${args}-l " ;;
         --alerting-recipient) args="${args}-o " ;;
         --admin-password) args="${args}-w " ;;
+        --rolling) args="${args}-r " ;;
         --use-registry) args="${args}-u " ;;
         --existing-k8s) args="${args}-e " ;;
         --help) args="${args}-h " ;;
