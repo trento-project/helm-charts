@@ -345,6 +345,8 @@ install_trento_server_chart() {
         pushd -- "$trento_chart_path" >/dev/null
         helm dep update >/dev/null
         popd >/dev/null
+    else
+        trento_chart_path="$trento_chart_path --version ${TRENTO_HELM_VERSION}"
     fi
 
     local args=(
