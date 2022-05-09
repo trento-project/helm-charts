@@ -4,7 +4,10 @@ set -e
 
 readonly ARGS=("$@")
 readonly PROGNAME="./install-server.sh"
-TRENTO_VERSION="1.0.0"
+TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"1.0.0"}
+TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"1.0.0"}
+TRENTO_RUNNER_VERSION=${TRENTO_RUNNER_VERSION:-"1.0.0"}
+TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
 
 usage() {
     cat <<-EOF
@@ -26,8 +29,8 @@ usage() {
         -o, --alerting-recipient    Recipient email for alerting notifications.
         -w, --admin-password        admin user password.
         -r, --rolling               Use the rolling version instead of the stable one.
-        -e, --existing-k8s    Deploy to an existing kubernetes cluster (don't deploy k3s)
-        -u, --use-registry    Container registry to pull the images from
+        -e, --existing-k8s          Deploy to an existing kubernetes cluster (don't deploy k3s)
+        -u, --use-registry          Container registry to pull the images from
         -h, --help                  Print this help.
 
     Example:
@@ -53,6 +56,7 @@ cmdline() {
         --smtp-password) args="${args}-l " ;;
         --alerting-recipient) args="${args}-o " ;;
         --admin-password) args="${args}-w " ;;
+        --rolling) args="${args}-r " ;;
         --use-registry) args="${args}-u " ;;
         --existing-k8s) args="${args}-e " ;;
         --help) args="${args}-h " ;;
@@ -148,7 +152,9 @@ cmdline() {
     configure_alerting
 
     if [[ "$ROLLING" == "true" ]]; then
-        TRENTO_VERSION="rolling"
+        TRENTO_SERVER_CHART_VERSION=$TRENTO_ROLLING_VERSION
+        TRENTO_WEB_VERSION=$TRENTO_ROLLING_VERSION
+        TRENTO_RUNNER_VERSION=$TRENTO_ROLLING_VERSION
     fi
 
     return 0
@@ -322,7 +328,7 @@ install_trento_server_chart() {
     local runner_image=${TRENTO_RUNNER_IMAGE:-"$registry/trento-runner"}
     local web_image=${TRENTO_WEB_IMAGE:-"$registry/trento-web"}
     local private_key=${PRIVATE_KEY:-"./id_rsa_runner"}
-    local trento_source_zip="${TRENTO_VERSION}"
+    local trento_source_zip="${TRENTO_SERVER_CHART_VERSION}"
     local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/helm-charts-${trento_source_zip}/charts/trento-server"}
     local trento_packages_url="https://github.com/${repo_owner}/helm-charts/archive/refs/tags"
 
@@ -339,14 +345,16 @@ install_trento_server_chart() {
         pushd -- "$trento_chart_path" >/dev/null
         helm dep update >/dev/null
         popd >/dev/null
+    else
+        trento_chart_path="$trento_chart_path --version ${TRENTO_SERVER_CHART_VERSION}"
     fi
 
     local args=(
         --set-file trento-runner.privateKey="${private_key}"
-        --set trento-web.image.tag="${TRENTO_VERSION}"
-        --set trento-runner.image.tag="${TRENTO_VERSION}"
-        --set trento-runner.image.repository="${runner_image}"
+        --set trento-web.image.tag="${TRENTO_WEB_VERSION}"
         --set trento-web.image.repository="${web_image}"
+        --set trento-runner.image.tag="${TRENTO_RUNNER_VERSION}"
+        --set trento-runner.image.repository="${runner_image}"
         --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
@@ -365,7 +373,7 @@ install_trento_server_chart() {
             --set trento-runner.image.pullPolicy=Always
         )
     fi
-    HELM_EXPERIMENTAL_OCI=1 helm upgrade --install trento-server "$trento_chart_path" "${args[@]}"
+    HELM_EXPERIMENTAL_OCI=1 helm upgrade --install trento-server $trento_chart_path "${args[@]}"
 }
 
 main() {
