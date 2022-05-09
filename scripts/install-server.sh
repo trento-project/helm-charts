@@ -4,7 +4,7 @@ set -e
 
 readonly ARGS=("$@")
 readonly PROGNAME="./install-server.sh"
-TRENTO_HELM_VERSION=${TRENTO_HELM_VERSION:-"1.0.0"}
+TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"1.0.0"}
 TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"1.0.0"}
 TRENTO_RUNNER_VERSION=${TRENTO_RUNNER_VERSION:-"1.0.0"}
 TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
@@ -152,7 +152,7 @@ cmdline() {
     configure_alerting
 
     if [[ "$ROLLING" == "true" ]]; then
-        TRENTO_HELM_VERSION=$TRENTO_ROLLING_VERSION
+        TRENTO_SERVER_CHART_VERSION=$TRENTO_ROLLING_VERSION
         TRENTO_WEB_VERSION=$TRENTO_ROLLING_VERSION
         TRENTO_RUNNER_VERSION=$TRENTO_ROLLING_VERSION
     fi
@@ -328,7 +328,7 @@ install_trento_server_chart() {
     local runner_image=${TRENTO_RUNNER_IMAGE:-"$registry/trento-runner"}
     local web_image=${TRENTO_WEB_IMAGE:-"$registry/trento-web"}
     local private_key=${PRIVATE_KEY:-"./id_rsa_runner"}
-    local trento_source_zip="${TRENTO_HELM_VERSION}"
+    local trento_source_zip="${TRENTO_SERVER_CHART_VERSION}"
     local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/helm-charts-${trento_source_zip}/charts/trento-server"}
     local trento_packages_url="https://github.com/${repo_owner}/helm-charts/archive/refs/tags"
 
@@ -346,7 +346,7 @@ install_trento_server_chart() {
         helm dep update >/dev/null
         popd >/dev/null
     else
-        trento_chart_path="$trento_chart_path --version ${TRENTO_HELM_VERSION}"
+        trento_chart_path="$trento_chart_path --version ${TRENTO_SERVER_CHART_VERSION}"
     fi
 
     local args=(
