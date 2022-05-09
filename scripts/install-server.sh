@@ -373,7 +373,7 @@ install_trento_server_chart() {
             --set trento-runner.image.pullPolicy=Always
         )
     fi
-    HELM_EXPERIMENTAL_OCI=1 helm upgrade --install trento-server "$trento_chart_path" "${args[@]}"
+    HELM_EXPERIMENTAL_OCI=1 helm upgrade --install trento-server $trento_chart_path "${args[@]}"
 }
 
 main() {
