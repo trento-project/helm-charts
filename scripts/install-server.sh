@@ -26,6 +26,7 @@ usage() {
         -g, --smtp-port             The port on SMT server.
         -i, --smtp-user             Username to access SMTP server.
         -l, --smtp-password         Password to access SMTP server.
+        -s, --alerting-sender       Sender email for alerting notifications.
         -o, --alerting-recipient    Recipient email for alerting notifications.
         -w, --admin-password        admin user password.
         -r, --rolling               Use the rolling version instead of the stable one.
@@ -54,6 +55,7 @@ cmdline() {
         --smtp-port) args="${args}-g " ;;
         --smtp-user) args="${args}-i " ;;
         --smtp-password) args="${args}-l " ;;
+        --alerting-sender) args="${args}-s " ;;
         --alerting-recipient) args="${args}-o " ;;
         --admin-password) args="${args}-w " ;;
         --rolling) args="${args}-r " ;;
@@ -71,7 +73,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "p:c:k:a:f:g:i:l:o:mnrw:u:eh" OPTION; do
+    while getopts "p:c:k:a:f:g:i:l:s:o:mnrw:u:eh" OPTION; do
         case $OPTION in
         h)
             usage
@@ -116,6 +118,10 @@ cmdline() {
 
         l)
             SMTP_PASSWORD=$OPTARG
+            ;;
+        
+        s)
+            ALERTING_SENDER=$OPTARG
             ;;
 
         o)
@@ -256,6 +262,10 @@ function configure_alerting() {
             read -rp "Please provide the SMTP password: " SMTP_PASSWORD </dev/tty
         fi
 
+        if [[ -z "$ALERTING_SENDER" ]]; then
+            read -rp "Please provide the sender email for alerting notifications: " ALERTING_SENDER </dev/tty
+        fi
+
         if [[ -z "$ALERTING_RECIPIENT" ]]; then
             read -rp "Please provide the recipient email for alerting notifications: " ALERTING_RECIPIENT </dev/tty
         fi
@@ -364,6 +374,7 @@ install_trento_server_chart() {
             --set trento-web.alerting.smtpPort="${SMTP_PORT}"
             --set trento-web.alerting.smtpUser="${SMTP_USER}"
             --set trento-web.alerting.smtpPassword="${SMTP_PASSWORD}"
+            --set trento-web.alerting.sender="${ALERTING_SENDER}"
             --set trento-web.alerting.recipient="${ALERTING_RECIPIENT}"
         )
     fi
