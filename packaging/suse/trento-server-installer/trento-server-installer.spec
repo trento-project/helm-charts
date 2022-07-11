@@ -28,7 +28,8 @@ Source:    %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-build
 BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
-Conflicts: trento-premium-server-installer
+Provides:  trento-premium-server-installer = %{version}-%{release}
+Obsoletes: trento-premium-server-installer < 0.9.1-0
 
 %description
 Quickstart installer for the trento-server helm chart.
