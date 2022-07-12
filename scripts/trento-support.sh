@@ -24,9 +24,14 @@ collect_base_system() {
     set -x
     k3s --version
     helm version
-    helm get all trento-server
+    helm get hooks trento-server
+    helm get manifest trento-server | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data.privatekey, .data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE") else . end)'
+    helm get notes
+    helm get values trento-server | jq 'del(."trento-runner".privateKey)'
+
+
     set +x
-    echo "===== END BASE SYSTEM DETAILS ====="    
+    echo "===== END BASE SYSTEM DETAILS ====="
 } &> "$OUTPUT"
 
 collect_kubernetes_state() {
@@ -46,7 +51,7 @@ collect_kubernetes_state() {
 collect_all() {
     collect_trento_configuration
     collect_base_system
-    collect_kubernetes_state    
+    collect_kubernetes_state
 }
 
 generate_output() {
@@ -129,7 +134,7 @@ cmdline() {
 
         c)
             COLLECT=$OPTARG
-            IFS=, read -a arr <<<"${COLLECT}"            
+            IFS=, read -a arr <<<"${COLLECT}"
             for key in "${!arr[@]}"; do
                 if [[ -z "${VALID_FACILITIES[${arr[$key]}]}" ]]; then
                     printf '%s: unsupported facility\n' "${arr[$key]}"
