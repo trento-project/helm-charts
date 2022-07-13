@@ -13,39 +13,65 @@ declare -A VALID_FACILITIES=(
 indent() { sed 's/^/  /'; }
 
 collect_trento_configuration() {
-    echo "===== TRENTO CONFIGURATION FILES ====="
-    echo "/etc/trento/installer.conf:"
-    echo "$(</etc/trento/installer.conf)"
-    echo "===== END TRENTO CONFIGURATION FILES ====="
+    echo "#==[ Configuration File ]===========================#"
+    echo "# /etc/trento/installer.conf"
+    echo "$(</etc/trento/installer.conf)"    
 } &> "$OUTPUT"
 
 collect_base_system() {
-    echo "===== BASE SYSTEM DETAILS ====="
-    set -x
+    echo "#==[ Command ]======================================#"
+    echo "# k3s --version"
     k3s --version
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which helm) version"
     helm version
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which helm) get hooks trento-server"
     helm get hooks trento-server
+    
+    echo "#==[ Command ]======================================#"
+    echo "# $(which helm) get manifest trento-server"
     helm get manifest trento-server | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data.privatekey, .data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE") else . end)'
-    helm get notes
-    helm get values trento-server | jq 'del(."trento-runner".privateKey)'
-
-
-    set +x
-    echo "===== END BASE SYSTEM DETAILS ====="
+    
+    echo "#==[ Command ]======================================#"
+    echo "# $(which helm) get notes trento-server"
+    helm get notes trento-server
+    
+    echo "#==[ Command ]======================================#"
+    echo "# $(which helm) get values trento-server"
+    helm get values trento-server | yq 'del(."trento-runner".privateKey, ."trento-web".adminUser)'
 } &> "$OUTPUT"
 
 collect_kubernetes_state() {
-    echo "===== KUBERNETES CLUSTER STATE ====="
-    set -x
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) get nodes -o wide"
     kubectl get nodes -o wide
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) get pods"
     kubectl get pods
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) logs deploy/trento-server-runner"
     kubectl logs deploy/trento-server-runner
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) logs deploy/trento-server-web -c init"
     kubectl logs deploy/trento-server-web -c init
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) logs deploy/trento-server-web"
     kubectl logs deploy/trento-server-web
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) describe deployments" 
     kubectl describe deployments
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which crictl) images"
     crictl images
-    set +x
-    echo "===== END KUBERNETES CLUSTER STATE ====="
 } &> "$OUTPUT"
 
 collect_all() {
