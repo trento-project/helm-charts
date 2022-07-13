@@ -52,10 +52,12 @@ install -D -m 0640 packaging/suse/config/installer.conf %{buildroot}%{_sysconfdi
 
 # Install the installer script.
 install -D -m 0755 scripts/install-server.sh "%{buildroot}%{_bindir}/install-trento-server"
+install -D -m 0755 scripts/trento-support.sh "%{buildroot}%{_bindir}/trento-support"
 
 %files
 %defattr(-,root,root)
 %{_bindir}/install-trento-server
+%{_bindir}/trento-support
 
 %if 0%{?suse_version} > 1500
 %dir %{_distconfdir}/trento
