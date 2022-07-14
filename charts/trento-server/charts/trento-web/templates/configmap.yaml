@@ -11,6 +11,7 @@ data:
   SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
   SMTP_USER: "{{ .Values.alerting.smtpUser }}"
   SMTP_PASSWORD: "{{ .Values.alerting.smtpPassword }}"
+  ALERT_SENDER: "{{ .Values.alerting.sender }}"
   ALERT_RECIPIENT: "{{ .Values.alerting.recipient }}"
   GRAFANA_PUBLIC_URL: "/grafana"
   GRAFANA_API_URL: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"

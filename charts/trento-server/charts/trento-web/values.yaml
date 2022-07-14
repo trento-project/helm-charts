@@ -20,6 +20,7 @@ alerting:
   smtpPort: ""
   smtpUser: ""
   smtpPassword: ""
+  sender: ""
   recipient: ""
 
 adminUser:
