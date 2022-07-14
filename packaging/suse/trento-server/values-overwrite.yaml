@@ -1,12 +1,10 @@
 trento-web:
   image:
     repository: registry.suse.com/trento/trento-web
-    tag: latest
 
 trento-runner:
   image:
     repository: registry.suse.com/trento/trento-runner
-    tag: latest
 
 postgresql:
   image:
