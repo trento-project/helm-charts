@@ -33,7 +33,7 @@ image:
   repository: ghcr.io/trento-project/trento-web
   # TODO switch to IfNotPresent when we release
   pullPolicy: IfNotPresent
-  tag: 1.0.0
+  tag: 1.1.0
 
 imagePullSecrets: []
 nameOverride: ""
