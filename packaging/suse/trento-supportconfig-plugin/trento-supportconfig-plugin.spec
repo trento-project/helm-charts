@@ -30,6 +30,7 @@ BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
 Requires:  supportconfig-plugin-resource
 Requires:  supportconfig-plugin-tag
+Requires:  trento-server-installer
 
 %description
 Supportconfig plugin for trento.
