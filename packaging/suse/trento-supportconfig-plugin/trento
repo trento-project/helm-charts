@@ -1,0 +1,9 @@
+#!/bin/bash
+#############################################################
+# Name:        Supportconfig Plugin for SUSE trento
+# Description: Gathers important troubleshooting information
+#              about a SUSE trento SAP console
+# License:     GPLv2
+#############################################################
+
+trento-support --output stdout --collect all
