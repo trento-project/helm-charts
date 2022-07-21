@@ -30,6 +30,7 @@ BuildArch: noarch
 Provides:  %{name} = %{version}-%{release}
 Requires:  supportconfig-plugin-resource
 Requires:  supportconfig-plugin-tag
+Requires:  python3-yq
 Requires:  trento-server-installer
 
 %description

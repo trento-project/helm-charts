@@ -10,6 +10,8 @@ declare -A VALID_FACILITIES=(
     ["all"]="all"
 )
 
+OUTPUT=/dev/stdout
+
 indent() { sed 's/^/  /'; }
 
 collect_trento_configuration() {
@@ -19,9 +21,11 @@ collect_trento_configuration() {
 } &> "$OUTPUT"
 
 collect_base_system() {
-    echo "#==[ Command ]======================================#"
-    echo "# k3s --version"
-    k3s --version
+    if [ "$COLLECT_K3S" != "false" ]; then
+        echo "#==[ Command ]======================================#"
+        echo "# k3s --version"
+        k3s --version
+    fi
 
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) version"
@@ -69,9 +73,11 @@ collect_kubernetes_state() {
     echo "# $(which kubectl) describe deployments" 
     kubectl describe deployments
 
-    echo "#==[ Command ]======================================#"
-    echo "# $(which crictl) images"
-    crictl images
+    if [ "$COLLECT_CRICTL" != "false" ]; then 
+        echo "#==[ Command ]======================================#"
+        echo "# $(which crictl) images"
+        crictl images
+    fi
 } &> "$OUTPUT"
 
 collect_all() {
@@ -180,5 +186,27 @@ cmdline() {
     return 0
 }
 
+check_deps() {
+    if ! which yq >/dev/null 2>&1; then
+        echo "error: yq is required and not installed"
+        exit 1
+    fi
+    if ! which helm >/dev/null 2>&1; then
+        echo "error: helm is required and not installed"
+        exit 1
+    fi
+    if ! which kubectl >/dev/null 2>&1; then
+        echo "error: kubectl is required and not installed"
+        exit 1
+    fi
+    if ! which crictl >/dev/null 2>&1; then
+        COLLECT_CRICTL=false
+    fi
+    if ! which k3s >/dev/null 2>&1; then
+        COLLECT_K3S=false
+    fi
+}
+
+check_deps
 cmdline "${ARGS[@]}"
 generate_output
