@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-#!BuildTag: trento/trento-server:1.1.0
-#!BuildTag: trento/trento-server:1.1.0-build%RELEASE%
+#!BuildTag: trento/trento-server:1.1.1-dev
+#!BuildTag: trento/trento-server:1.1.1-dev+build%RELEASE%
 apiVersion: v2
 name: trento-server
 description: The trento server chart contains all the components necessary to run a Trento server.
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates
-version: 1.1.0
+version: 1.1.1-dev
 
 dependencies:
   - name: trento-web
@@ -25,6 +25,6 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts/
     condition: prometheus.enabled
   - name: grafana
-    version: ~6.21.2
+    version: ~6.36.1
     repository: https://grafana.github.io/helm-charts/
     condition: grafana.enabled
