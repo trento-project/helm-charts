@@ -14,6 +14,9 @@ global:
     name: grafana
   prometheus:
     name: prometheus-server
+  rabbitmq:
+    name: rabbitmq
+    servicePort: 5672
 
 ### Sub Charts Specific Values ###
 trento-web:
@@ -78,3 +81,11 @@ grafana:
       - ""
       ## Path for grafana ingress
     path: /grafana
+
+rabbitmq:
+  enabled: false
+  persistence:
+    enabled: true
+  auth:
+    username: trento
+    password: trento

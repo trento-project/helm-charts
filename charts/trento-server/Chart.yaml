@@ -28,3 +28,7 @@ dependencies:
     version: ~6.36.1
     repository: https://grafana.github.io/helm-charts/
     condition: grafana.enabled
+  - name: rabbitmq
+    version: ~10.3.9
+    repository: https://charts.bitnami.com/bitnami/
+    condition: rabbitmq.enabled
