@@ -14,5 +14,8 @@ dependencies:
 - name: grafana
   repository: https://grafana.github.io/helm-charts/
   version: 6.36.3
-digest: sha256:00a51940599944d19bfb9c73e12d12ac5dd009bead1a507918488e0f752172d2
-generated: "2022-09-14T15:01:11.224040855+01:00"
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami/
+  version: 10.3.9
+digest: sha256:c4bccf4b063296b73c47f23cfdf24eed572eb6cf5d94a8be4e020ddefda29564
+generated: "2022-10-10T14:54:10.104992787+02:00"
