@@ -16,6 +16,9 @@ dependencies:
   - name: trento-runner
     version: ">0.0.0"
     condition: trento-runner.enabled
+  - name: wanda
+    version: ">0.0.0"
+    condition: wanda.enabled
   - name: postgresql
     version: 10.x.x
     repository: https://charts.bitnami.com/bitnami/
