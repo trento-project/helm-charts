@@ -30,6 +30,9 @@ trento-runner:
   nameOverride: runner
   enabled: true
 
+wanda:
+  enabled: false
+
 postgresql:
   enabled: true
   image:
@@ -41,9 +44,6 @@ postgresql:
     init.sql: |
       CREATE DATABASE trento_event_store;
       CREATE DATABASE wanda;
-
-wanda:
-  enabled: false
 
 prometheus:
   enabled: true
