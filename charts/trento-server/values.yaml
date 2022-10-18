@@ -7,6 +7,9 @@ global:
   trentoRunner:
     name: runner
     servicePort: 8080
+  wanda:
+    name: wanda
+    servicePort: 4000
   postgresql:
     name: postgresql
     servicePort: 5432
@@ -27,6 +30,9 @@ trento-runner:
   nameOverride: runner
   enabled: true
 
+wanda:
+  enabled: false
+
 postgresql:
   enabled: true
   image:
@@ -37,6 +43,7 @@ postgresql:
   initdbScripts:
     init.sql: |
       CREATE DATABASE trento_event_store;
+      CREATE DATABASE wanda;
 
 prometheus:
   enabled: true
