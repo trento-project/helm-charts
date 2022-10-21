@@ -81,27 +81,26 @@ collect_kubernetes_state() {
 } &> "$OUTPUT"
 
 collect_all() {
-    collect_trento_configuration
-    collect_base_system
-    collect_kubernetes_state
+    collect_trento_configuration || echo "Error $? during 'configuration' collection"
+    collect_base_system || echo "Error $? during 'base' collection"
+    collect_kubernetes_state || echo "Error $? during 'kubernetes' collection"
 }
 
 generate_output() {
     if [[ " ${arr[*]} " =~ "all" ]]; then
         collect_all
-        exit 0
-    fi
+    else
+      if [[ " ${arr[*]} " =~ "configuration" ]]; then
+        collect_trento_configuration
+      fi
 
-    if [[ " ${arr[*]} " =~ "configuration" ]]; then
-       collect_trento_configuration
-    fi
-
-    if [[ " ${arr[*]} " =~ "base" ]]; then
+      if [[ " ${arr[*]} " =~ "base" ]]; then
         collect_base_system
-    fi
+      fi
 
-    if [[ " ${arr[*]} " =~ "kubernetes" ]]; then
+      if [[ " ${arr[*]} " =~ "kubernetes" ]]; then
         collect_kubernetes_state
+      fi
     fi
 
     if [[ -n "$COMPRESS" ]]; then
@@ -147,16 +146,16 @@ cmdline() {
             ;;
 
         o)
-            OUTPUT_OPT=$OPTARG
-            if [[ $OUTPUT_OPT != "stdout" && $OUTPUT_OPT != "file" && $OUTPUT_OPT != "file-tgz" ]]; then
+            OUTPUT_OPT="${OPTARG}"
+            if [[ ${OUTPUT_OPT} != "stdout" && ${OUTPUT_OPT} != "file" && ${OUTPUT_OPT} != "file-tgz" ]]; then
                 echo "Invalid output type: $OUTPUT_OPT"
                 usage
                 exit 1
             fi
 
-            if [ "$OUTPUT_OPT" = "stdout" ]; then
+            if [ "${OUTPUT_OPT}" = "stdout" ]; then
                 OUTPUT="/dev/stdout"
-            elif [ "$OUTPUT_OPT" = "file-tgz" ]; then
+            elif [ "${OUTPUT_OPT}" = "file-tgz" ]; then
                 OUTPUT="$(date +%Y-%m-%d_%H%M)_support.txt"
                 COMPRESS=true
             else
@@ -187,6 +186,10 @@ cmdline() {
 }
 
 check_deps() {
+    if ! which jq >/dev/null 2>&1; then
+        echo "error: jq is required and not installed"
+        exit 1
+    fi
     if ! which yq >/dev/null 2>&1; then
         echo "error: yq is required and not installed"
         exit 1
