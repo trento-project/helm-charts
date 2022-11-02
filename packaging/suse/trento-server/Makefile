@@ -9,7 +9,7 @@ verify-deps:
 clean:
 	rm -f *.tar
 tar:
-	osc service disabledrun
+	osc service manualrun
 	tmpdir=$$(mktemp -d -p .) && \
       pushd $$tmpdir && \
       tar -xf ../$(NAME).tar && \
