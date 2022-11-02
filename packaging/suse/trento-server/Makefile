@@ -18,7 +18,7 @@ tar:
 	    cat $$patch | patch --no-backup-if-mismatch -p1 -s -d $(NAME); \
 	done && \
 	if [ -f "../values-overwrite.yaml" ]; then \
-	    yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' $(NAME)/values.yaml ../values-overwrite.yaml > $(NAME)/values.yaml; \
+	    yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' ../helm-charts/charts/$(NAME)/values.yaml ../values-overwrite.yaml > $(NAME)/values.yaml; \
 	fi && \
 	pushd $(NAME) && \
 	helm dependency update && \
