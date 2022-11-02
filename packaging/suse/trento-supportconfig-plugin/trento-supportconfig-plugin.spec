@@ -44,10 +44,7 @@ The script allows the user to collect all relevant installation details for a su
 %build
 
 %install
-pwd;ls -la
-rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/usr/lib/supportconfig/plugins
-install -d $RPM_BUILD_ROOT/sbin
 install -m 0544 packaging/suse/trento-supportconfig-plugin/trento $RPM_BUILD_ROOT/usr/lib/supportconfig/plugins
 
 %files
@@ -55,6 +52,3 @@ install -m 0544 packaging/suse/trento-supportconfig-plugin/trento $RPM_BUILD_ROO
 /usr/lib/supportconfig
 /usr/lib/supportconfig/plugins
 /usr/lib/supportconfig/plugins/trento
-
-%clean
-rm -rf $RPM_BUILD_ROOT
