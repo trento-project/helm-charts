@@ -34,13 +34,11 @@ jobs:
       - name: Lint
         run: ct lint --config=ct.yaml --lint-conf=helmlintconf.yaml
 
-  build-static-binary:
+  create-artifact:
     runs-on: ubuntu-20.04
     needs: [test-helm-charts]
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: compress
         run: |
           set -x
@@ -52,7 +50,7 @@ jobs:
             *.tgz
 
   release-rolling:
-    needs: [test-helm-charts, build-static-binary]
+    needs: [test-helm-charts, create-artifact]
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-20.04
     steps:
@@ -75,10 +73,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Fetch history
-        run: git fetch --prune --unshallow
-
+        with:
+          fetch-depth: 0
       - name: Configure Git
         run: |
           git config user.name "$GITHUB_ACTOR"
@@ -87,7 +83,6 @@ jobs:
         uses: azure/setup-helm@v3.3
         with:
           version: v3.7.2
-
       - name: Add dependency chart repos
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -104,17 +99,19 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
-      image: ghcr.io/trento-project/continuous-delivery:master
+      image: ghcr.io/trento-project/continuous-delivery:main
       env:
-        GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEST_FOLDER: "/tmp/osc_project"
         FOLDER: packaging/suse
+      options: -u 0:0
     strategy:
       matrix:
         charts: ["trento-server"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag
         with:
@@ -124,9 +121,9 @@ jobs:
         # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
         # that is used to run osc commands
         run: |
-          /scripts/init_osc_creds.sh
           mkdir -p $HOME/.config/osc
-          cp /root/.config/osc/oscrc $HOME/.config/osc
+          cp /home/osc/.config/osc/oscrc $HOME/.config/osc
+          /scripts/init_osc_creds.sh
       - name: Prepare .changes file
         # The .changes file is updated only in release creation. This current task should be improved
         # in order to add the current rolling release notes
@@ -141,9 +138,6 @@ jobs:
           ./hack/gh_release_to_obs_changeset.py ${{ github.repository }} -a shap-staff@suse.de -t $TAG -f $CHART_FOLDER/$CHANGES_FILE
       - name: Commit on OBS
         run: |
-          echo "Installing helm and yq to run the makefile"
-          ssl_verify=host zypper in -y helm wget
-          wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
           echo "Commiting ${{ matrix.charts }} for package ${{ matrix.charts }}-helm"
           OBS_PACKAGE=$OBS_PROJECT/${{ matrix.charts }}-helm
           osc checkout $OBS_PACKAGE -o $DEST_FOLDER
@@ -152,21 +146,23 @@ jobs:
           cd $DEST_FOLDER
           make
           osc ar
-          osc commit -m "New development version of ${{ matrix.charts }}-helm released"
+          osc commit -m "GitHub Actions automated update to reference ${{ github.sha }}"
 
   obs-commit-installer:
     needs: [test-helm-charts]
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
-      image: ghcr.io/trento-project/continuous-delivery:master
+      image: ghcr.io/trento-project/continuous-delivery:main
       env:
         PACKAGE_NAME: trento-server-installer
-        GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FOLDER: packaging/suse/trento-server-installer
+      options: -u 0:0
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag
         with:
@@ -176,9 +172,9 @@ jobs:
         # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
         # that is used to run osc commands
         run: |
-          /scripts/init_osc_creds.sh
           mkdir -p $HOME/.config/osc
-          cp /root/.config/osc/oscrc $HOME/.config/osc
+          cp /home/osc/.config/osc/oscrc $HOME/.config/osc
+          /scripts/init_osc_creds.sh
       - name: Prepare .changes file
         # The .changes file is updated only in release creation. This current task should be improved
         # in order to add the current rolling release notes
@@ -189,7 +185,6 @@ jobs:
           mv $CHANGES_FILE $FOLDER
           TAG=${{ steps.latest-tag.outputs.tag }}
           hack/gh_release_to_obs_changeset.py ${{ github.repository }} -a shap-staff@suse.de -t $TAG -f $FOLDER/$CHANGES_FILE
-
       - name: prepare _service file
         run: |
           git config --global --add safe.directory /__w/helm-charts/helm-charts
@@ -199,21 +194,23 @@ jobs:
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $FOLDER/_service
       - name: Commit on OBS
-        run: cp -r $FOLDER/* . && /scripts/upload.sh
+        run: /scripts/upload.sh
 
   obs-commit-plugin:
     needs: [test-helm-charts]
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
-      image: ghcr.io/trento-project/continuous-delivery:master
+      image: ghcr.io/trento-project/continuous-delivery:main
       env:
         PACKAGE_NAME: trento-supportconfig-plugin
-        GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FOLDER: packaging/suse/trento-supportconfig-plugin
+      options: -u 0:0
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions-ecosystem/action-get-latest-tag@v1
         id: latest-tag
         with:
@@ -223,9 +220,9 @@ jobs:
         # OSC credentials must be configured beforehand as the HOME variables cannot be changed from /github/home
         # that is used to run osc commands
         run: |
-          /scripts/init_osc_creds.sh
           mkdir -p $HOME/.config/osc
-          cp /root/.config/osc/oscrc $HOME/.config/osc
+          cp /home/osc/.config/osc/oscrc $HOME/.config/osc
+          /scripts/init_osc_creds.sh
       - name: Prepare .changes file
         # The .changes file is updated only in release creation. This current task should be improved
         # in order to add the current rolling release notes
@@ -236,7 +233,6 @@ jobs:
           mv $CHANGES_FILE $FOLDER
           TAG=${{ steps.latest-tag.outputs.tag }}
           hack/gh_release_to_obs_changeset.py ${{ github.repository }} -a shap-staff@suse.de -t $TAG -f $FOLDER/$CHANGES_FILE
-
       - name: prepare _service file
         run: |
           git config --global --add safe.directory /__w/helm-charts/helm-charts
@@ -246,4 +242,4 @@ jobs:
           sed -i 's~%%REVISION%%~${{ github.sha }}~' $FOLDER/_service && \
           sed -i 's~%%VERSION%%~'"${VERSION}"'~' $FOLDER/_service
       - name: Commit on OBS
-        run: cp -r $FOLDER/* . && /scripts/upload.sh
+        run: /scripts/upload.sh

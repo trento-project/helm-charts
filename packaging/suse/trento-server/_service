@@ -1,5 +1,5 @@
 <services>
-	<service name="tar_scm" mode="disabled">
+	<service name="tar_scm" mode="manual">
 		<param name="url">https://github.com/trento-project/helm-charts.git</param>
 		<param name="scm">git</param>
 		<param name="filename">trento-server</param>
@@ -7,7 +7,7 @@
 		<param name="include">templates</param>
 		<param name="include">charts</param>
 		<param name="include">values.yaml</param>
-    <param name="include">Chart.yaml</param>
+		<param name="include">Chart.yaml</param>
 		<param name="subdir">charts/trento-server</param>
 		<param name="revision">main</param>
 		<param name="versionformat">@PARENT_TAG@</param>
