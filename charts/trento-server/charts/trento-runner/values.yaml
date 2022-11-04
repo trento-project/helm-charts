@@ -16,7 +16,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/trento-project/trento-runner
   pullPolicy: IfNotPresent
-  tag: 1.0.1
+  tag: 1.1.0
 
 imagePullSecrets: []
 nameOverride: ""
