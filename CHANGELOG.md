@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.2.0](https://github.com/trento-project/helm-charts/tree/1.2.0) (2022-11-04)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/1.1.0...1.2.0)
+
+### Fixed
+
+- Add gh\_release file to fix the CI process [\#36](https://github.com/trento-project/helm-charts/pull/36) (@arbulu89)
+
+### Other Changes
+
+- Cleanup debugging leftovers supportconfig specfile [\#48](https://github.com/trento-project/helm-charts/pull/48) (@rtorrero)
+- fix workflow name [\#47](https://github.com/trento-project/helm-charts/pull/47) (@gereonvey)
+- update obs related CI jobs [\#45](https://github.com/trento-project/helm-charts/pull/45) (@stefanotorresi)
+- Fixes in trento-support about compressed output [\#44](https://github.com/trento-project/helm-charts/pull/44) (@mpagot)
+- Initial work to add  wanda container [\#43](https://github.com/trento-project/helm-charts/pull/43) (@rtorrero)
+- Add basic rabbitmq chart [\#42](https://github.com/trento-project/helm-charts/pull/42) (@arbulu89)
+- Update grafana chart dependency to 6.36.1 [\#39](https://github.com/trento-project/helm-charts/pull/39) (@rtorrero)
+- Bump helm/chart-testing-action from 2.2.1 to 2.3.0 [\#38](https://github.com/trento-project/helm-charts/pull/38) (@dependabot[bot])
+- Bump azure/setup-helm from 2.1 to 3.3 [\#37](https://github.com/trento-project/helm-charts/pull/37) (@dependabot[bot])
+- Add basic script for support requests [\#32](https://github.com/trento-project/helm-charts/pull/32) (@rtorrero)
+
 ## [1.1.0](https://github.com/trento-project/helm-charts/tree/1.1.0) (2022-07-14)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/1.0.0...1.1.0)
