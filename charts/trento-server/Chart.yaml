@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #!BuildTag: trento/trento-server:1.2.0
-#!BuildTag: trento/trento-server:1.2.0-dev+build%RELEASE%
+#!BuildTag: trento/trento-server:1.2.0+build%RELEASE%
 apiVersion: v2
 name: trento-server
 description: The trento server chart contains all the components necessary to run a Trento server.
