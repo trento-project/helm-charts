@@ -9,8 +9,8 @@ dependencies:
   repository: ""
   version: '>0.0.0'
 - name: postgresql
-  repository: https://charts.bitnami.com/bitnami/
-  version: 12.1.6
+  repository: ""
+  version: '>0.0.0'
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts/
   version: 15.1.3
@@ -20,5 +20,5 @@ dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami/
   version: 10.3.9
-digest: sha256:f8edc11797bde2fb06c316ef77f09fea7f0d62e43e434641b68f883f136cffc9
-generated: "2023-01-02T12:39:36.790666843+01:00"
+digest: sha256:b85e42a1608ce01653f1515b7555454d99212bdc69ee642c646682521b2bc36f
+generated: "2023-01-02T13:50:49.668366666+01:00"
