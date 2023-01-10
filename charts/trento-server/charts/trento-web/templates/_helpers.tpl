@@ -85,6 +85,26 @@ Return or generate the grafana admin password
   {{- end -}}
 {{- end -}}
 
+{{- define "trento.web.accessTokenSecret" -}}
+  {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
+  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+  {{- if $secret -}}
+    {{- index $secret "data" "ACCESS_TOKEN_ENC_SECRET" -}}
+  {{- else -}}
+    {{- (randAlphaNum 64) | b64enc -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "trento.web.refreshTokenSecret" -}}
+  {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
+  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+  {{- if $secret -}}
+    {{- index $secret "data" "REFRESH_TOKEN_ENC_SECRET" -}}
+  {{- else -}}
+    {{- (randAlphaNum 64) | b64enc -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "trento.web.secretKeyBase" -}}
   {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
   {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
@@ -94,6 +114,7 @@ Return or generate the grafana admin password
     {{- (randAlphaNum 64) | b64enc -}}
   {{- end -}}
 {{- end -}}
+
 
 {{- define "trento.web.adminPassword" -}}
   {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
