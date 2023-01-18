@@ -4,9 +4,6 @@ global:
   trentoWeb:
     name: web
     servicePort: 4000
-  trentoRunner:
-    name: runner
-    servicePort: 8080
   wanda:
     name: wanda
     servicePort: 4000
@@ -24,10 +21,6 @@ global:
 ### Sub Charts Specific Values ###
 trento-web:
   nameOverride: web
-  enabled: true
-
-trento-runner:
-  nameOverride: runner
   enabled: true
 
 wanda:

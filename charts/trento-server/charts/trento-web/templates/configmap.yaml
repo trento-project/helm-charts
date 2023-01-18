@@ -5,7 +5,6 @@ metadata:
 data:
   DATABASE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
   EVENTSTORE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
-  RUNNER_URL: "http://{{ .Release.Name }}-{{ .Values.global.trentoRunner.name }}:{{ .Values.global.trentoRunner.servicePort }}"
   ENABLE_ALERTING: "{{ .Values.alerting.enabled }}"
   SMTP_SERVER: "{{ .Values.alerting.smtpServer }}"
   SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
