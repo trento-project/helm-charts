@@ -81,3 +81,13 @@ Return Trento Wanda service port
     {{- (randAlphaNum 64) | b64enc -}}
   {{- end -}}
 {{- end -}}
+
+{{- define "trento-wanda.accessTokenSecret" -}}
+  {{ $secretName := (print (include "trento-wanda.fullname" .) "-secret") }}
+  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+  {{- if $secret -}}
+    {{- index $secret "data" "ACCESS_TOKEN_ENC_SECRET" -}}
+  {{- else -}}
+    {{- (randAlphaNum 64) | b64enc -}}
+  {{- end -}}
+{{- end -}}

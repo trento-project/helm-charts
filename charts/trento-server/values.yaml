@@ -24,7 +24,8 @@ trento-web:
   enabled: true
 
 trento-wanda:
-  enabled: false
+  nameOverride: wanda
+  enabled: true
 
 postgresql:
   enabled: true
@@ -83,7 +84,7 @@ grafana:
     path: /grafana
 
 rabbitmq:
-  enabled: false
+  enabled: true
   persistence:
     enabled: true
   auth:

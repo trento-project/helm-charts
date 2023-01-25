@@ -5,3 +5,4 @@ metadata:
 data:
   DATABASE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/wanda"
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
+  CORS_ORIGIN: "http://{{ .Release.Name }}-{{ .Values.global.trentoWanda.name }}/api"
