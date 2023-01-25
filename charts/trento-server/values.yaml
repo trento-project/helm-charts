@@ -4,7 +4,7 @@ global:
   trentoWeb:
     name: web
     servicePort: 4000
-  wanda:
+  trentoWanda:
     name: wanda
     servicePort: 4000
   postgresql:
@@ -23,7 +23,7 @@ trento-web:
   nameOverride: web
   enabled: true
 
-wanda:
+trento-wanda:
   enabled: false
 
 postgresql:

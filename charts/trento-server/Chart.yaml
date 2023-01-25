@@ -13,9 +13,9 @@ dependencies:
   - name: trento-web
     version: ">0.0.0-0"
     condition: trento-web.enabled
-  - name: wanda
-    version: ">0.0.0"
-    condition: wanda.enabled
+  - name: trento-wanda
+    version: ">0.0.0-0"
+    condition: trento-wanda.enabled
   - name: postgresql
     version: ">0.0.0"
     condition: postgresql.enabled

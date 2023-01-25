@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "wanda.fullname" . }}
+  name: {{ include "trento-wanda.fullname" . }}
   labels:
-    {{- include "wanda.labels" . | nindent 4 }}
+    {{- include "trento-wanda.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "wanda.fullname" . }}
+    name: {{ include "trento-wanda.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 global:
-  wanda:
+  trentoWanda:
     servicePort: ""
   rabbitmq:
     name: rabbitmq
@@ -15,7 +15,7 @@ global:
 replicaCount: 1
 
 image:
-  repository: ghcr.io/trento-project/wanda
+  repository: ghcr.io/trento-project/trento-wanda
   #pullPolicy: IfNotPresent
   pullPolicy: Always
   tag: rolling
