@@ -10,6 +10,8 @@ global:
   postgresql:
     name: postgresql
     servicePort: 5432
+    postgresqlUsername: "postgres"
+    postgresqlPassword: "postgres"
   grafana:
     name: grafana
   prometheus:
@@ -31,13 +33,10 @@ postgresql:
   enabled: true
   image:
     tag: 14.1.0-debian-10-r30
-  postgresqlUsername: "postgres"
-  postgresqlPassword: "postgres"
   postgresqlDatabase: "trento"
   initdbScripts:
     init.sql: |
       CREATE DATABASE trento_event_store;
-      CREATE DATABASE wanda;
 
 prometheus:
   enabled: true
