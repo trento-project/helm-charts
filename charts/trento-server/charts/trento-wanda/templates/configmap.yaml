@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: {{ include "trento-wanda.fullname" . }}-configmap
 data:
-  DATABASE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/wanda"
+  DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_wanda"
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
   CORS_ORIGIN: "http://{{ .Release.Name }}-{{ .Values.global.trentoWanda.name }}/api"

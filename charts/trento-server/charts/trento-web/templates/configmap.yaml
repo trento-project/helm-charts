@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: {{ include "trento-web.fullname" . }}-configmap
 data:
-  DATABASE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
-  EVENTSTORE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
+  DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
+  EVENTSTORE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
   ENABLE_ALERTING: "{{ .Values.alerting.enabled }}"
   SMTP_SERVER: "{{ .Values.alerting.smtpServer }}"
   SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
