@@ -89,3 +89,5 @@ rabbitmq:
   auth:
     username: trento
     password: trento
+  service:
+    type: LoadBalancer
