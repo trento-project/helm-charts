@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "wanda.fullname" . }}
+  name: {{ include "trento-wanda.fullname" . }}
   labels:
-    {{- include "wanda.labels" . | nindent 4 }}
+    {{- include "trento-wanda.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "wanda.selectorLabels" . | nindent 6 }}
+      {{- include "trento-wanda.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "wanda.selectorLabels" . | nindent 8 }}
+        {{- include "trento-wanda.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "wanda.serviceAccountName" . }}
+      serviceAccountName: {{ include "trento-wanda.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
@@ -33,9 +33,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
-                name: {{ include "wanda.fullname" . }}-configmap
+                name: {{ include "trento-wanda.fullname" . }}-configmap
             - secretRef:
-                name: {{ include "wanda.fullname" . }}-secret
+                name: {{ include "trento-wanda.fullname" . }}-secret
           args: ['eval', 'Wanda.Release.init()']
       containers:
         - name: {{ .Chart.Name }}
@@ -45,12 +45,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
-                name: {{ include "wanda.fullname" . }}-configmap
+                name: {{ include "trento-wanda.fullname" . }}-configmap
             - secretRef:
-                name: {{ include "wanda.fullname" . }}-secret
+                name: {{ include "trento-wanda.fullname" . }}-secret
+            - secretRef:
+                name: {{ .Release.Name }}-auth-tokens-secret
           ports:
             - name: http
-              containerPort: {{ template "wanda.port" . }}
+              containerPort: {{ template "trentoWanda.port" . }}
               protocol: TCP
           args: ['start']
           # livenessProbe:

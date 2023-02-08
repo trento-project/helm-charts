@@ -4,15 +4,14 @@ global:
   trentoWeb:
     name: web
     servicePort: 4000
-  trentoRunner:
-    name: runner
-    servicePort: 8080
-  wanda:
+  trentoWanda:
     name: wanda
     servicePort: 4000
   postgresql:
     name: postgresql
     servicePort: 5432
+    postgresqlUsername: "postgres"
+    postgresqlPassword: "postgres"
   grafana:
     name: grafana
   prometheus:
@@ -26,24 +25,18 @@ trento-web:
   nameOverride: web
   enabled: true
 
-trento-runner:
-  nameOverride: runner
+trento-wanda:
+  nameOverride: wanda
   enabled: true
-
-wanda:
-  enabled: false
 
 postgresql:
   enabled: true
   image:
     tag: 14.1.0-debian-10-r30
-  postgresqlUsername: "postgres"
-  postgresqlPassword: "postgres"
   postgresqlDatabase: "trento"
   initdbScripts:
     init.sql: |
       CREATE DATABASE trento_event_store;
-      CREATE DATABASE wanda;
 
 prometheus:
   enabled: true
@@ -90,9 +83,11 @@ grafana:
     path: /grafana
 
 rabbitmq:
-  enabled: false
+  enabled: true
   persistence:
     enabled: true
   auth:
     username: trento
     password: trento
+  service:
+    type: LoadBalancer

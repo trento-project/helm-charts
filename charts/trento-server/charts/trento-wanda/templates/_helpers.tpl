@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "trento-runner.name" -}}
+{{- define "trento-wanda.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "trento-runner.fullname" -}}
+{{- define "trento-wanda.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "trento-runner.chart" -}}
+{{- define "trento-wanda.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "trento-runner.labels" -}}
-helm.sh/chart: {{ include "trento-runner.chart" . }}
-{{ include "trento-runner.selectorLabels" . }}
+{{- define "trento-wanda.labels" -}}
+helm.sh/chart: {{ include "trento-wanda.chart" . }}
+{{ include "trento-wanda.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,29 +45,49 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "trento-runner.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "trento-runner.name" . }}
+{{- define "trento-wanda.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "trento-wanda.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "trento-runner.serviceAccountName" -}}
+{{- define "trento-wanda.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "trento-runner.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "trento-wanda.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
 {{/*
-Return Trento Runner service port
+Return Trento Wanda service port
 */}}
-{{- define "trentoRunner.port" -}}
-{{- if .Values.global.trentoRunner.servicePort }}
-    {{- .Values.global.trentoRunner.servicePort -}}
+{{- define "trentoWanda.port" -}}
+{{- if .Values.global.trentoWanda.servicePort }}
+    {{- .Values.global.trentoWanda.servicePort -}}
 {{- else -}}
     {{- .Values.service.port -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "trento-wanda.secretKeyBase" -}}
+  {{ $secretName := (print (include "trento-wanda.fullname" .) "-secret") }}
+  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+  {{- if $secret -}}
+    {{- index $secret "data" "SECRET_KEY_BASE" -}}
+  {{- else -}}
+    {{- (randAlphaNum 64) | b64enc -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "trento-wanda.accessTokenSecret" -}}
+  {{ $secretName := (print (include "trento-wanda.fullname" .) "-secret") }}
+  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+  {{- if $secret -}}
+    {{- index $secret "data" "ACCESS_TOKEN_ENC_SECRET" -}}
+  {{- else -}}
+    {{- (randAlphaNum 64) | b64enc -}}
+  {{- end -}}
 {{- end -}}

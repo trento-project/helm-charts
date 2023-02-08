@@ -3,9 +3,8 @@ kind: ConfigMap
 metadata:
   name: {{ include "trento-web.fullname" . }}-configmap
 data:
-  DATABASE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
-  EVENTSTORE_URL: "ecto://postgres:postgres@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
-  RUNNER_URL: "http://{{ .Release.Name }}-{{ .Values.global.trentoRunner.name }}:{{ .Values.global.trentoRunner.servicePort }}"
+  DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
+  EVENTSTORE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
   ENABLE_ALERTING: "{{ .Values.alerting.enabled }}"
   SMTP_SERVER: "{{ .Values.alerting.smtpServer }}"
   SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
@@ -16,3 +15,4 @@ data:
   GRAFANA_PUBLIC_URL: "/grafana"
   GRAFANA_API_URL: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
+  AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"

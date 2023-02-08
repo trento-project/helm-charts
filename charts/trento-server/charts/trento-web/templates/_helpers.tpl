@@ -85,7 +85,7 @@ Return or generate the grafana admin password
   {{- end -}}
 {{- end -}}
 
-{{- define "trento.web.accessTokenSecret" -}}
+{{- define "trento-web.accessTokenSecret" -}}
   {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
   {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
   {{- if $secret -}}
@@ -95,7 +95,7 @@ Return or generate the grafana admin password
   {{- end -}}
 {{- end -}}
 
-{{- define "trento.web.refreshTokenSecret" -}}
+{{- define "trento-web.refreshTokenSecret" -}}
   {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
   {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
   {{- if $secret -}}

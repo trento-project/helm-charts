@@ -2,12 +2,9 @@ dependencies:
 - name: trento-web
   repository: ""
   version: '>0.0.0-0'
-- name: trento-runner
+- name: trento-wanda
   repository: ""
-  version: '>0.0.0'
-- name: wanda
-  repository: ""
-  version: '>0.0.0'
+  version: '>0.0.0-0'
 - name: postgresql
   repository: ""
   version: '>0.0.0'
@@ -20,5 +17,5 @@ dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami/
   version: 10.3.9
-digest: sha256:f19c5352e438f383061ff03ac1adc817b88918d0103e28f9f16399333a6538cf
-generated: "2023-01-10T16:31:23.98229448+01:00"
+digest: sha256:d7ee96285c1ea9e901231c774508b818cd2466ff7a0755b8580cf20f9b241f40
+generated: "2023-01-25T09:58:48.312610243+01:00"

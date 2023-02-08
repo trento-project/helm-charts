@@ -37,6 +37,8 @@ spec:
                 name: {{ include "trento-web.fullname" . }}-configmap
             - secretRef:
                 name: {{ include "trento-web.fullname" . }}-secret
+            - secretRef:
+                name: {{ .Release.Name }}-auth-tokens-secret
           env:
             - name: GRAFANA_PASSWORD
               valueFrom:
@@ -53,6 +55,8 @@ spec:
                 name: {{ include "trento-web.fullname" . }}-configmap
             - secretRef:
                 name: {{ include "trento-web.fullname" . }}-secret
+            - secretRef:
+                name: {{ .Release.Name }}-auth-tokens-secret
           env:
             - name: GRAFANA_PASSWORD
               valueFrom:
