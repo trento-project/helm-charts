@@ -17,7 +17,7 @@ indent() { sed 's/^/  /'; }
 collect_trento_configuration() {
     echo "#==[ Configuration File ]===========================#"
     echo "# /etc/trento/installer.conf"
-    echo "$(</etc/trento/installer.conf)"    
+    echo "$(</etc/trento/installer.conf)"
 } &> "$OUTPUT"
 
 collect_base_system() {
@@ -34,18 +34,18 @@ collect_base_system() {
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) get hooks trento-server"
     helm get hooks trento-server
-    
+
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) get manifest trento-server"
     helm get manifest trento-server | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data.privatekey, .data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE") else . end)'
-    
+
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) get notes trento-server"
     helm get notes trento-server
-    
+
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) get values trento-server"
-    helm get values trento-server | yq 'del(."trento-runner".privateKey, ."trento-web".adminUser)'
+    helm get values trento-server | yq 'del(."trento-web".adminUser)'
 } &> "$OUTPUT"
 
 collect_kubernetes_state() {
@@ -58,8 +58,8 @@ collect_kubernetes_state() {
     kubectl get pods
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/trento-server-runner"
-    kubectl logs deploy/trento-server-runner
+    echo "# $(which kubectl) logs deploy/trento-server-wanda"
+    kubectl logs deploy/trento-server-wanda
 
     echo "#==[ Command ]======================================#"
     echo "# $(which kubectl) logs deploy/trento-server-web -c init"
@@ -70,10 +70,10 @@ collect_kubernetes_state() {
     kubectl logs deploy/trento-server-web
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) describe deployments" 
+    echo "# $(which kubectl) describe deployments"
     kubectl describe deployments
 
-    if [ "$COLLECT_CRICTL" != "false" ]; then 
+    if [ "$COLLECT_CRICTL" != "false" ]; then
         echo "#==[ Command ]======================================#"
         echo "# $(which crictl) images"
         crictl images
