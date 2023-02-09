@@ -37,7 +37,7 @@ collect_base_system() {
 
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) get manifest trento-server"
-    helm get manifest trento-server | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data.privatekey, .data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE") else . end)'
+    helm get manifest trento-server | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
 
     echo "#==[ Command ]======================================#"
     echo "# $(which helm) get notes trento-server"
@@ -56,6 +56,10 @@ collect_kubernetes_state() {
     echo "#==[ Command ]======================================#"
     echo "# $(which kubectl) get pods"
     kubectl get pods
+
+    echo "#==[ Command ]======================================#"
+    echo "# $(which kubectl) logs deploy/trento-server-wanda -c init"
+    kubectl logs deploy/trento-server-wanda -c init
 
     echo "#==[ Command ]======================================#"
     echo "# $(which kubectl) logs deploy/trento-server-wanda"
