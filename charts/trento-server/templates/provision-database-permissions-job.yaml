@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-provision-database-permissions-job"
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-{{ .Release.Name }}-postgresql-0
+      containers:
+        - name: postgresql
+          image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p {{ .Values.postgresql.postgresqlDataDir }}
+              chmod 700 {{ .Values.postgresql.postgresqlDataDir }}
+              ls -la {{ .Values.postgresql.postgresqlDataDir }}
+          securityContext: 
+            runAsUser: {{ .Values.postgresql.containerSecurityContext.runAsUser }}
+          volumeMounts:
+            {{- if .Values.postgresql.persistence.enabled }}
+            - name: data
+              mountPath: {{ .Values.postgresql.persistence.mountPath }}
+              {{- if .Values.postgresql.persistence.subPath }}
+              subPath: {{ .Values.postgresql.persistence.subPath }}
+              {{- end }}
+            {{- end }}
+      restartPolicy: Never
+  backoffLimit: 4
