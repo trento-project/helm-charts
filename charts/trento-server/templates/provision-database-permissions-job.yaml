@@ -3,6 +3,7 @@ kind: Job
 metadata:
   name: "{{ .Release.Name }}-provision-database-permissions-job"
 spec:
+  ttlSecondsAfterFinished: 100
   template:
     spec:
       volumes:
