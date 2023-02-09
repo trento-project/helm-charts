@@ -2,9 +2,9 @@ trento-web:
   image:
     repository: registry.suse.com/trento/trento-web
 
-trento-runner:
+trento-wanda:
   image:
-    repository: registry.suse.com/trento/trento-runner
+    repository: registry.suse.com/trento/trento-wanda
 
 postgresql:
   image:
