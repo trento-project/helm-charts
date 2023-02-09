@@ -5,7 +5,7 @@
 ## Requirements
 
 The _Trento Server_ is intended to run in many ways, depending on users' already existing infrastructure, but it's designed to be cloud-native and OS agnostic.
-As such, our default installation method provisions a minimal, single node, [K3S] Kubernetes cluster to run its various components in Linux containers.  
+As such, our default installation method provisions a minimal, single node, [K3S] Kubernetes cluster to run its various components in Linux containers.
 The suggested physical resources for running all the _Trento Server_ components are 2GB of RAM and 2 CPU cores.
 The _Trento Server_ needs to reach the target infrastructure.
 
@@ -117,6 +117,6 @@ Use a different container registry:
 
 ```
 helm install trento . --set trento-web.image.repository="ghcr.io/myrepo/trento-web" --set trento-wanda.image.repository="ghcr.io/myrepo/trento-wanda"
+```
 
 Please refer to the the subcharts `values.yaml` for an advanced usage.
-```
