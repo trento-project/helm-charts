@@ -1,7 +1,7 @@
 # Trento project Helm Charts
 
 Trento project Helm Charts. It includes:
-- Trento server helm chart: Chart to deploy a fully functional Trento server side including the Trento Web and Runner components, together with other auxiliary elements.
+- Trento server helm chart: Chart to deploy a fully functional Trento server side including the Trento Web and Wanda components, together with other auxiliary elements.
 
 ## Usage
 

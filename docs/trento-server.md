@@ -5,7 +5,7 @@
 ## Requirements
 
 The _Trento Server_ is intended to run in many ways, depending on users' already existing infrastructure, but it's designed to be cloud-native and OS agnostic.
-As such, our default installation method provisions a minimal, single node, [K3S] Kubernetes cluster to run its various components in Linux containers.  
+As such, our default installation method provisions a minimal, single node, [K3S] Kubernetes cluster to run its various components in Linux containers.
 The suggested physical resources for running all the _Trento Server_ components are 2GB of RAM and 2 CPU cores.
 The _Trento Server_ needs to reach the target infrastructure.
 
@@ -32,8 +32,6 @@ curl -O https://raw.githubusercontent.com/trento-project/helm-charts/main/script
 chmod 700 install-server.sh
 sudo ./install-server.sh
 ```
-
-The script will ask you for a private key that is used by the runner service to perform checks in the agent hosts via ssh.
 
 _Note: if a Trento server is already installed in the host, it will be updated._
 
@@ -93,20 +91,16 @@ cd charts/trento-server/
 helm dependency update
 ```
 
-The Runner component of Trento server needs ssh access to the agent nodes to perform the checks.
-You need to pass a valid private key used for ssh authentication to the Helm chart, and it will be stored
-in the K3s cluster as a secret.
-
 Install the Trento Server chart:
 
 ```
-helm install trento . --set-file trento-runner.privateKey=/your/path/id_rsa_runner
+helm install trento .
 ```
 
 or perform a rolling update:
 
 ```
-helm upgrade trento . --set-file trento-runner.privateKey=/your/path/id_rsa_runner
+helm upgrade trento .
 ```
 
 Now you can connect to the web server via `http://localhost` and point the agents to the cluster IP address.
@@ -116,13 +110,13 @@ Now you can connect to the web server via `http://localhost` and point the agent
 Use a different container image (e.g. the `rolling` one):
 
 ```
-helm install trento . --set trento-web.image.tag="rolling" --set trento-runner.image.tag="rolling" --set-file trento-runner.privateKey=id_rsa_runner
+helm install trento . --set trento-web.image.tag="rolling" --set trento-wanda.image.tag="rolling"
 ```
 
 Use a different container registry:
 
 ```
-helm install trento . --set trento-web.image.repository="ghcr.io/myrepo/trento-web" --set trento-runner.image.repository="ghcr.io/myrepo/trento-runner" --set-file trento-runner.privateKey=id_rsa_runner
+helm install trento . --set trento-web.image.repository="ghcr.io/myrepo/trento-web" --set trento-wanda.image.repository="ghcr.io/myrepo/trento-wanda"
 ```
 
 Please refer to the the subcharts `values.yaml` for an advanced usage.
