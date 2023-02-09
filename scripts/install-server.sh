@@ -6,7 +6,7 @@ readonly ARGS=("$@")
 readonly PROGNAME="./install-server.sh"
 TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"1.2.0"}
 TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"1.2.0"}
-TRENTO_RUNNER_VERSION=${TRENTO_RUNNER_VERSION:-"1.1.0"}
+TRENTO_WANDA_VERSION=${TRENTO_WANDA_VERSION:-"0.1.0"}
 TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
 
 usage() {
@@ -16,7 +16,6 @@ usage() {
     Install Trento Server
 
     OPTIONS:
-        -p, --private-key           Private SSH key used by the runner to connect to the hosts.
         -m, --enable-mtls           Enable mTLS secure communication between the agent and the server.
         -c, --cert                  The path to the TLS certificate file. Required if --enable-mtls is set.
         -k, --key                   The path to the TLS key file. Required if --enable-mtls is set.
@@ -35,7 +34,7 @@ usage() {
         -h, --help                  Print this help.
 
     Example:
-       $PROGNAME --private-key ./id_rsa_runner
+       $PROGNAME --admin-password MyAdminPassword
 EOF
 }
 
@@ -45,7 +44,6 @@ cmdline() {
     for arg; do
         local delim=""
         case "$arg" in
-        --private-key) args="${args}-p " ;;
         --enable-mtls) args="${args}-m " ;;
         --cert) args="${args}-c " ;;
         --key) args="${args}-k " ;;
@@ -73,15 +71,11 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "p:c:k:a:f:g:i:l:s:o:mnrw:u:eh" OPTION; do
+    while getopts "c:k:a:f:g:i:l:s:o:mnrw:u:eh" OPTION; do
         case $OPTION in
         h)
             usage
             exit 0
-            ;;
-
-        p)
-            PRIVATE_KEY=$OPTARG
             ;;
 
         m)
@@ -154,13 +148,12 @@ cmdline() {
 
     set_admin_password
     confirm_admin_password
-    set_private_key
     configure_alerting
 
     if [[ "$ROLLING" == "true" ]]; then
         TRENTO_SERVER_CHART_VERSION=$TRENTO_ROLLING_VERSION
         TRENTO_WEB_VERSION=$TRENTO_ROLLING_VERSION
-        TRENTO_RUNNER_VERSION=$TRENTO_ROLLING_VERSION
+        TRENTO_WANDA_VERSION=$TRENTO_ROLLING_VERSION
     fi
 
     return 0
@@ -200,19 +193,6 @@ function confirm_admin_password() {
         unset CONFIRM_ADMIN_PASSWORD
         confirm_admin_password
     fi
-}
-
-function set_private_key() {
-
-    if [[ -z "$PRIVATE_KEY" ]]; then
-        read -rp "Please provide the path of the runner private key: " PRIVATE_KEY </dev/tty
-    fi
-
-    PRIVATE_KEY=$(normalize_path "$PRIVATE_KEY") || {
-        echo "Path to the private key file does not exist, please try again."
-        unset PRIVATE_KEY
-        set_private_key
-    }
 }
 
 function configure_mtls() {
@@ -335,9 +315,8 @@ install_trento_server_chart() {
     local download_chart=${DOWNLOAD_CHART:-true}
     local repo_owner=${TRENTO_REPO_OWNER:-"trento-project"}
     local registry=${TRENTO_REGISTRY:-"ghcr.io/$repo_owner"}
-    local runner_image=${TRENTO_RUNNER_IMAGE:-"$registry/trento-runner"}
+    local wanda_image=${TRENTO_WANDA_IMAGE:-"$registry/trento-wanda"}
     local web_image=${TRENTO_WEB_IMAGE:-"$registry/trento-web"}
-    local private_key=${PRIVATE_KEY:-"./id_rsa_runner"}
     local trento_source_zip="${TRENTO_SERVER_CHART_VERSION}"
     local trento_chart_path=${TRENTO_CHART_PATH:-"/tmp/trento-${trento_source_zip}/helm-charts-${trento_source_zip}/charts/trento-server"}
     local trento_packages_url="https://github.com/${repo_owner}/helm-charts/archive/refs/tags"
@@ -360,11 +339,10 @@ install_trento_server_chart() {
     fi
 
     local args=(
-        --set-file trento-runner.privateKey="${private_key}"
         --set trento-web.image.tag="${TRENTO_WEB_VERSION}"
         --set trento-web.image.repository="${web_image}"
-        --set trento-runner.image.tag="${TRENTO_RUNNER_VERSION}"
-        --set trento-runner.image.repository="${runner_image}"
+        --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
+        --set trento-wanda.image.repository="${wanda_image}"
         --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
@@ -381,15 +359,15 @@ install_trento_server_chart() {
     if [[ "$ROLLING" == "true" ]]; then
         args+=(
             --set trento-web.image.pullPolicy=Always
-            --set trento-runner.image.pullPolicy=Always
+            --set trento-wanda.image.pullPolicy=Always
         )
     fi
     HELM_EXPERIMENTAL_OCI=1 helm upgrade --install trento-server $trento_chart_path "${args[@]}"
 }
 
 main() {
-    cmdline "${ARGS[@]}"
     load_conf
+    cmdline "${ARGS[@]}"
     if [[ "$EXISTING_K8S" != "true" ]]; then
         echo "Installing trento-server on k3s..."
         check_requirements
