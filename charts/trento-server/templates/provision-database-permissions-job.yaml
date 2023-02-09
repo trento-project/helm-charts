@@ -18,6 +18,7 @@ spec:
             - |
               mkdir -p {{ .Values.postgresql.postgresqlDataDir }}
               chmod 700 {{ .Values.postgresql.postgresqlDataDir }}
+              ls -la {{ .Values.postgresql.postgresqlDataDir }}
           securityContext: 
             runAsUser: {{ .Values.postgresql.containerSecurityContext.runAsUser }}
           volumeMounts:
