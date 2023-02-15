@@ -10,6 +10,7 @@ declare -A VALID_FACILITIES=(
     ["all"]="all"
 )
 
+INSTALLATION_NAME="trento-server"
 OUTPUT=/dev/stdout
 
 indent() { sed 's/^/  /'; }
@@ -32,20 +33,20 @@ collect_base_system() {
     helm version
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get hooks trento-server"
-    helm get hooks trento-server
+    echo "# $(which helm) get hooks $INSTALLATION_NAME"
+    helm get hooks $INSTALLATION_NAME
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get manifest trento-server"
-    helm get manifest trento-server | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
+    echo "# $(which helm) get manifest $INSTALLATION_NAME"
+    helm get manifest $INSTALLATION_NAME | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get notes trento-server"
-    helm get notes trento-server
+    echo "# $(which helm) get notes $INSTALLATION_NAME"
+    helm get notes $INSTALLATION_NAME
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get values trento-server"
-    helm get values trento-server | yq 'del(."trento-web".adminUser)'
+    echo "# $(which helm) get values $INSTALLATION_NAME"
+    helm get values $INSTALLATION_NAME | yq 'del(."trento-web".adminUser)'
 } &> "$OUTPUT"
 
 collect_kubernetes_state() {
@@ -58,20 +59,20 @@ collect_kubernetes_state() {
     kubectl get pods
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/trento-server-wanda -c init"
-    kubectl logs deploy/trento-server-wanda -c init
+    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-wanda -c init"
+    kubectl logs deploy/$INSTALLATION_NAME-wanda -c init
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/trento-server-wanda"
-    kubectl logs deploy/trento-server-wanda
+    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-wanda"
+    kubectl logs deploy/$INSTALLATION_NAME-wanda
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/trento-server-web -c init"
-    kubectl logs deploy/trento-server-web -c init
+    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-web -c init"
+    kubectl logs deploy/$INSTALLATION_NAME-web -c init
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/trento-server-web"
-    kubectl logs deploy/trento-server-web
+    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-web"
+    kubectl logs deploy/$INSTALLATION_NAME-web
 
     echo "#==[ Command ]======================================#"
     echo "# $(which kubectl) describe deployments"
@@ -115,7 +116,21 @@ generate_output() {
 }
 
 usage() {
-    echo "Usage: $0 --output [stdout|file|file-tgz] --collect [configuration|base|kubernetes|all]"
+    cat <<-EOF
+    Usage: $0 options
+
+    Run Trento Server supportconfig script
+
+    Options:
+        -o, --output   Output type. Options: stdout|file|file-tgz
+        -c, --collect  Collection options: configuration|base|kubernetes|all
+        -n, --name     Name of the installation. "trento-server" by default.
+        -h, --help
+
+    Example:
+        $0 --output stdout --collect all
+
+EOF
 }
 
 cmdline() {
@@ -132,6 +147,7 @@ cmdline() {
         --help) args="${args}-h " ;;
         --output) args="${args}-o " ;;
         --collect) args="${args}-c " ;;
+        --name) args="${args}-n " ;;
 
         *)
             [[ "${arg:0:1}" == "-" ]] || delim="\""
@@ -142,7 +158,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "ho:c:" OPTION; do
+    while getopts "ho:c:n:" OPTION; do
         case $OPTION in
         h)
             usage
@@ -177,6 +193,10 @@ cmdline() {
                     exit 1
                 fi
             done
+            ;;
+
+        n)
+            INSTALLATION_NAME=$OPTARG
             ;;
 
         *)
