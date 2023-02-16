@@ -9,6 +9,7 @@ data:
   SMTP_SERVER: "{{ .Values.alerting.smtpServer }}"
   SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
   SMTP_USER: "{{ .Values.alerting.smtpUser }}"
+  CHECKS_SERVICE_BASE_URL: "{{ .Values.global.checkServiceBaseUrl }}"
   SMTP_PASSWORD: "{{ .Values.alerting.smtpPassword }}"
   ALERT_SENDER: "{{ .Values.alerting.sender }}"
   ALERT_RECIPIENT: "{{ .Values.alerting.recipient }}"

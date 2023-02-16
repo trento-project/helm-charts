@@ -4,6 +4,7 @@
 
 global:
   logLevel: info
+  checkServiceBaseUrl: "/check_service"
   trentoWeb:
     servicePort: ""
   postgresql:
