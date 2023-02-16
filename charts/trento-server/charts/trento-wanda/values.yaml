@@ -63,6 +63,8 @@ ingress:
       paths:
         - path: /api/checks
           pathType: ImplementationSpecific
+        - path: /api/v1/checks
+          pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
