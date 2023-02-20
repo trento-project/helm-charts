@@ -36,6 +36,8 @@ spec:
                 name: {{ include "trento-wanda.fullname" . }}-configmap
             - secretRef:
                 name: {{ include "trento-wanda.fullname" . }}-secret
+            - secretRef:
+                name: {{ .Release.Name }}-auth-tokens-secret
           args: ['eval', 'Wanda.Release.init()']
       containers:
         - name: {{ .Chart.Name }}

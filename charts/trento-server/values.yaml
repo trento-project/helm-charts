@@ -63,7 +63,7 @@ grafana:
   persistence:
     enabled: true
   admin:
-    existingSecret: trento-server-grafana-secret
+    existingSecret: "{{ .Release.Name }}-grafana-secret"
   grafana.ini:
     auth.anonymous:
       enabled: true

@@ -43,7 +43,7 @@ spec:
             - name: GRAFANA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trento-server-grafana-secret
+                  name: {{ .Release.Name }}-grafana-secret
                   key: admin-password
           args: ['eval', 'Trento.Release.init()']
       containers:
@@ -61,7 +61,7 @@ spec:
             - name: GRAFANA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: trento-server-grafana-secret
+                  name: {{ .Release.Name }}-grafana-secret
                   key: admin-password
           args:
             - start
