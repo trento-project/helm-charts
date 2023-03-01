@@ -81,3 +81,14 @@ Return Trento Wanda service port
     {{- (randAlphaNum 64) | b64enc -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+Create CORS origin value
+*/}}
+{{- define "trentoWanda.cors_origin" -}}
+{{- if .Values.cors.origin }}
+    {{- .Values.cors.origin -}}
+{{- else -}}
+    {{- printf "http://%s-%s" .Release.Name .Values.global.trentoWanda.name -}}
+{{- end -}}
+{{- end -}}

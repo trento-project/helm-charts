@@ -5,4 +5,7 @@ metadata:
 data:
   DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_wanda"
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
-  CORS_ENABLED: "false"
+  CORS_ENABLED: {{ .Values.cors.enabled | quote }}
+  {{- if .Values.cors.enabled }}
+  CORS_ORIGIN: {{ include "trentoWanda.cors_origin" . | quote }}
+  {{- end }}
