@@ -12,6 +12,9 @@ global:
     name: postgresql
     servicePort: 5432
 
+cors:
+  enabled: false
+
 replicaCount: 1
 
 image:
