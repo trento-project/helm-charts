@@ -1,5 +1,40 @@
 # Changelog
 
+## [2.0.0](https://github.com/trento-project/helm-charts/tree/2.0.0) (2023-04-26)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/1.2.0...2.0.0)
+
+### Added
+
+- Disable cors usage for wanda [\#69](https://github.com/trento-project/helm-charts/pull/69) (@arbulu89)
+- Add a temporary fix to wanda ingress path value to use versioning [\#65](https://github.com/trento-project/helm-charts/pull/65) (@arbulu89)
+- Add new name flag to supportconfig script [\#64](https://github.com/trento-project/helm-charts/pull/64) (@arbulu89)
+- Update support script with wanda [\#63](https://github.com/trento-project/helm-charts/pull/63) (@fabriziosestito)
+- Update installation script for wanda [\#61](https://github.com/trento-project/helm-charts/pull/61) (@arbulu89)
+- Replace legacy runner by wanda [\#58](https://github.com/trento-project/helm-charts/pull/58) (@fabriziosestito)
+- Add the env variables for new authentication system of trento-web project [\#57](https://github.com/trento-project/helm-charts/pull/57) (@CDimonaco)
+- Include postgresql chart [\#55](https://github.com/trento-project/helm-charts/pull/55) (@fabriziosestito)
+
+### Fixed
+
+- Fix shared access token key usage [\#67](https://github.com/trento-project/helm-charts/pull/67) (@arbulu89)
+- Provision postgresql data folder permissions [\#59](https://github.com/trento-project/helm-charts/pull/59) (@arbulu89)
+- Fix wrong -dev suffix in trento-server BuildTag [\#50](https://github.com/trento-project/helm-charts/pull/50) (@rtorrero)
+
+### Removed
+
+- Remove runner references from docs [\#62](https://github.com/trento-project/helm-charts/pull/62) (@fabriziosestito)
+
+### Other Changes
+
+- Bump actions/checkout from 2 to 3 [\#68](https://github.com/trento-project/helm-charts/pull/68) (@dependabot[bot])
+- Bump helm/chart-releaser-action from 1.4.1 to 1.5.0 [\#56](https://github.com/trento-project/helm-charts/pull/56) (@dependabot[bot])
+- Bump postgresql chart version to 12.1.6 [\#53](https://github.com/trento-project/helm-charts/pull/53) (@fabriziosestito)
+- Bump azure/setup-helm from 3.3 to 3.5 [\#52](https://github.com/trento-project/helm-charts/pull/52) (@dependabot[bot])
+- Switch + sign for - in build metadata [\#51](https://github.com/trento-project/helm-charts/pull/51) (@rtorrero)
+- Bump helm/chart-testing-action from 2.3.0 to 2.3.1 [\#41](https://github.com/trento-project/helm-charts/pull/41) (@dependabot[bot])
+- Bump helm/chart-releaser-action from 1.4.0 to 1.4.1 [\#40](https://github.com/trento-project/helm-charts/pull/40) (@dependabot[bot])
+
 ## [1.2.0](https://github.com/trento-project/helm-charts/tree/1.2.0) (2022-11-04)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/1.1.0...1.2.0)
