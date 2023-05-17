@@ -1,6 +1,7 @@
 # Trento project Helm Charts
 
 Trento project Helm Charts. It includes:
+
 - Trento server helm chart: Chart to deploy a fully functional Trento server side including the Trento Web and Wanda components, together with other auxiliary elements.
 
 ## Usage
@@ -23,7 +24,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 # License
 
-Copyright 2022 SUSE LLC
+Copyright 2023 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this file except in compliance with the License. You may obtain a copy of the
