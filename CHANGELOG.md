@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.0](https://github.com/trento-project/helm-charts/tree/2.1.0) (2023-08-02)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.0.0...2.1.0)
+
+### Other Changes
+
+- Update copyright year to 2023 [\#72](https://github.com/trento-project/helm-charts/pull/72) (@EMaksy)
+
 ## [2.0.0](https://github.com/trento-project/helm-charts/tree/2.0.0) (2023-04-26)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/1.2.0...2.0.0)
