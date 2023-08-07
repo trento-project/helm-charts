@@ -93,14 +93,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      volumes:
-      - name: certs
-        secret:
-          secretName: {{ include "trento-web.fullname" . }}-certs
-          items:
-          - key: cert
-            path: cert.pem
-          - key: ca
-            path: ca.pem
-          - key: key
-            path: key.pem
