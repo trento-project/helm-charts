@@ -4,7 +4,7 @@ set -e
 
 readonly ARGS=("$@")
 readonly PROGNAME="./install-server.sh"
-TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"2.1.0"}
+TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"2.1.1"}
 TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"2.1.0"}
 TRENTO_WANDA_VERSION=${TRENTO_WANDA_VERSION:-"1.1.0"}
 TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
@@ -16,10 +16,6 @@ usage() {
     Install Trento Server
 
     OPTIONS:
-        -m, --enable-mtls           Enable mTLS secure communication between the agent and the server.
-        -c, --cert                  The path to the TLS certificate file. Required if --enable-mtls is set.
-        -k, --key                   The path to the TLS key file. Required if --enable-mtls is set.
-        -a, --ca                    The path to the TLS CA file. Required if --enable-mtls is set.
         -n, --enable-alerting       Enable Alerting feature.
         -f, --smtp-server           The SMTP server designated to send alerting emails.
         -g, --smtp-port             The port on SMT server.
@@ -44,10 +40,6 @@ cmdline() {
     for arg; do
         local delim=""
         case "$arg" in
-        --enable-mtls) args="${args}-m " ;;
-        --cert) args="${args}-c " ;;
-        --key) args="${args}-k " ;;
-        --ca) args="${args}-a " ;;
         --enable-alerting) args="${args}-n " ;;
         --smtp-server) args="${args}-f " ;;
         --smtp-port) args="${args}-g " ;;
@@ -71,27 +63,11 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "c:k:a:f:g:i:l:s:o:mnrw:u:eh" OPTION; do
+    while getopts "f:g:i:l:s:o:nrw:u:eh" OPTION; do
         case $OPTION in
         h)
             usage
             exit 0
-            ;;
-
-        m)
-            ENABLE_MTLS=true
-            ;;
-
-        c)
-            CERT=$OPTARG
-            ;;
-
-        k)
-            KEY=$OPTARG
-            ;;
-
-        a)
-            CA=$OPTARG
             ;;
 
         n)
@@ -192,35 +168,6 @@ function confirm_admin_password() {
         echo "The password don't match, please try again."
         unset CONFIRM_ADMIN_PASSWORD
         confirm_admin_password
-    fi
-}
-
-function configure_mtls() {
-    if [[ -n "$ENABLE_MTLS" ]]; then
-        if [[ -z "$CERT" ]]; then
-            read -rp "Please provide the TLS certificate path: " CERT </dev/tty
-
-        fi
-        CERT=$(normalize_path "$CERT") || {
-            echo "Path to the TLS cert file does not exist, please try again."
-            exit 1
-        }
-
-        if [[ -z "$KEY" ]]; then
-            read -rp "Please provide the TLS key path: " KEY </dev/tty
-        fi
-        KEY=$(normalize_path "$KEY") || {
-            echo "Path to the TLS key file does not exist, please try again."
-            exit 1
-        }
-
-        if [[ -z "$CA" ]]; then
-            read -rp "Please provide the TLS CA path: " CA </dev/tty
-        fi
-        CA=$(normalize_path "$CA") || {
-            echo "Path to the TLS CA file does not exist, please try again."
-            exit 1
-        }
     fi
 }
 
