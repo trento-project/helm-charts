@@ -52,31 +52,31 @@ collect_base_system() {
 
 collect_kubernetes_state() {
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) get nodes -o wide"
+    echo "# $(which kubectl) get nodes -o wide -n $NAMESPACE"
     kubectl get nodes -o wide -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) get pods"
+    echo "# $(which kubectl) get pods -n $NAMESPACE"
     kubectl get pods -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-wanda -c init"
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-wanda -c init -n $NAMESPACE"
     kubectl logs deploy/$RELEASE_NAME-wanda -c init -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-wanda"
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-wanda -n $NAMESPACE"
     kubectl logs deploy/$RELEASE_NAME-wanda -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-web -c init"
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-web -c init -n $NAMESPACE"
     kubectl logs deploy/$RELEASE_NAME-web -c init -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-web"
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-web -n $NAMESPACE"
     kubectl logs deploy/$RELEASE_NAME-web -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) describe deployments"
+    echo "# $(which kubectl) describe deployments -n $NAMESPACE"
     kubectl describe deployments -n $NAMESPACE
 
     if [ "$COLLECT_CRICTL" != "false" ]; then
