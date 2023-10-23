@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: {{ include "trento-web.fullname" . }}-prune-events-cronjob
 spec:
-  schedule: {{ .Values.pruneEventsCronjobSchedule }}
+  schedule: "{{ .Values.pruneEventsCronjobSchedule }}"
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   jobTemplate:
@@ -19,5 +19,7 @@ spec:
                   name: {{ include "trento-web.fullname" . }}-configmap
               - secretRef:
                   name: {{ include "trento-web.fullname" . }}-secret
-            args: ['eval', 'Trento.Release.prune_events([])']
+              - secretRef:
+                  name: {{ .Release.Name }}-auth-tokens-secret
+            args: ['eval', 'Trento.Release.prune_events(["--days", "{{ .Values.pruneEventsOlderThan }}"])']
           restartPolicy: OnFailure

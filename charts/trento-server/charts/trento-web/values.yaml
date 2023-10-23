@@ -67,6 +67,7 @@ service:
   port: 4000
 
 pruneEventsCronjobSchedule: "0 0 * * *"
+pruneEventsOlderThan: 10
 
 ingress:
   enabled: true
