@@ -34,20 +34,20 @@ collect_base_system() {
     helm version
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get hooks $RELEASE_NAME"
-    helm get hooks $RELEASE_NAME
+    echo "# $(which helm) get hooks $RELEASE_NAME --namespace $NAMESPACE"
+    helm get hooks $RELEASE_NAME --namespace $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get manifest $RELEASE_NAME"
-    helm get manifest $RELEASE_NAME | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
+    echo "# $(which helm) get manifest $RELEASE_NAME --namespace $NAMESPACE"
+    helm get manifest $RELEASE_NAME --namespace $NAMESPACE | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get notes $RELEASE_NAME"
-    helm get notes $RELEASE_NAME
+    echo "# $(which helm) get notes $RELEASE_NAME --namespace $NAMESPACE"
+    helm get notes $RELEASE_NAME --namespace $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get values $RELEASE_NAME"
-    helm get values $RELEASE_NAME | yq 'del(."trento-web".adminUser)'
+    echo "# $(which helm) get values $RELEASE_NAME --namespace $NAMESPACE"
+    helm get values $RELEASE_NAME --namespace $NAMESPACE | yq 'del(."trento-web".adminUser)'
 } &> "$OUTPUT"
 
 collect_kubernetes_state() {
