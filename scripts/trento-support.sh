@@ -10,7 +10,8 @@ declare -A VALID_FACILITIES=(
     ["all"]="all"
 )
 
-INSTALLATION_NAME="trento-server"
+RELEASE_NAME="trento-server"
+NAMESPACE="default"
 OUTPUT=/dev/stdout
 
 indent() { sed 's/^/  /'; }
@@ -33,50 +34,50 @@ collect_base_system() {
     helm version
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get hooks $INSTALLATION_NAME"
-    helm get hooks $INSTALLATION_NAME
+    echo "# $(which helm) get hooks $RELEASE_NAME -n $NAMESPACE"
+    helm get hooks $RELEASE_NAME -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get manifest $INSTALLATION_NAME"
-    helm get manifest $INSTALLATION_NAME | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
+    echo "# $(which helm) get manifest $RELEASE_NAME -n $NAMESPACE"
+    helm get manifest $RELEASE_NAME -n $NAMESPACE | yq -n '[inputs]' | jq 'walk(if type == "object" then del(.data."postgresql-password", .data."postgresql-postgres-password", .secretKeyRef, ."admin-user", ."admin-password", ."SMTP_PASSWORD", ."ADMIN_USER", ."ADMIN_PASSWORD", ."SECRET_KEY_BASE", ."ACCESS_TOKEN_ENC_SECRET", ."REFRESH_TOKEN_ENC_SECRET") else . end)'
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get notes $INSTALLATION_NAME"
-    helm get notes $INSTALLATION_NAME
+    echo "# $(which helm) get notes $RELEASE_NAME -n $NAMESPACE"
+    helm get notes $RELEASE_NAME -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which helm) get values $INSTALLATION_NAME"
-    helm get values $INSTALLATION_NAME | yq 'del(."trento-web".adminUser)'
+    echo "# $(which helm) get values $RELEASE_NAME -n $NAMESPACE"
+    helm get values $RELEASE_NAME -n $NAMESPACE | yq 'del(."trento-web".adminUser)'
 } &> "$OUTPUT"
 
 collect_kubernetes_state() {
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) get nodes -o wide"
-    kubectl get nodes -o wide
+    echo "# $(which kubectl) get nodes -o wide -n $NAMESPACE"
+    kubectl get nodes -o wide -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) get pods"
-    kubectl get pods
+    echo "# $(which kubectl) get pods -n $NAMESPACE"
+    kubectl get pods -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-wanda -c init"
-    kubectl logs deploy/$INSTALLATION_NAME-wanda -c init
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-wanda -c init -n $NAMESPACE"
+    kubectl logs deploy/$RELEASE_NAME-wanda -c init -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-wanda"
-    kubectl logs deploy/$INSTALLATION_NAME-wanda
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-wanda -n $NAMESPACE"
+    kubectl logs deploy/$RELEASE_NAME-wanda -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-web -c init"
-    kubectl logs deploy/$INSTALLATION_NAME-web -c init
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-web -c init -n $NAMESPACE"
+    kubectl logs deploy/$RELEASE_NAME-web -c init -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) logs deploy/$INSTALLATION_NAME-web"
-    kubectl logs deploy/$INSTALLATION_NAME-web
+    echo "# $(which kubectl) logs deploy/$RELEASE_NAME-web -n $NAMESPACE"
+    kubectl logs deploy/$RELEASE_NAME-web -n $NAMESPACE
 
     echo "#==[ Command ]======================================#"
-    echo "# $(which kubectl) describe deployments"
-    kubectl describe deployments
+    echo "# $(which kubectl) describe deployments -n $NAMESPACE"
+    kubectl describe deployments -n $NAMESPACE
 
     if [ "$COLLECT_CRICTL" != "false" ]; then
         echo "#==[ Command ]======================================#"
@@ -122,9 +123,10 @@ usage() {
     Run Trento Server supportconfig script
 
     Options:
-        -o, --output   Output type. Options: stdout|file|file-tgz
-        -c, --collect  Collection options: configuration|base|kubernetes|all
-        -n, --name     Name of the installation. "trento-server" by default.
+        -o, --output        Output type. Options: stdout|file|file-tgz
+        -c, --collect       Collection options: configuration|base|kubernetes|all
+        -r, --release-name  Release name to use for the chart installation. "trento-server" by default.
+        -n, --namespace     Kubernetes namespace used when installing the chart. "default" by default.
         -h, --help
 
     Example:
@@ -147,7 +149,8 @@ cmdline() {
         --help) args="${args}-h " ;;
         --output) args="${args}-o " ;;
         --collect) args="${args}-c " ;;
-        --name) args="${args}-n " ;;
+        --release-name) args="${args}-r " ;;
+        --namespace) args="${args}-n " ;;
 
         *)
             [[ "${arg:0:1}" == "-" ]] || delim="\""
@@ -158,7 +161,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "ho:c:n:" OPTION; do
+    while getopts "ho:c:r:n:" OPTION; do
         case $OPTION in
         h)
             usage
@@ -195,8 +198,12 @@ cmdline() {
             done
             ;;
 
+        r)
+            RELEASE_NAME=$OPTARG
+            ;;
+
         n)
-            INSTALLATION_NAME=$OPTARG
+            NAMESPACE=$OPTARG
             ;;
 
         *)
