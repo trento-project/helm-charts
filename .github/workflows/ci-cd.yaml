@@ -186,7 +186,7 @@ jobs:
       - name: Prepare OBS package
         run: |
           PACKAGE_FOLDER=$FOLDER/${{ matrix.packages }}
-          osc checkout $OBS_PROJECT ${{ matrix.packages }} $DEST_FOLDER
+          osc checkout $OBS_PROJECT ${{ matrix.packages }} -o $DEST_FOLDER
           cp $PACKAGE_FOLDER/_service $DEST_FOLDER
           cp $PACKAGE_FOLDER/${{ matrix.packages }}.spec $DEST_FOLDER
           rm $DEST_FOLDER/*.tar.gz
