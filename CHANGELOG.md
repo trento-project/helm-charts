@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.2.0](https://github.com/trento-project/helm-charts/tree/2.2.0) (2023-11-14)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.1.0...2.2.0)
+
+### Added
+
+- Add namespace option [\#77](https://github.com/trento-project/helm-charts/pull/77) (@rtorrero)
+- Make pruning crobjob days variable [\#76](https://github.com/trento-project/helm-charts/pull/76) (@arbulu89)
+- Wanda rollout [\#74](https://github.com/trento-project/helm-charts/pull/74) (@nelsonkopliku)
+
+### Fixed
+
+- Enable rolling releases for script packages in OBS [\#78](https://github.com/trento-project/helm-charts/pull/78) (@rtorrero)
+
+### Other Changes
+
+- Bump helm/chart-testing-action from 2.4.0 to 2.6.0 [\#79](https://github.com/trento-project/helm-charts/pull/79) (@dependabot[bot])
+- Bump actions/checkout from 3 to 4 [\#75](https://github.com/trento-project/helm-charts/pull/75) (@dependabot[bot])
+- Bump helm/chart-testing-action from 2.3.1 to 2.4.0 [\#70](https://github.com/trento-project/helm-charts/pull/70) (@dependabot[bot])
+
 ## [2.1.0](https://github.com/trento-project/helm-charts/tree/2.1.0) (2023-08-02)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.0.0...2.1.0)
