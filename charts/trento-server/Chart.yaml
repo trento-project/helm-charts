@@ -7,7 +7,7 @@ description: The trento server chart contains all the components necessary to ru
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates
-version: 2.2.1-dev1
+version: 2.2.1-dev2
 
 dependencies:
   - name: trento-web
@@ -23,10 +23,6 @@ dependencies:
     version: ~15.1.3
     repository: https://prometheus-community.github.io/helm-charts/
     condition: prometheus.enabled
-  - name: grafana
-    version: ~6.36.1
-    repository: https://grafana.github.io/helm-charts/
-    condition: grafana.enabled
   - name: rabbitmq
     version: ~10.3.9
     repository: https://charts.bitnami.com/bitnami/

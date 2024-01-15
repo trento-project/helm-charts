@@ -12,7 +12,5 @@ data:
   SMTP_PASSWORD: "{{ .Values.alerting.smtpPassword }}"
   ALERT_SENDER: "{{ .Values.alerting.sender }}"
   ALERT_RECIPIENT: "{{ .Values.alerting.recipient }}"
-  GRAFANA_PUBLIC_URL: "/grafana"
-  GRAFANA_API_URL: "http://{{ .Release.Name }}-{{ .Values.global.grafana.name }}/api"
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"

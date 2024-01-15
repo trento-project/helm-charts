@@ -9,8 +9,6 @@ global:
   postgresql:
     name: postgresql
     servicePort: 5432
-  grafana:
-    name: grafana
   prometheus:
     name: prometheus-server
 

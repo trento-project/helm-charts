@@ -39,12 +39,6 @@ spec:
                 name: {{ include "trento-web.fullname" . }}-secret
             - secretRef:
                 name: {{ .Release.Name }}-auth-tokens-secret
-          env:
-            - name: GRAFANA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-grafana-secret
-                  key: admin-password
           args: ['eval', 'Trento.Release.init()']
       containers:
         - name: {{ .Chart.Name }}
@@ -57,12 +51,6 @@ spec:
                 name: {{ include "trento-web.fullname" . }}-secret
             - secretRef:
                 name: {{ .Release.Name }}-auth-tokens-secret
-          env:
-            - name: GRAFANA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-grafana-secret
-                  key: admin-password
           args:
             - start
           securityContext:

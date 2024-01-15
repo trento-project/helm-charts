@@ -12,8 +12,6 @@ global:
     servicePort: 5432
     postgresqlUsername: "postgres"
     postgresqlPassword: "postgres"
-  grafana:
-    name: grafana
   prometheus:
     name: prometheus-server
   rabbitmq:
@@ -57,30 +55,6 @@ prometheus:
     enabled: false
   nodeExporter:
     enabled: false
-
-grafana:
-  enabled: true
-  persistence:
-    enabled: true
-  admin:
-    existingSecret: "{{ .Release.Name }}-grafana-secret"
-  grafana.ini:
-    auth.anonymous:
-      enabled: true
-    server:
-      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
-      serve_from_sub_path: true
-    security:
-      allow_embedding: true
-  sidecar:
-    datasources:
-      enabled: true
-  ingress:
-    enabled: true
-    hosts:
-      - ""
-      ## Path for grafana ingress
-    path: /grafana
 
 rabbitmq:
   enabled: true
