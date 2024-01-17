@@ -25,6 +25,8 @@ adminUser:
   username: "admin"
   password: ""
 
+chartsEnabled: true
+
 replicaCount: 1
 
 image:
