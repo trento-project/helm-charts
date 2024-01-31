@@ -29,6 +29,30 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
+        - name: create-wanda-db
+          image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          command:
+            - sh
+            - -c
+            - >
+              while ! pg_isready -U {{ .Values.global.postgresql.postgresqlUsername }} -h {{ .Release.Name }}-{{ .Values.global.postgresql.name }};
+              do sleep 1;
+              done;
+              echo $COMMAND | psql --file=- --echo-queries --set ON_ERROR_STOP=1
+          env:
+            - name: PGUSER
+              value: "{{ .Values.global.postgresql.postgresqlUsername }}"
+            - name: PGPASSWORD
+              value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+            - name: PGHOST
+              value: "{{ .Release.Name }}-{{ .Values.global.postgresql.name }}"
+            - name: COMMAND
+              value: |
+                SELECT 'CREATE DATABASE trento_wanda'
+                WHERE NOT EXISTS (
+                  SELECT FROM pg_database WHERE datname = 'trento_wanda'
+                )
+                \gexec
         - name: init
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
