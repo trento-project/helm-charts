@@ -1,6 +1,11 @@
 trento-web:
   image:
     repository: registry.suse.com/trento/trento-web
+  postgresql:
+    image:
+      registry: registry.suse.com
+      repository: trento/trento-db
+      tag: latest
 
 trento-wanda:
   image:

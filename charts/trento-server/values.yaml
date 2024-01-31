@@ -22,6 +22,11 @@ global:
 trento-web:
   nameOverride: web
   enabled: true
+  postgresql:
+    image:
+      tag: 14.1.0-debian-10-r30
+      registry: docker.io
+      repository: bitnami/postgresql
 
 trento-wanda:
   nameOverride: wanda
@@ -31,10 +36,6 @@ postgresql:
   enabled: true
   image:
     tag: 14.1.0-debian-10-r30
-  postgresqlDatabase: "trento"
-  initdbScripts:
-    init.sql: |
-      CREATE DATABASE trento_event_store;
 
 prometheus:
   enabled: true
