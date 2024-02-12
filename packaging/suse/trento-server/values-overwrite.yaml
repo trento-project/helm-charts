@@ -5,16 +5,3 @@ trento-web:
 trento-wanda:
   image:
     repository: registry.suse.com/trento/trento-wanda
-
-postgresql:
-  image:
-    registry: registry.suse.com
-    repository: trento/trento-db
-    tag: latest
-  persistence:
-    mountPath: /var/lib/postgresql/data
-  postgresqlDataDir: /var/lib/postgresql/data/trento
-  securityContext:
-    fsGroup: 26
-  containerSecurityContext:
-    runAsUser: 26
