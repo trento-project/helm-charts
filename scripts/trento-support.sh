@@ -10,8 +10,10 @@ declare -A VALID_FACILITIES=(
     ["all"]="all"
 )
 
-RELEASE_NAME="trento-server"
-NAMESPACE="default"
+# These two variables can be set from the env as its the
+# supportconfig plugin wrapper doesn't allow for arguments
+RELEASE_NAME=${TRENTO_CHART_RELEASE_NAME:-"trento-server"}
+NAMESPACE=${TRENTO_K8S_NAMESPACE:-"default"}
 OUTPUT=/dev/stdout
 
 indent() { sed 's/^/  /'; }
@@ -125,8 +127,10 @@ usage() {
     Options:
         -o, --output        Output type. Options: stdout|file|file-tgz
         -c, --collect       Collection options: configuration|base|kubernetes|all
-        -r, --release-name  Release name to use for the chart installation. "trento-server" by default.
-        -n, --namespace     Kubernetes namespace used when installing the chart. "default" by default.
+        -r, --release-name  Release name to use for the chart installation. Default value: "trento-server".
+                            Can also be set with the TRENTO_CHART_RELEASE_NAME environment variable.
+        -n, --namespace     Kubernetes namespace used when installing the chart. Default value: "default".
+                            Can also be set with the TRENTO_K8S_NAMESPACE environment variable.
         -h, --help
 
     Example:
