@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.3.0](https://github.com/trento-project/helm-charts/tree/2.3.0) (2024-05-13)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.2.0...2.3.0)
+
+### Added
+
+- Add v3 checks path to the ingress configuration [\#93](https://github.com/trento-project/helm-charts/pull/93) (@arbulu89)
+- Postgres database creation with INIT containers [\#91](https://github.com/trento-project/helm-charts/pull/91) (@CDimonaco)
+- Add option to disable charts [\#89](https://github.com/trento-project/helm-charts/pull/89) (@arbulu89)
+
+### Fixed
+
+- Add wanda v2 apis in ingress [\#84](https://github.com/trento-project/helm-charts/pull/84) (@nelsonkopliku)
+
+### Removed
+
+- Remove grafana [\#88](https://github.com/trento-project/helm-charts/pull/88) (@arbulu89)
+
+### Other Changes
+
+- Update license to the year 2024 [\#92](https://github.com/trento-project/helm-charts/pull/92) (@EMaksy)
+- Update LICENSE [\#90](https://github.com/trento-project/helm-charts/pull/90) (@stefanotorresi)
+
 ## [2.2.0](https://github.com/trento-project/helm-charts/tree/2.2.0) (2023-11-14)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.1.0...2.2.0)
