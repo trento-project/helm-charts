@@ -1,0 +1,101 @@
+diff --git a/charts/trento-server/Chart.lock b/charts/trento-server/Chart.lock
+index 5ff2ba2..d876fc4 100644
+--- a/charts/trento-server/Chart.lock
++++ b/charts/trento-server/Chart.lock
+@@ -14,5 +14,8 @@ dependencies:
+ - name: rabbitmq
+   repository: https://charts.bitnami.com/bitnami/
+   version: 10.3.9
+-digest: sha256:2998e61c0c7b55bee282d2be9243910bdceb0d2b3e86282e3532379bda4a513b
+-generated: "2024-01-15T09:32:02.973015789+01:00"
++- name: cert-manager
++  repository: https://charts.jetstack.io
++  version: v1.9.1
++digest: sha256:8d0cc082d485c5bd583e3972c19a2bcb9ed1787fc485710863a5b75d8f50d381
++generated: "2024-05-10T11:40:00.819074246+01:00"
+diff --git a/charts/trento-server/Chart.yaml b/charts/trento-server/Chart.yaml
+index be9f42a..cf3c466 100644
+--- a/charts/trento-server/Chart.yaml
++++ b/charts/trento-server/Chart.yaml
+@@ -27,3 +27,6 @@ dependencies:
+     version: ~10.3.9
+     repository: https://charts.bitnami.com/bitnami/
+     condition: rabbitmq.enabled
++  - name: cert-manager
++    version: v1.9.1
++    repository: https://charts.jetstack.io
+diff --git a/charts/trento-server/charts/trento-wanda/templates/ingress.yaml b/charts/trento-server/charts/trento-wanda/templates/ingress.yaml
+index 65b3ac1..fee02e5 100644
+--- a/charts/trento-server/charts/trento-wanda/templates/ingress.yaml
++++ b/charts/trento-server/charts/trento-wanda/templates/ingress.yaml
+@@ -30,10 +30,8 @@ spec:
+   tls:
+     {{- range .Values.ingress.tls }}
+     - hosts:
+-        {{- range .hosts }}
+-        - {{ . | quote }}
+-        {{- end }}
+-      secretName: {{ .secretName }}
++      - "{{ .Values.certManager.certificate.domain }}"
++      secretName: {{ .Values.certManager.certificate.secretName }}
+     {{- end }}
+   {{- end }}
+   rules:
+diff --git a/charts/trento-server/charts/trento-wanda/values.yaml b/charts/trento-server/charts/trento-wanda/values.yaml
+index 8988438..fd43c73 100644
+--- a/charts/trento-server/charts/trento-wanda/values.yaml
++++ b/charts/trento-server/charts/trento-wanda/values.yaml
+@@ -60,6 +60,7 @@ ingress:
+   annotations:
+     kubernetes.io/ingress.class: "traefik"
+     kubernetes.io/tls-acme: "true"
++    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+   hosts:
+     - host: ""
+       paths:
+diff --git a/charts/trento-server/charts/trento-web/templates/ingress.yaml b/charts/trento-server/charts/trento-web/templates/ingress.yaml
+index 7063576..174dc59 100644
+--- a/charts/trento-server/charts/trento-web/templates/ingress.yaml
++++ b/charts/trento-server/charts/trento-web/templates/ingress.yaml
+@@ -30,9 +30,7 @@ spec:
+   tls:
+     {{- range .Values.ingress.tls }}
+     - hosts:
+-        {{- range .hosts }}
+-        - {{ . | quote }}
+-        {{- end }}
++      - "{{ .Values.certManager.certificate.domain }}"
+       secretName: {{ .secretName }}
+     {{- end }}
+   {{- end }}
+diff --git a/charts/trento-server/charts/trento-web/values.yaml b/charts/trento-server/charts/trento-web/values.yaml
+index 3a32e7c..f1094a1 100644
+--- a/charts/trento-server/charts/trento-web/values.yaml
++++ b/charts/trento-server/charts/trento-web/values.yaml
+@@ -42,7 +42,8 @@ serviceAccount:
+   # Specifies whether a service account should be created
+   create: true
+   # Annotations to add to the service account
+-  annotations: {}
++  annotations:
++    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+   # The name of the service account to use.
+   # If not set and create is true, a name is generated using the fullname template
+   name: ""
+diff --git a/charts/trento-server/values.yaml b/charts/trento-server/values.yaml
+index cda22a4..5fa79b4 100644
+--- a/charts/trento-server/values.yaml
++++ b/charts/trento-server/values.yaml
+@@ -80,3 +80,12 @@ rabbitmq:
+     password: trento
+   service:
+     type: LoadBalancer
++
++certManager:
++  email: trento-project@suse.com
++  certificate:
++    name: trento-cert
++    secretName: trento-tls
++    domain: demo.trento-project.io  # update this with your own FQDN
++ingress:
++  className: traefik

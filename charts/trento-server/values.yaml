@@ -80,3 +80,12 @@ rabbitmq:
     password: trento
   service:
     type: LoadBalancer
+
+certManager:
+  email: trento-project@suse.com
+  certificate:
+    name: trento-cert
+    secretName: trento-tls
+    domain: demo.trento-project.io  # update this with your own FQDN
+ingress:
+  className: traefik

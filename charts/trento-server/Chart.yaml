@@ -27,3 +27,6 @@ dependencies:
     version: ~10.3.9
     repository: https://charts.bitnami.com/bitnami/
     condition: rabbitmq.enabled
+  - name: cert-manager
+    version: v1.9.1
+    repository: https://charts.jetstack.io
