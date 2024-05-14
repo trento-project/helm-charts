@@ -3,8 +3,8 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: {{ .Values.webhook.mutatingWebhookName | default "cert-manager-webhook" }}
   labels:
-    app: {{ include "your-chart.name" . }}
-    chart: {{ include "your-chart.chart" . }}
+    app: {{ include "trento-server.name" . }}
+    chart: {{ include "trento-server.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 webhooks:
