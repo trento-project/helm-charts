@@ -95,3 +95,4 @@ webhook:
   validatingWebhookName: cert-manager-webhook
   serviceName: cert-manager-webhook
   namespace: cert-manager
+  caBundle: ""  # Add the CA bundle if necessary
