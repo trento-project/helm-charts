@@ -89,3 +89,9 @@ certManager:
     domain: demo.trento-project.io  # update this with your own FQDN
 ingress:
   className: traefik
+
+webhook:
+  mutatingWebhookName: cert-manager-webhook
+  validatingWebhookName: cert-manager-webhook
+  serviceName: cert-manager-webhook
+  namespace: cert-manager

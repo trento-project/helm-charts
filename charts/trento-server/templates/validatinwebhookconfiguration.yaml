@@ -1,0 +1,25 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ .Values.webhook.validatingWebhookName | default "cert-manager-webhook" }}
+  labels:
+    app: {{ include "your-chart.name" . }}
+    chart: {{ include "your-chart.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+webhooks:
+  - name: webhook.cert-manager.io
+    clientConfig:
+      service:
+        name: {{ .Values.webhook.serviceName | default "cert-manager-webhook" }}
+        namespace: {{ .Values.webhook.namespace | default "cert-manager" }}
+        path: "/validate"
+      caBundle: {{ .Values.webhook.caBundle | default "" }}
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+    timeoutSeconds: 10
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
