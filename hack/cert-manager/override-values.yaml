@@ -1,0 +1,31 @@
+trento-web:
+  ingress:
+    hosts:
+        # Adjust this to your FQDN
+      - host: demo.trento-project.io
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: trento-tls
+
+trento-wanda:
+  ingress:
+    hosts:
+      # Adjust this to your FQDN
+      - host: demo.trento-project.io
+        paths:
+        - path: /api/checks
+          pathType: ImplementationSpecific
+        - path: /api/v1/checks
+          pathType: ImplementationSpecific
+        - path: /api/v2/checks
+          pathType: ImplementationSpecific
+        - path: /api/v3/checks
+          pathType: ImplementationSpecific
+    tls:
+      - secretName: trento-tls
+
+global:
+  certManager:
+    enabled: true

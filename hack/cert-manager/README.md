@@ -9,7 +9,8 @@
    kubectl apply -f cluster-issuer.yaml
 5. Apply certificate:
    kubectl apply -f certificate.yaml
-6. Deploy trento with certmanager support enabled:
+6. Update the email and FQDN values in certificate.yaml, cluster-issuer.yaml and override-values.yaml
+7. Deploy trento with certmanager support enabled:
    cd helm-charts-rolling/charts/trento-server
    helm dependency update
    helm upgrade -i trento --wait . \
@@ -20,8 +21,4 @@
             --set trento-wanda.image.pullPolicy=Always \
             --set trento-wanda.image.repository="${IMAGE_REPOSITORY}/trento-wanda" \
             --set trento-wanda.image.tag="demo" \
-            --set global.certManager.enabled=true \
-            --set trento-wanda.ingress.hosts[0].host=new-host.example.com \
-            --set trento-wanda.ingress.tls[0].secretName=trento-tls \
-            --set trento-web.ingress.hosts[0].host=new-host.example.com \
-            --set trento-web.ingress.tls[0].secretName=trento-tls
+            -f override-values.yaml
