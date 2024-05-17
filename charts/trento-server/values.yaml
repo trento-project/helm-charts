@@ -17,6 +17,9 @@ global:
   rabbitmq:
     name: rabbitmq
     servicePort: 5672
+  certManager:
+    enabled: false
+    clusterIssuer: "letsencrypt-production"
 
 ### Sub Charts Specific Values ###
 trento-web:

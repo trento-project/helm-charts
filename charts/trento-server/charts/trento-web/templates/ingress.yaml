@@ -22,6 +22,9 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- if .Values.global.certManager.enabled }}
+    cert-manager.io/cluster-issuer: "{{ .Values.global.certManager.clusterIssuer }}"
+  {{- end }}
 spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}

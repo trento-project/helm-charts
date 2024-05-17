@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: trento-certificate
+  namespace: default
+spec:
+  secretName: trento-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  # Adjust both with the FQDN you intend to use for your deployment
+  commonName: demo.trento-project.io
+  dnsNames:
+  - demo.trento-project.io
