@@ -8,6 +8,8 @@ trento-web:
             pathType: ImplementationSpecific
     tls:
       - secretName: trento-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
 
 trento-wanda:
   ingress:
@@ -25,7 +27,5 @@ trento-wanda:
           pathType: ImplementationSpecific
     tls:
       - secretName: trento-tls
-
-global:
-  certManager:
-    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
