@@ -4,12 +4,11 @@ metadata:
   name: letsencrypt-production
 spec:
   acme:
-    # Adjust the email before using this for your own deployment
-    email: trento-project@suse.com
+    email: trento-project@suse.com # Adjust the email before using this for your own deployment
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-production
     solvers:
     - http01:
         ingress:
-          class: traefik
+          class: traefik # Adjust if you are using a different ingress controller
