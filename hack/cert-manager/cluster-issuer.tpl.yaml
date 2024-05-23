@@ -4,11 +4,11 @@ metadata:
   name: letsencrypt-production
 spec:
   acme:
-    email: trento-project@suse.com # Adjust the email before using this for your own deployment
+    email: ${TRENTO_ADMIN_EMAIL}
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-production
     solvers:
     - http01:
         ingress:
-          class: traefik # Adjust if you are using a different ingress controller
+          class: ${TRENTO_INGRESS_CLASS}

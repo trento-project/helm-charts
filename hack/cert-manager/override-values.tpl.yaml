@@ -1,8 +1,7 @@
 trento-web:
   ingress:
     hosts:
-        # Adjust this to your FQDN
-      - host: demo.trento-project.io
+      - host: ${TRENTO_DOMAIN}
         paths:
           - path: /
             pathType: ImplementationSpecific
@@ -14,8 +13,7 @@ trento-web:
 trento-wanda:
   ingress:
     hosts:
-      # Adjust this to your FQDN
-      - host: demo.trento-project.io
+      - host: ${TRENTO_DOMAIN}
         paths:
         - path: /api/checks
           pathType: ImplementationSpecific
