@@ -13,6 +13,9 @@ After that, refer to each individual chart documentation to find more informatio
 
 - [Trento server](docs/trento-server.md)
 
+## Optional: SSL with cert-manager
+cert-manager is a Kubernetes add-on that automates the management and issuance of TLS certificates. It can be optionally enabled in this Helm chart to provide SSL support for secure communication. While it simplifies certificate management and renewal, it introduces additional cluster-wide resources. For detailed setup instructions and considerations, refer to the `README.md` file in the `hack/cert-manager` docs directory.
+
 # Support
 
 Please only report bugs via [GitHub issues](https://github.com/trento-project/trento/issues);

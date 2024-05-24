@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: trento-certificate
+  namespace: ${TRENTO_NAMESPACE}
+
+spec:
+  secretName: trento-tls
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+
+  commonName: ${TRENTO_DOMAIN}
+  dnsNames:
+  - ${TRENTO_DOMAIN}
