@@ -15,3 +15,4 @@ data:
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
   CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
+  TRENTO_DOMAIN: "{{ .Values.trentoDomain }}"
