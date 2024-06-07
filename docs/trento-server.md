@@ -100,8 +100,10 @@ helm install trento .
 or perform a rolling update:
 
 ```
-helm upgrade trento .
+helm upgrade trento . --set trento-web.trentoDomain="trento.example.com"
 ```
+
+_Note: be sure to replace trento.example.com with a valid hostname that points to the Trento server._
 
 Now you can connect to the web server via `http://localhost` and point the agents to the cluster IP address.
 
