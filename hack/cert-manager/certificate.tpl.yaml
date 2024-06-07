@@ -10,6 +10,6 @@ spec:
     name: letsencrypt-production
     kind: ClusterIssuer
 
-  commonName: ${TRENTO_DOMAIN}
+  commonName: ${TRENTO_WEB_ORIGIN}
   dnsNames:
-  - ${TRENTO_DOMAIN}
+  - ${TRENTO_WEB_ORIGIN}
