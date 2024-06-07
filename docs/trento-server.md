@@ -100,7 +100,7 @@ helm install trento .
 or perform a rolling update:
 
 ```
-helm upgrade trento . --set trento-web.trentoDomain="trento.example.com"
+helm upgrade trento . --set trento-web.trentoWebOrigin="trento.example.com"
 ```
 
 _Note: be sure to replace trento.example.com with a valid hostname that points to the Trento server._

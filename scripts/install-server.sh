@@ -118,7 +118,7 @@ cmdline() {
             ;;
 
         d)
-            TRENTO_DOMAIN=$OPTARG
+            TRENTO_WEB_ORIGIN=$OPTARG
             ;;
 
         *)
@@ -128,7 +128,7 @@ cmdline() {
         esac
     done
 
-    check_trento_domain
+    check_trento_web_origin
     set_admin_password
     confirm_admin_password
     configure_alerting
@@ -164,9 +164,9 @@ function set_admin_password() {
     fi
 }
 
-function check_trento_domain() {
-    if [[ -z "$TRENTO_DOMAIN" ]]; then
-        read -rp "A valid domain is required for websockets functionality, please provide one: " TRENTO_DOMAIN </dev/tty
+function check_trento_web_origin() {
+    if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
+        read -rp "A valid domain is required for websockets functionality, please provide one: " TRENTO_WEB_ORIGIN </dev/tty
     fi
 }
 
@@ -304,7 +304,7 @@ install_trento_server_chart() {
         --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
         --set trento-wanda.image.repository="${wanda_image}"
         --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
-        --set trento-web.trentoDomain="${TRENTO_DOMAIN}"
+        --set trento-web.trentoWebOrigin="${TRENTO_WEB_ORIGIN}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
         args+=(
