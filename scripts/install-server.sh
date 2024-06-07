@@ -27,6 +27,7 @@ usage() {
         -r, --rolling               Use the rolling version instead of the stable one.
         -e, --existing-k8s          Deploy to an existing kubernetes cluster (don't deploy k3s)
         -u, --use-registry          Container registry to pull the images from
+        -d, --trento-domain         FQDN for trento-server
         -h, --help                  Print this help.
 
     Example:
@@ -51,6 +52,7 @@ cmdline() {
         --rolling) args="${args}-r " ;;
         --use-registry) args="${args}-u " ;;
         --existing-k8s) args="${args}-e " ;;
+        --trento-domain) args="${args}-d " ;;
         --help) args="${args}-h " ;;
 
         # pass through anything else
@@ -63,7 +65,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "f:g:i:l:s:o:nrw:u:eh" OPTION; do
+    while getopts "f:g:i:l:s:o:nrw:u:ed:h" OPTION; do
         case $OPTION in
         h)
             usage
@@ -89,7 +91,7 @@ cmdline() {
         l)
             SMTP_PASSWORD=$OPTARG
             ;;
-        
+
         s)
             ALERTING_SENDER=$OPTARG
             ;;
@@ -115,6 +117,10 @@ cmdline() {
             EXISTING_K8S=true
             ;;
 
+        d)
+            TRENTO_DOMAIN=$OPTARG
+            ;;
+
         *)
             usage
             exit 0
@@ -122,6 +128,7 @@ cmdline() {
         esac
     done
 
+    check_trento_domain
     set_admin_password
     confirm_admin_password
     configure_alerting
@@ -154,6 +161,12 @@ function set_admin_password() {
         echo "The admin password should be at least 8 characters, please try again."
         unset ADMIN_PASSWORD
         set_admin_password
+    fi
+}
+
+function check_trento_domain() {
+    if [[ -z "$TRENTO_DOMAIN" ]]; then
+        read -rp "A valid domain is required for websockets functionality, please provide one: " TRENTO_DOMAIN </dev/tty
     fi
 }
 
@@ -291,6 +304,7 @@ install_trento_server_chart() {
         --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
         --set trento-wanda.image.repository="${wanda_image}"
         --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
+        --set trento-web.trentoDomain="${TRENTO_DOMAIN}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
         args+=(
