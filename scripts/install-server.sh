@@ -168,6 +168,13 @@ function check_trento_web_origin() {
     if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
         read -rp "A valid origin is required for websockets functionality, please provide one: " TRENTO_WEB_ORIGIN </dev/tty
     fi
+
+    if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
+        echo "An origin for trento web is mandatory, please try again."
+        unset TRENTO_WEB_ORIGIN
+        check_trento_web_origin
+    fi
+
 }
 
 function confirm_admin_password() {
