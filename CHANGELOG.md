@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.3.1](https://github.com/trento-project/helm-charts/tree/2.3.1) (2024-06-10)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.0...2.3.1)
+
+### Other Changes
+
+- Rename `TRENTO_DOMAIN` to `TRENTO_WEB_ORIGIN` [\#97](https://github.com/trento-project/helm-charts/pull/97) (@nelsonkopliku)
+- Add TRENTO\_DOMAIN env var [\#96](https://github.com/trento-project/helm-charts/pull/96) (@rtorrero)
+- Add cert manager support [\#95](https://github.com/trento-project/helm-charts/pull/95) (@rtorrero)
+- Add env var support for the supportconfig plugin/wrapper [\#83](https://github.com/trento-project/helm-charts/pull/83) (@rtorrero)
+
 ## [2.3.0](https://github.com/trento-project/helm-charts/tree/2.3.0) (2024-05-13)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.2.0...2.3.0)
