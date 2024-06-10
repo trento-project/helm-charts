@@ -30,7 +30,7 @@ helm install cert-manager jetstack/cert-manager --namespace cert-manager --creat
 ### 4. Generate a valid configuration for cert-manager
 Use `envsubst` to substitute the templates with actual valid data (make sure to replace the suggestions here with valid ones for your deployment):
 ```
-export TRENTO_DOMAIN=example.com TRENTO_ADMIN_EMAIL=admin@example.com TRENTO_NAMESPACE=default TRENTO_INGRESS_CLASS=traefik
+export TRENTO_WEB_ORIGIN=example.com TRENTO_ADMIN_EMAIL=admin@example.com TRENTO_NAMESPACE=default TRENTO_INGRESS_CLASS=traefik
 envsubst < certificate.tpl.yaml > certificate.yaml
 envsubst < cluster-issuer.tpl.yaml > cluster-issuer.yaml
 envsubst < override-values.tpl.yaml > override-values.yaml

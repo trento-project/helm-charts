@@ -27,7 +27,7 @@ usage() {
         -r, --rolling               Use the rolling version instead of the stable one.
         -e, --existing-k8s          Deploy to an existing kubernetes cluster (don't deploy k3s)
         -u, --use-registry          Container registry to pull the images from
-        -d, --trento-domain         FQDN for trento-server
+        -d, --trento-web-origin     Origin of trento-server
         -h, --help                  Print this help.
 
     Example:
@@ -52,7 +52,7 @@ cmdline() {
         --rolling) args="${args}-r " ;;
         --use-registry) args="${args}-u " ;;
         --existing-k8s) args="${args}-e " ;;
-        --trento-domain) args="${args}-d " ;;
+        --trento-web-origin) args="${args}-d " ;;
         --help) args="${args}-h " ;;
 
         # pass through anything else
@@ -118,7 +118,7 @@ cmdline() {
             ;;
 
         d)
-            TRENTO_DOMAIN=$OPTARG
+            TRENTO_WEB_ORIGIN=$OPTARG
             ;;
 
         *)
@@ -128,7 +128,7 @@ cmdline() {
         esac
     done
 
-    check_trento_domain
+    check_trento_web_origin
     set_admin_password
     confirm_admin_password
     configure_alerting
@@ -164,10 +164,17 @@ function set_admin_password() {
     fi
 }
 
-function check_trento_domain() {
-    if [[ -z "$TRENTO_DOMAIN" ]]; then
-        read -rp "A valid domain is required for websockets functionality, please provide one: " TRENTO_DOMAIN </dev/tty
+function check_trento_web_origin() {
+    if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
+        read -rp "A valid origin is required for websockets functionality, please provide one: " TRENTO_WEB_ORIGIN </dev/tty
     fi
+
+    if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
+        echo "An origin for trento web is mandatory, please try again."
+        unset TRENTO_WEB_ORIGIN
+        check_trento_web_origin
+    fi
+
 }
 
 function confirm_admin_password() {
@@ -304,7 +311,7 @@ install_trento_server_chart() {
         --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
         --set trento-wanda.image.repository="${wanda_image}"
         --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
-        --set trento-web.trentoDomain="${TRENTO_DOMAIN}"
+        --set trento-web.trentoWebOrigin="${TRENTO_WEB_ORIGIN}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
         args+=(

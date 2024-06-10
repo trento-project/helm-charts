@@ -1,7 +1,7 @@
 trento-web:
   ingress:
     hosts:
-      - host: ${TRENTO_DOMAIN}
+      - host: ${TRENTO_WEB_ORIGIN}
         paths:
           - path: /
             pathType: ImplementationSpecific
@@ -13,7 +13,7 @@ trento-web:
 trento-wanda:
   ingress:
     hosts:
-      - host: ${TRENTO_DOMAIN}
+      - host: ${TRENTO_WEB_ORIGIN}
         paths:
         - path: /api/checks
           pathType: ImplementationSpecific
