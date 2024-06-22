@@ -23,6 +23,7 @@ usage() {
         -l, --smtp-password         Password to access SMTP server.
         -s, --alerting-sender       Sender email for alerting notifications.
         -o, --alerting-recipient    Recipient email for alerting notifications.
+        -a, --admin-username        admin user name. (default: admin)
         -w, --admin-password        admin user password.
         -r, --rolling               Use the rolling version instead of the stable one.
         -e, --existing-k8s          Deploy to an existing kubernetes cluster (don't deploy k3s)
@@ -48,6 +49,7 @@ cmdline() {
         --smtp-password) args="${args}-l " ;;
         --alerting-sender) args="${args}-s " ;;
         --alerting-recipient) args="${args}-o " ;;
+        --admin-username) args="${args}-a " ;;
         --admin-password) args="${args}-w " ;;
         --rolling) args="${args}-r " ;;
         --use-registry) args="${args}-u " ;;
@@ -65,7 +67,7 @@ cmdline() {
 
     eval set -- "$args"
 
-    while getopts "f:g:i:l:s:o:nrw:u:ed:h" OPTION; do
+    while getopts "f:g:i:l:s:o:nrw:a:u:ed:h" OPTION; do
         case $OPTION in
         h)
             usage
@@ -103,6 +105,10 @@ cmdline() {
         w)
             ADMIN_PASSWORD=$OPTARG
             CONFIRM_ADMIN_PASSWORD=$ADMIN_PASSWORD
+            ;;
+
+        a)
+            ADMIN_USERNAME=$OPTARG
             ;;
 
         r)
@@ -310,7 +316,7 @@ install_trento_server_chart() {
         --set trento-web.image.repository="${web_image}"
         --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
         --set trento-wanda.image.repository="${wanda_image}"
-        --set trento-web.adminUser.password="${ADMIN_PASSWORD}"
+        --set-string trento-web.adminUser.password="${ADMIN_PASSWORD}"
         --set trento-web.trentoWebOrigin="${TRENTO_WEB_ORIGIN}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
@@ -328,6 +334,11 @@ install_trento_server_chart() {
         args+=(
             --set trento-web.image.pullPolicy=Always
             --set trento-wanda.image.pullPolicy=Always
+        )
+    fi
+    if [[ "$ADMIN_USERNAME" ]]; then
+        args+=(
+            --set-string trento-web.adminUser.username="${ADMIN_USERNAME}"
         )
     fi
     HELM_EXPERIMENTAL_OCI=1 helm upgrade --install trento-server $trento_chart_path "${args[@]}"
