@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.2](https://github.com/trento-project/helm-charts/tree/2.3.2) (2024-07-24)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.1...2.3.2)
+
+### Other Changes
+
+- Update chart to use trento-web 2.3.2 version (@arbulu89)
+
 ## [2.3.1](https://github.com/trento-project/helm-charts/tree/2.3.1) (2024-06-10)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.0...2.3.1)
