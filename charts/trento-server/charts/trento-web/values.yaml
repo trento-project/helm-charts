@@ -25,6 +25,12 @@ adminUser:
   username: "admin"
   password: ""
 
+oidc:
+  enabled: false
+  clientId: ""
+  clientSecret: ""
+  baseUrl: ""
+
 chartsEnabled: true
 
 replicaCount: 1
