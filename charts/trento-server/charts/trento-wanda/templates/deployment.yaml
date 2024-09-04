@@ -29,6 +29,12 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
+        - name: deploy-checks
+          # FIXME: replace this with a template string
+          image: registry.opensuse.org/devel/sap/trento/factory/containers/trento/trento-checks:latest
+          volumeMounts:
+            - name: checks
+              mountPath: /usr/share/trento/checks
         - name: create-wanda-db
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           command:
@@ -92,6 +98,12 @@ spec:
           #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: checks
+              mountPath: /usr/share/trento/checks
+      volumes:
+        - name: checks
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
