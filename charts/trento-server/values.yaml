@@ -36,6 +36,13 @@ trento-wanda:
       registry: registry.suse.com
       repository: suse/postgres
       tag: "14"
+  checks:
+    image:
+      # FIXME: Change to SUSE registry once it is released
+      registry: registry.opensuse.org
+      repository: devel/sap/trento/factory/containers/trento/trento-checks
+      pullPolicy: IfNotPresent
+      tag: latest
 
 postgresql:
   enabled: true

@@ -30,8 +30,8 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
         - name: deploy-checks
-          # FIXME: replace this with a template string
-          image: registry.opensuse.org/devel/sap/trento/factory/containers/trento/trento-checks:latest
+          image: "{{ .Values.checks.image.registry }}/{{ .Values.checks.image.repository }}:{{ .Values.checks.image.tag }}"
+          imagePullPolicy: {{ .Values.checks.image.pullPolicy }}
           volumeMounts:
             - name: checks
               mountPath: /usr/share/trento/checks
@@ -101,6 +101,7 @@ spec:
           volumeMounts:
             - name: checks
               mountPath: /usr/share/trento/checks
+              readOnly: true
       volumes:
         - name: checks
           emptyDir: {}
