@@ -39,7 +39,7 @@ oauth2:
   authorizeUrl: ""
   tokenUrl: ""
   userUrl: ""
-  scopes: "profile,email"
+  scopes: "profile email"
 
 chartsEnabled: true
 
