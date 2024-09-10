@@ -31,6 +31,16 @@ oidc:
   clientSecret: ""
   baseUrl: ""
 
+oauth2:
+  enabled: false
+  clientId: ""
+  clientSecret: ""
+  baseUrl: ""
+  authorizeUrl: ""
+  tokenUrl: ""
+  userUrl: ""
+  scopes: "profile,email"
+
 chartsEnabled: true
 
 replicaCount: 1
