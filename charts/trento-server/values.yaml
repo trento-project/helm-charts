@@ -36,6 +36,12 @@ trento-wanda:
       registry: registry.suse.com
       repository: suse/postgres
       tag: "14"
+  checks:
+    image:
+      registry: ghcr.io
+      repository: trento-project/checks
+      pullPolicy: IfNotPresent
+      tag: rolling
 
 postgresql:
   enabled: true

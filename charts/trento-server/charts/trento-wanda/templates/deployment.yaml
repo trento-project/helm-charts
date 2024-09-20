@@ -29,6 +29,12 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
+        - name: deploy-checks
+          image: "{{ .Values.checks.image.registry }}/{{ .Values.checks.image.repository }}:{{ .Values.checks.image.tag }}"
+          imagePullPolicy: {{ .Values.checks.image.pullPolicy }}
+          volumeMounts:
+            - name: checks
+              mountPath: /usr/share/trento/checks
         - name: create-wanda-db
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           command:
@@ -92,6 +98,13 @@ spec:
           #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: checks
+              mountPath: /usr/share/trento/checks
+              readOnly: true
+      volumes:
+        - name: checks
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
