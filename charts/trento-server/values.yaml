@@ -38,11 +38,10 @@ trento-wanda:
       tag: "14"
   checks:
     image:
-      # FIXME: Change to SUSE registry once it is released
-      registry: registry.opensuse.org
-      repository: devel/sap/trento/factory/containers/trento/trento-checks
+      registry: ghcr.io
+      repository: trento-project/checks
       pullPolicy: IfNotPresent
-      tag: latest
+      tag: rolling
 
 postgresql:
   enabled: true
