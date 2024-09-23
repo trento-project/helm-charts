@@ -28,6 +28,11 @@ spec:
       serviceAccountName: {{ include "trento-web.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.saml.enabled }}
+      volumes:
+      - name: saml-data
+        emptyDir: {}
+      {{- end }}
       initContainers:
         - name: create-trento-db
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
@@ -81,6 +86,11 @@ spec:
         - name: init
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.saml.enabled }}
+          volumeMounts:
+            - name: saml-data
+              mountPath: {{ .Values.saml.spDir }}
+          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "trento-web.fullname" . }}-configmap
@@ -93,6 +103,11 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.saml.enabled }}
+          volumeMounts:
+            - name: saml-data
+              mountPath: {{ .Values.saml.spDir }}
+          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "trento-web.fullname" . }}-configmap
