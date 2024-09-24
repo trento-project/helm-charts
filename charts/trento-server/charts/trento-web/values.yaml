@@ -58,6 +58,7 @@ saml:
   firstNameAttrName: "firstName"
   lastNameAttrName: "lastName"
   metadataUrl: ""
+  metadataContent: ""
   signRequests: true
   signMetadata: true
   signedAssertion: true
