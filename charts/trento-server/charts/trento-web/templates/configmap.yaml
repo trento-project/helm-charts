@@ -36,6 +36,10 @@ data:
   SAML_SP_ORG_NAME: "{{ .Values.saml.a }}"
   SAML_SP_ORG_DISPLAYNAME: "{{ .Values.saml.spOrgDisplayName }}"
   SAML_SP_ORG_URL: "{{ .Values.saml.spOrgUrl }}"
+  SAML_USERNAME_ATTR_NAME: "{{ .Values.saml.usernameAttrName }}"
+  SAML_EMAIL_ATTR_NAME: "{{ .Values.saml.emailAttrName }}"
+  SAML_FIRSTNAME_ATTR_NAME: "{{ .Values.saml.firstNameAttrName }}"
+  SAML_LASTNAME_ATTR_NAME: "{{ .Values.saml.lastNameAttrName }}"
   {{- if .Values.saml.metadataUrl }}
   SAML_METADATA_URL: "{{ .Values.saml.metadataUrl }}"
   {{- end }}

@@ -53,6 +53,10 @@ saml:
   spOrgName: "Trento SP"
   spOrgDisplayName: "SAML SP build with Trento"
   spOrgUrl: "https://www.trento-project.io/"
+  usernameAttrName: "username"
+  emailAttrName: "email"
+  firstNameAttrName: "firstName"
+  lastNameAttrName: "lastName"
   metadataUrl: ""
   signRequests: true
   signMetadata: true
