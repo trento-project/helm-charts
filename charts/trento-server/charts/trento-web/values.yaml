@@ -41,6 +41,29 @@ oauth2:
   userUrl: ""
   scopes: "profile email"
 
+saml:
+  enabled: false
+  idpId: ""
+  idpNameIdFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+  spDir: /etc/trento/trento-web/saml
+  spId: ""
+  spEntityId: ""
+  spContanctName: "Trento SP Admin"
+  spContactEmail: "admin@trento.suse.com"
+  spOrgName: "Trento SP"
+  spOrgDisplayName: "SAML SP build with Trento"
+  spOrgUrl: "https://www.trento-project.io/"
+  usernameAttrName: "username"
+  emailAttrName: "email"
+  firstNameAttrName: "firstName"
+  lastNameAttrName: "lastName"
+  metadataUrl: ""
+  metadataContent: ""
+  signRequests: true
+  signMetadata: true
+  signedAssertion: true
+  signedEnvelopes: true
+
 chartsEnabled: true
 
 replicaCount: 1

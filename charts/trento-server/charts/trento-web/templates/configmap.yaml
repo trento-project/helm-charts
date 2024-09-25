@@ -25,3 +25,28 @@ data:
   OAUTH2_TOKEN_URL: "{{ .Values.oauth2.tokenUrl }}"
   OAUTH2_USER_URL: "{{ .Values.oauth2.userUrl }}"
   OAUTH2_SCOPES: "{{ .Values.oauth2.scopes }}"
+  ENABLE_SAML: "{{ .Values.saml.enabled }}"
+  SAML_IDP_ID: "{{ .Values.saml.idpId }}"
+  SAML_IDP_NAMEID_FORMAT: "{{ .Values.saml.idpNameIdFormat }}"
+  SAML_SP_DIR: "{{ .Values.saml.spDir }}"
+  SAML_SP_ID: "{{ .Values.saml.spId }}"
+  SAML_SP_ENTITY_ID: "{{ .Values.saml.spEntityId }}"
+  SAML_SP_CONTACT_NAME: "{{ .Values.saml.spContanctName }}"
+  SAML_SP_CONTACT_EMAIL: "{{ .Values.saml.spContactEmail }}"
+  SAML_SP_ORG_NAME: "{{ .Values.saml.a }}"
+  SAML_SP_ORG_DISPLAYNAME: "{{ .Values.saml.spOrgDisplayName }}"
+  SAML_SP_ORG_URL: "{{ .Values.saml.spOrgUrl }}"
+  SAML_USERNAME_ATTR_NAME: "{{ .Values.saml.usernameAttrName }}"
+  SAML_EMAIL_ATTR_NAME: "{{ .Values.saml.emailAttrName }}"
+  SAML_FIRSTNAME_ATTR_NAME: "{{ .Values.saml.firstNameAttrName }}"
+  SAML_LASTNAME_ATTR_NAME: "{{ .Values.saml.lastNameAttrName }}"
+  {{- if .Values.saml.metadataUrl }}
+  SAML_METADATA_URL: "{{ .Values.saml.metadataUrl }}"
+  {{- end }}
+  {{- if .Values.saml.metadataContent }}
+  SAML_METADATA_CONTENT: "{{ .Values.saml.metadataContent }}"
+  {{- end }}
+  SAML_SIGN_REQUESTS: "{{ .Values.saml.signRequests }}"
+  SAML_SIGN_METADATA: "{{ .Values.saml.signMetadata }}"
+  SAML_SIGNED_ASSERTION: "{{ .Values.saml.signedAssertion }}"
+  SAML_SIGNED_ENVELOPES: "{{ .Values.saml.signedEnvelopes }}"
