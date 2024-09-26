@@ -159,7 +159,7 @@ jobs:
       options: -u 0:0
     strategy:
       matrix:
-        packages: ["trento-server-installer", "trento-supportconfig-plugin"]
+        packages: ["trento-server-installer"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
