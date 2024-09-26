@@ -1,10 +1,22 @@
 NAME = trento-server
 
+YQ := $(shell command -v yq 2> /dev/null)
+HELM := $(shell command -v helm 2> /dev/null)
+OSC := $(shell command -v osc 2> /dev/null)
+
+.PHONY: verify-deps clean tar
 default: verify-deps clean tar
 
 verify-deps:
-	@yq -V | grep -q "version 4." >/dev/null 2>&1 || ( echo "yq 4.x not found" && false )
-	@helm version | grep -q "Version" >/dev/null 2>&1 || ( echo "helm not found" && false )
+ifndef YQ
+	$(error "yq not found")
+endif
+ifndef HELM
+	$(error "helm not found")
+endif
+ifndef OSC
+	$(error "osc not found")
+endif
 
 clean:
 	rm -f *.tar
