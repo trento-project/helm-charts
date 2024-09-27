@@ -41,7 +41,7 @@ trento-wanda:
       registry: ghcr.io
       repository: trento-project/checks
       pullPolicy: IfNotPresent
-      tag: rolling
+      tag: 0.2.0
 
 postgresql:
   enabled: true
