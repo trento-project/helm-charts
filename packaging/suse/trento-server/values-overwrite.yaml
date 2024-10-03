@@ -5,3 +5,6 @@ trento-web:
 trento-wanda:
   image:
     repository: registry.suse.com/trento/trento-wanda
+  checks:
+    image:
+      repository: registry.suse.com/trento/trento-checks

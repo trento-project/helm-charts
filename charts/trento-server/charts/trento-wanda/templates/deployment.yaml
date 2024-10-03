@@ -30,7 +30,7 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
         - name: deploy-checks
-          image: "{{ .Values.checks.image.registry }}/{{ .Values.checks.image.repository }}:{{ .Values.checks.image.tag }}"
+          image: "{{ .Values.checks.image.repository }}:{{ .Values.checks.image.tag }}"
           imagePullPolicy: {{ .Values.checks.image.pullPolicy }}
           volumeMounts:
             - name: checks

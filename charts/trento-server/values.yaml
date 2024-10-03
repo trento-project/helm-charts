@@ -38,8 +38,7 @@ trento-wanda:
       tag: "14"
   checks:
     image:
-      registry: ghcr.io
-      repository: trento-project/checks
+      repository: ghcr.io/trento-project/checks
       pullPolicy: IfNotPresent
       tag: 0.2.0
 
