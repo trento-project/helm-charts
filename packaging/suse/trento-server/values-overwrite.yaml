@@ -7,5 +7,4 @@ trento-wanda:
     repository: registry.suse.com/trento/trento-wanda
   checks:
     image:
-      registry: registry.suse.com
-      repository: trento/trento-checks
+      repository: registry.suse.com/trento/trento-checks
