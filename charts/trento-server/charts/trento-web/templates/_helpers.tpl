@@ -93,12 +93,16 @@ Return Trento Web service port
 {{- end -}}
 
 {{- define "trento.web.secretKeyBase" -}}
-  {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
-  {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
-  {{- if $secret -}}
-    {{- index $secret "data" "SECRET_KEY_BASE" -}}
+  {{- if .Values.secretKeyBase -}}
+    {{- .Values.secretKeyBase | b64enc -}}
   {{- else -}}
-    {{- (randAlphaNum 64) | b64enc -}}
+    {{ $secretName := (print (include "trento-web.fullname" .) "-secret") }}
+    {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
+    {{- if $secret -}}
+      {{- index $secret "data" "SECRET_KEY_BASE" -}}
+    {{- else -}}
+      {{- (randAlphaNum 64) | b64enc -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
