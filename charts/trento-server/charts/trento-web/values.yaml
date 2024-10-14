@@ -48,7 +48,7 @@ saml:
   spDir: /etc/trento/trento-web/saml
   spId: ""
   spEntityId: ""
-  spContanctName: "Trento SP Admin"
+  spContactName: "Trento SP Admin"
   spContactEmail: "admin@trento.suse.com"
   spOrgName: "Trento SP"
   spOrgDisplayName: "SAML SP build with Trento"
