@@ -65,6 +65,7 @@ saml:
   signedEnvelopes: true
 
 chartsEnabled: true
+caStoreConfigmap: ""
 
 replicaCount: 1
 
