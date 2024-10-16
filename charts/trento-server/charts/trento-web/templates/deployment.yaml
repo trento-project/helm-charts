@@ -28,10 +28,15 @@ spec:
       serviceAccountName: {{ include "trento-web.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.saml.enabled }}
       volumes:
+      {{- if .Values.saml.enabled }}
       - name: saml-data
         emptyDir: {}
+      {{- end }}
+      {{- if .Values.caStoreConfigmap }}
+      - name: {{ .Values.caStoreConfigmap }}
+        configMap:
+          name: {{ .Values.caStoreConfigmap }}
       {{- end }}
       initContainers:
         - name: create-trento-db
@@ -103,10 +108,15 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.saml.enabled }}
           volumeMounts:
+          {{- if .Values.saml.enabled }}
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
+          {{- end }}
+          {{- if .Values.caStoreConfigmap }}
+            - name: {{ .Values.caStoreConfigmap }}
+              mountPath: /usr/share/pki/trust/anchors/
+              readOnly: true
           {{- end }}
           envFrom:
             - configMapRef:
@@ -117,6 +127,15 @@ spec:
                 name: {{ .Release.Name }}-auth-tokens-secret
           args:
             - start
+          {{- if .Values.caStoreConfigmap }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - update-ca-certificates
+          {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
