@@ -45,7 +45,7 @@ saml:
   enabled: false
   idpId: ""
   idpNameIdFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
-  spDir: /etc/trento/trento-web/saml
+  spDir: /etc/trento/saml
   spId: ""
   spEntityId: ""
   spContactName: "Trento SP Admin"
