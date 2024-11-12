@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.4.0](https://github.com/trento-project/helm-charts/tree/2.4.0) (2024-11-12)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.2...2.4.0)
+
+### Added
+
+- Fix typo in variable usage [\#113](https://github.com/trento-project/helm-charts/pull/113) (@arbulu89)
+- Make secret key base configurable [\#112](https://github.com/trento-project/helm-charts/pull/112) (@arbulu89)
+- Add SAML integration [\#106](https://github.com/trento-project/helm-charts/pull/106) (@arbulu89)
+- Add OAUTH2 usage [\#105](https://github.com/trento-project/helm-charts/pull/105) (@arbulu89)
+- Add an argument to the install script for username [\#100](https://github.com/trento-project/helm-charts/pull/100) (@bear454)
+
+### Other Changes
+
+- Change saml.spDir default location [\#115](https://github.com/trento-project/helm-charts/pull/115) (@arbulu89)
+- Update values-overwrite.yaml [\#111](https://github.com/trento-project/helm-charts/pull/111) (@dottorblaster)
+- Fix checks image tag [\#109](https://github.com/trento-project/helm-charts/pull/109) (@dottorblaster)
+- make version check less brittle and more relaxed [\#108](https://github.com/trento-project/helm-charts/pull/108) (@stefanotorresi)
+- remove support script [\#107](https://github.com/trento-project/helm-charts/pull/107) (@stefanotorresi)
+- Add init-container for checks deployment [\#104](https://github.com/trento-project/helm-charts/pull/104) (@janvhs)
+- Add OIDC usage [\#103](https://github.com/trento-project/helm-charts/pull/103) (@arbulu89)
+- Bump actions/upload-artifact from 3 to 4 [\#87](https://github.com/trento-project/helm-charts/pull/87) (@dependabot[bot])
+- Bump actions/download-artifact from 3 to 4 [\#86](https://github.com/trento-project/helm-charts/pull/86) (@dependabot[bot])
+- Bump helm/chart-testing-action from 2.6.0 to 2.6.1 [\#81](https://github.com/trento-project/helm-charts/pull/81) (@dependabot[bot])
+
 ## [2.3.2](https://github.com/trento-project/helm-charts/tree/2.3.2) (2024-07-24)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.1...2.3.2)
