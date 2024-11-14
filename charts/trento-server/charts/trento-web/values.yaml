@@ -73,6 +73,12 @@ image:
   pullPolicy: IfNotPresent
   tag: 2.4.0
 
+postgresql:
+  image:
+    registry: registry.suse.com
+    repository: suse/postgres
+    tag: "14"
+
 secretKeyBase: ""
 imagePullSecrets: []
 nameOverride: ""

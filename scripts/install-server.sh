@@ -4,7 +4,7 @@ set -e
 
 readonly ARGS=("$@")
 readonly PROGNAME="./install-server.sh"
-TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"2.4.0"}
+TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"2.4.1"}
 TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"2.4.0"}
 TRENTO_WANDA_VERSION=${TRENTO_WANDA_VERSION:-"1.4.0"}
 TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
@@ -146,14 +146,6 @@ cmdline() {
     fi
 
     return 0
-}
-
-function load_conf() {
-    if [ -f /etc/trento/installer.conf ]; then
-        echo "Loading installer configuration"
-        # shellcheck source=/dev/null
-        source /etc/trento/installer.conf
-    fi
 }
 
 function set_admin_password() {
