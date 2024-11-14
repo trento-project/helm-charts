@@ -22,6 +22,18 @@ image:
   pullPolicy: IfNotPresent
   tag: 1.4.0
 
+postgresql:
+  image:
+    registry: registry.suse.com
+    repository: suse/postgres
+    tag: "14"
+
+checks:
+  image:
+    repository: ghcr.io/trento-project/checks
+    pullPolicy: IfNotPresent
+    tag: 1.0.0
+
 secretKeyBase: ""
 imagePullSecrets: []
 nameOverride: ""

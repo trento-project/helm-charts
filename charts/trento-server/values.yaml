@@ -22,25 +22,10 @@ global:
 trento-web:
   nameOverride: web
   enabled: true
-  postgresql:
-    image:
-      registry: registry.suse.com
-      repository: suse/postgres
-      tag: "14"
 
 trento-wanda:
   nameOverride: wanda
   enabled: true
-  postgresql:
-    image:
-      registry: registry.suse.com
-      repository: suse/postgres
-      tag: "14"
-  checks:
-    image:
-      repository: ghcr.io/trento-project/checks
-      pullPolicy: IfNotPresent
-      tag: 1.0.0
 
 postgresql:
   enabled: true
