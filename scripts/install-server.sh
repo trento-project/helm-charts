@@ -148,14 +148,6 @@ cmdline() {
     return 0
 }
 
-function load_conf() {
-    if [ -f /etc/trento/installer.conf ]; then
-        echo "Loading installer configuration"
-        # shellcheck source=/dev/null
-        source /etc/trento/installer.conf
-    fi
-}
-
 function set_admin_password() {
     if [[ -z "$ADMIN_PASSWORD" ]]; then
         read -rsp "Please provide the password of the \"admin\" user (min 8 characters): " ADMIN_PASSWORD </dev/tty
