@@ -23,6 +23,8 @@ trento-wanda:
           pathType: ImplementationSpecific
         - path: /api/v3/checks
           pathType: ImplementationSpecific
+        - path: /api/groups
+          pathType: ImplementationSpecific
         - path: /api/v1/groups
           pathType: ImplementationSpecific
     tls:
