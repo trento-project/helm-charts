@@ -18,7 +18,7 @@ env:
 
 jobs:
   test-helm-charts:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,14 +28,14 @@ jobs:
           version: v3.4.0
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: 3.13
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.6.1
       - name: Lint
         run: ct lint --config=ct.yaml --lint-conf=helmlintconf.yaml
 
   create-artifact:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [test-helm-charts]
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
   release-rolling:
     needs: [test-helm-charts, create-artifact]
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -95,7 +95,7 @@ jobs:
 
   obs-commit-charts:
     needs: [test-helm-charts]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
       image: ghcr.io/trento-project/continuous-delivery:main
