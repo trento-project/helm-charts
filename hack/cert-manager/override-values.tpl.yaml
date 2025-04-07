@@ -27,6 +27,10 @@ trento-wanda:
           pathType: ImplementationSpecific
         - path: /api/v1/groups
           pathType: ImplementationSpecific
+        - path: /api/operations
+          pathType: ImplementationSpecific
+        - path: /api/v1/operations
+          pathType: ImplementationSpecific
     tls:
       - secretName: trento-tls
     annotations:
