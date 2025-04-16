@@ -8,6 +8,7 @@ TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"2.4.1"}
 TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"2.4.0"}
 TRENTO_WANDA_VERSION=${TRENTO_WANDA_VERSION:-"1.4.0"}
 TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
+CURRENT_TTY=${TTY:-"/dev/tty"}
 
 usage() {
     cat <<-EOF
@@ -150,7 +151,7 @@ cmdline() {
 
 function set_admin_password() {
     if [[ -z "$ADMIN_PASSWORD" ]]; then
-        read -rsp "Please provide the password of the \"admin\" user (min 8 characters): " ADMIN_PASSWORD </dev/tty
+        read -rsp "Please provide the password of the \"admin\" user (min 8 characters): " ADMIN_PASSWORD < $CURRENT_TTY
     fi
 
     echo
@@ -164,7 +165,7 @@ function set_admin_password() {
 
 function check_trento_web_origin() {
     if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
-        read -rp "A valid origin is required for websockets functionality, please provide one: " TRENTO_WEB_ORIGIN </dev/tty
+        read -rp "A valid origin is required for websockets functionality, please provide one: " TRENTO_WEB_ORIGIN < $CURRENT_TTY
     fi
 
     if [[ -z "$TRENTO_WEB_ORIGIN" ]]; then
@@ -177,7 +178,7 @@ function check_trento_web_origin() {
 
 function confirm_admin_password() {
     if [[ -z "$CONFIRM_ADMIN_PASSWORD" ]]; then
-        read -rsp "Please confirm the password: " CONFIRM_ADMIN_PASSWORD </dev/tty
+        read -rsp "Please confirm the password: " CONFIRM_ADMIN_PASSWORD < $CURRENT_TTY
     fi
 
     echo
@@ -192,27 +193,27 @@ function confirm_admin_password() {
 function configure_alerting() {
     if [[ -n "$ENABLE_ALERTING" ]]; then
         if [[ -z "$SMTP_SERVER" ]]; then
-            read -rp "Please provide the SMTP server host: " SMTP_SERVER </dev/tty
+            read -rp "Please provide the SMTP server host: " SMTP_SERVER < $CURRENT_TTY
         fi
 
         if [[ -z "$SMTP_PORT" ]]; then
-            read -rp "Please provide the Port of the SMTP server: " SMTP_PORT </dev/tty
+            read -rp "Please provide the Port of the SMTP server: " SMTP_PORT < $CURRENT_TTY
         fi
 
         if [[ -z "$SMTP_USER" ]]; then
-            read -rp "Please provide the SMTP user: " SMTP_USER </dev/tty
+            read -rp "Please provide the SMTP user: " SMTP_USER < $CURRENT_TTY
         fi
 
         if [[ -z "$SMTP_PASSWORD" ]]; then
-            read -rp "Please provide the SMTP password: " SMTP_PASSWORD </dev/tty
+            read -rp "Please provide the SMTP password: " SMTP_PASSWORD < $CURRENT_TTY
         fi
 
         if [[ -z "$ALERTING_SENDER" ]]; then
-            read -rp "Please provide the sender email for alerting notifications: " ALERTING_SENDER </dev/tty
+            read -rp "Please provide the sender email for alerting notifications: " ALERTING_SENDER < $CURRENT_TTY
         fi
 
         if [[ -z "$ALERTING_RECIPIENT" ]]; then
-            read -rp "Please provide the recipient email for alerting notifications: " ALERTING_RECIPIENT </dev/tty
+            read -rp "Please provide the recipient email for alerting notifications: " ALERTING_RECIPIENT < $CURRENT_TTY
         fi
     fi
 }
@@ -337,7 +338,6 @@ install_trento_server_chart() {
 }
 
 main() {
-    load_conf
     cmdline "${ARGS[@]}"
     if [[ "$EXISTING_K8S" != "true" ]]; then
         echo "Installing trento-server on k3s..."
