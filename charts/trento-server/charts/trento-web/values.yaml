@@ -13,13 +13,13 @@ global:
     name: prometheus-server
 
 alerting:
-  enabled: false
-  smtpServer: ""
-  smtpPort: ""
-  smtpUser: ""
-  smtpPassword: ""
-  sender: ""
-  recipient: ""
+  enabled: null
+  smtpServer: null
+  smtpPort: null
+  smtpUser: null
+  smtpPassword: null
+  sender: null
+  recipient: null
 
 adminUser:
   username: "admin"

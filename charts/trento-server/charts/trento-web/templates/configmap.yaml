@@ -5,12 +5,26 @@ metadata:
 data:
   DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
   EVENTSTORE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
-  ENABLE_ALERTING: "{{ .Values.alerting.enabled }}"
-  SMTP_SERVER: "{{ .Values.alerting.smtpServer }}"
-  SMTP_PORT: "{{ .Values.alerting.smtpPort }}"
-  SMTP_USER: "{{ .Values.alerting.smtpUser }}"
-  ALERT_SENDER: "{{ .Values.alerting.sender }}"
-  ALERT_RECIPIENT: "{{ .Values.alerting.recipient }}"
+  {{- with .Values.alerting }}
+  {{- if not (eq .enabled nil) }}
+  ENABLE_ALERTING: {{ .enabled }}
+  {{- end }}
+  {{- if not (eq .smtpServer nil) }}
+  SMTP_SERVER: {{ .smtpServer }}
+  {{- end }}
+  {{- if not (eq .smtpPort nil) }}
+  SMTP_PORT: {{ .smtpPort }}
+  {{- end }}
+  {{- if not (eq .smtpUser nil) }}
+  SMTP_USER: {{ .smtpUser }}
+  {{- end }}
+  {{- if not (eq .sender nil) }}
+  ALERT_SENDER: {{ .sender }}
+  {{- end }}
+  {{- if not (eq .recipient nil) }}
+  ALERT_RECIPIENT: {{ .recipient }}
+  {{- end }}
+  {{- end }}
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
   CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
