@@ -18,9 +18,9 @@ global:
     name: rabbitmq
     servicePort: 5671
     mtls:
-        enabled: true
-        existingCASecret: "rabbitmq-ca"
-        existingServerSecret: "rabbitmq-server-tls"
+      enabled: true
+      existingCASecret: "rabbitmq-ca"
+      existingServerSecret: "rabbitmq-server-tls"
 
 ### Sub Charts Specific Values ###
 trento-web:

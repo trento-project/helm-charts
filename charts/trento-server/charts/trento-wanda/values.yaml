@@ -56,7 +56,7 @@ podSecurityContext:
 
 securityContext:
   {}
-  # capabilities:
+  # capabilitie  s:
   #   drop:
   #   - ALL
   # readOnlyRootFilesystem: true
