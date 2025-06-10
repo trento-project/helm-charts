@@ -78,14 +78,14 @@ rabbitmq:
       existingSecret: "{{ .Values.global.rabbitmq.mtls.existingServerSecret }}"
   extraConfiguration: |
     {{- if .Values.global.rabbitmq.mtls.enabled }}
-    listeners.ssl.default = 5671
+    listeners.ssl.default = {{ .Values.global.rabbitmq.servicePort }}
     ssl_options.cacertfile = /opt/bitnami/rabbitmq/certs/ca_certificate.pem
     ssl_options.certfile = /opt/bitnami/rabbitmq/certs/server_certificate.pem
     ssl_options.keyfile = /opt/bitnami/rabbitmq/certs/server_key.pem
     ssl_options.verify = verify_peer
     ssl_options.fail_if_no_peer_cert = true
     {{- else }}
-    listeners.tcp.default = 5672
+    listeners.tcp.default = {{ .Values.global.rabbitmq.servicePort }}
     {{- end }}
 
   service:
