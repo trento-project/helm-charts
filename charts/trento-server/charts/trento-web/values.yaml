@@ -71,7 +71,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/trento-project/trento-web
   pullPolicy: IfNotPresent
-  tag: 2.5.0
+  tag: 2.4.0
 
 postgresql:
   image:
