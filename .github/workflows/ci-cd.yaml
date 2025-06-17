@@ -1,15 +1,20 @@
 name: Continuous Integration
-concurrency: ci-${{ github.ref }}
+
 on:
   push:
-    tags-ignore:
-      - "*"
     branches:
-      - "main"
+      - main
+    paths-ignore:
+      - "VERSION"
+      - "CHANGELOG.md"
   pull_request:
-  release:
-    types: [published]
+    paths-ignore:
+      - "VERSION"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   OBS_USER: ${{ secrets.OBS_USER }}
