@@ -33,7 +33,7 @@ spec:
       - name: saml-data
         emptyDir: {}
       {{- end }}
-      {{- if .Values.global.rabbitmq.mtls.enabled }}
+      {{- if .Values.global.rabbitmq.auth.tls.enabled }}
       - name: rabbitmq-mtls-certs
         secret:
           secretName: web-rabbitmq-client-tls
@@ -96,7 +96,7 @@ spec:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
           {{- end }}
-          {{- if .Values.global.rabbitmq.mtls.enabled }}
+          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
             - name: rabbitmq-mtls-certs
               mountPath: /var/rabbitmq/ssl
               readOnly: true
@@ -118,7 +118,7 @@ spec:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
           {{- end }}
-          {{- if .Values.global.rabbitmq.mtls.enabled }}
+          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
             - name: rabbitmq-mtls-certs
               mountPath: /var/rabbitmq/ssl
               readOnly: true
