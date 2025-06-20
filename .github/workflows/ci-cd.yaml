@@ -43,7 +43,7 @@ jobs:
         run: ct lint --config=ct.yaml --lint-conf=helmlintconf.yaml $CT_FLAGS
 
   obs-commit-charts:
-    needs: [test-helm-charts]
+    needs: test
     runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     container:
