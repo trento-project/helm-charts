@@ -35,11 +35,6 @@ spec:
           volumeMounts:
             - name: checks
               mountPath: /usr/share/trento/checks
-          {{- if .Values.global.rabbitmq.mtls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
-          {{- end }}
         - name: create-wanda-db
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           command:
@@ -107,19 +102,9 @@ spec:
             - name: checks
               mountPath: /usr/share/trento/checks
               readOnly: true
-          {{- if .Values.global.rabbitmq.mtls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
-          {{- end }}
       volumes:
         - name: checks
           emptyDir: {}
-      {{- if .Values.global.rabbitmq.mtls.enabled }}
-        - name: rabbitmq-mtls-certs
-          secret:
-            secretName: wanda-rabbitmq-client-tls
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

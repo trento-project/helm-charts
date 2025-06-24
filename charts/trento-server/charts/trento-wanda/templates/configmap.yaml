@@ -4,11 +4,7 @@ metadata:
   name: {{ include "trento-wanda.fullname" . }}-configmap
 data:
   DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_wanda"
-  {{- if .Values.global.rabbitmq.mtls.enabled }}
-  AMQP_URL: "amqps://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}?certfile=/var/rabbitmq/ssl/client.crt&keyfile=/var/rabbitmq/ssl/client.key&cacertfile=/var/rabbitmq/ssl/ca.crt&verify=verify_peer"
-  {{- else }}
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
-  {{- end }}
   CORS_ENABLED: {{ .Values.cors.enabled | quote }}
   {{- if .Values.cors.enabled }}
   CORS_ORIGIN: {{ include "trentoWanda.cors_origin" . | quote }}

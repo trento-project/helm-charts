@@ -12,12 +12,8 @@ data:
   ALERT_SENDER: "{{ .Values.alerting.sender }}"
   ALERT_RECIPIENT: "{{ .Values.alerting.recipient }}"
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
-  CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
-  {{- if .Values.global.rabbitmq.mtls.enabled }}
-  AMQP_URL: "amqps://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}?certfile=/var/rabbitmq/ssl/client.crt&keyfile=/var/rabbitmq/ssl/client.key&cacertfile=/var/rabbitmq/ssl/ca.crt&verify=verify_peer"
-  {{- else }}
   AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
-  {{- end }}
+  CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
   TRENTO_WEB_ORIGIN: "{{ .Values.trentoWebOrigin }}"
   ENABLE_OIDC: "{{ .Values.oidc.enabled }}"
   OIDC_CLIENT_ID: "{{ .Values.oidc.clientId }}"
