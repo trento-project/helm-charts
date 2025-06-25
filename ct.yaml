@@ -7,3 +7,4 @@ chart-repos:
   - prometheus-community=https://prometheus-community.github.io/helm-charts
 target-branch: main
 validate-maintainers: false
+check-version-increment: false
