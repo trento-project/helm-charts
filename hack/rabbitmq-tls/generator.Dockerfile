@@ -1,4 +1,4 @@
-FROM opensuse/tumbleweed
+FROM opensuse/tumbleweed:20250627
 
 RUN zypper --non-interactive install curl tar make python3 python3-pip hostname
 
@@ -15,4 +15,3 @@ RUN mkdir /output
 
 ENV RELEASE_NAME=trento-server
 CMD [ "sh", "-c",  "/app/generator /tls-gen/basic $RELEASE_NAME" ]
- 
