@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-rabbitmq-configmap
+data:
+  extraConfiguration: |
+    {{- if .Values.global.rabbitmq.auth.tls.enabled }}
+    listeners.ssl.default = {{ .Values.global.rabbitmq.servicePort }}
+    listeners.tcp = none
+    ssl_options.cacertfile = /opt/bitnami/rabbitmq/certs/ca_certificate.pem
+    ssl_options.certfile = /opt/bitnami/rabbitmq/certs/server_certificate.pem
+    ssl_options.keyfile = /opt/bitnami/rabbitmq/certs/server_key.pem
+    ssl_options.verify = verify_peer
+    ssl_options.fail_if_no_peer_cert = true
+    {{- else }}
+    listeners.tcp.default = {{ .Values.global.rabbitmq.servicePort }}
+    {{- end }}
+
+    default_user = {{ .Values.global.rabbitmq.auth.username }}
+    default_pass = {{ .Values.global.rabbitmq.auth.password }}
