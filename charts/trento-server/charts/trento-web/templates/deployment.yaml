@@ -33,6 +33,11 @@ spec:
       - name: saml-data
         emptyDir: {}
       {{- end }}
+      {{- if .Values.global.rabbitmq.auth.tls.enabled }}
+      - name: rabbitmq-mtls-certs
+        secret:
+          secretName: rabbitmq-tls-client-web
+      {{- end }}
       initContainers:
         - name: create-trento-db
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
@@ -91,6 +96,11 @@ spec:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
           {{- end }}
+          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
+            - name: rabbitmq-mtls-certs
+              mountPath: /var/rabbitmq/ssl
+              readOnly: true
+          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "trento-web.fullname" . }}-configmap
@@ -107,6 +117,11 @@ spec:
           volumeMounts:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
+          {{- end }}
+          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
+            - name: rabbitmq-mtls-certs
+              mountPath: /var/rabbitmq/ssl
+              readOnly: true
           {{- end }}
           envFrom:
             - configMapRef:
