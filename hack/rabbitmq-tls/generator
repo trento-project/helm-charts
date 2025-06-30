@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+PROFILE_DIR=${1:-"./basic"}
+RELEASE_NAME=${2:-"trento-server"}
+
+# check if output directory exists
+# if it does, ask for confirmation to overwrite
+if [ -d "/output/certs" ]; then
+    read -p "Output directory /output/certs already exists. Do you want to overwrite it? (y/n): " confirm
+    if [[ "$confirm" != "y" ]]; then
+        echo "Exiting without overwriting."
+        exit 1
+    else
+        echo "Overwriting existing directory /output/certs."
+        rm -rf /output/certs
+    fi
+fi
+
+# Generate the CA and server certificates
+
+pushd "$PROFILE_DIR"
+
+make CN="$RELEASE_NAME"-rabbitmq PASSWORD=    
+make alias-leaf-artifacts CN="$RELEASE_NAME"-rabbitmq PASSWORD= 
+make CN=wanda CLIENT_ALT_NAME=wanda gen-client
+make CN=web CLIENT_ALT_NAME=web gen-client
+
+popd
+
+# Move the generated files to the output directory
+
+pushd "$PROFILE_DIR/result"
+
+mkdir -p /output/certs
+cp ca_certificate.pem ca_key.pem \
+    server_certificate.pem server_key.pem \
+    client_wanda_certificate.pem client_wanda_key.pem \
+    client_web_certificate.pem client_web_key.pem \
+    /output/certs
+
+popd
