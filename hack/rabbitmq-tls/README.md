@@ -1,7 +1,7 @@
 # Generate TLS certificates for RabbitMQ
 
 Generates certificates for RabbitMQ TLS using the official generator tool. Certificates are meant to be used for development and QA.
-Please refere to the [official documentation](https://www.rabbitmq.com/docs/ssl#automated-certificate-generation-transcript).
+Please refer to the [official documentation](https://www.rabbitmq.com/docs/ssl#automated-certificate-generation-transcript).
 
 ## Usage
 
