@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.5.0](https://github.com/trento-project/helm-charts/tree/2.5.0) (2025-07-01)
+
+### What's Changed
+
+* update license notice and replace README section with a link by @stefanotorresi in https://github.com/trento-project/helm-charts/pull/121
+* adjust new wanda endpoints by @nelsonkopliku in https://github.com/trento-project/helm-charts/pull/124
+* Add operations endpoint ingress rule by @arbulu89 in https://github.com/trento-project/helm-charts/pull/126
+* Upgrade github actions runner ubuntu version by @arbulu89 in https://github.com/trento-project/helm-charts/pull/127
+* Bump wanda charts by @nelsonkopliku in https://github.com/trento-project/helm-charts/pull/128
+* Add operation api paths to cert manager guideline by @arbulu89 in https://github.com/trento-project/helm-charts/pull/129
+* Add CODEOWNERS by @nelsonkopliku in https://github.com/trento-project/helm-charts/pull/130
+* Small fixes on the install script by @balanza in https://github.com/trento-project/helm-charts/pull/125
+
+#### Dependencies
+
+<details>
+<summary>5 changes</summary>
+* Bump azure/setup-helm from 3.5 to 4 by @dependabot in https://github.com/trento-project/helm-charts/pull/110
+* Bump actions/setup-python from 4 to 5 by @dependabot in https://github.com/trento-project/helm-charts/pull/85
+* Bump helm/chart-releaser-action from 1.5.0 to 1.6.0 by @dependabot in https://github.com/trento-project/helm-charts/pull/80
+* Bump helm/chart-testing-action from 2.6.1 to 2.7.0 by @dependabot in https://github.com/trento-project/helm-charts/pull/122
+* Bump helm/chart-releaser-action from 1.6.0 to 1.7.0 by @dependabot in https://github.com/trento-project/helm-charts/pull/123
+</details>
+
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/2.4.1...2.5.0
+
+
 ## [2.4.0](https://github.com/trento-project/helm-charts/tree/2.4.0) (2024-11-12)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.2...2.4.0)
