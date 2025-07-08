@@ -26,8 +26,12 @@ data:
   {{- end }}
   {{- end }}
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
-  AMQP_URL: "amqp://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
   CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
+  {{- if .Values.global.rabbitmq.auth.tls.enabled }}
+  AMQP_URL: "amqps://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}?certfile=/var/rabbitmq/ssl/client.crt&keyfile=/var/rabbitmq/ssl/client.key&cacertfile=/var/rabbitmq/ssl/ca.crt&verify=verify_peer"
+  {{- else }}
+  AMQP_URL: "amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
+  {{- end }}
   TRENTO_WEB_ORIGIN: "{{ .Values.trentoWebOrigin }}"
   ENABLE_OIDC: "{{ .Values.oidc.enabled }}"
   OIDC_CLIENT_ID: "{{ .Values.oidc.clientId }}"
