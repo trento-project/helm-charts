@@ -17,7 +17,7 @@ After that, refer to each individual chart documentation to find more informatio
 
 ### Optional: mTLS authentication with RabbitMQ
 
-mTLS authentication with RabbitMQ can be enabled through the `global.rabbitmq.tls` configuration section. This feature enhances security by ensuring mutual authentication between RabbitMQ and its clients. 
+mTLS authentication with RabbitMQ can be enabled through the `global.rabbitmq.auth.tls` configuration section. This feature enhances security by ensuring mutual authentication between RabbitMQ and its clients. 
 When mTLS is enabled, the following secrets are expected to exist in the Kubernetes namespace:
 
 1. `rabbitmq-tls-server`
