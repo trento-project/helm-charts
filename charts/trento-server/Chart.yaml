@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-#!BuildTag: trento/trento-server:2.6.0-dev2
-#!BuildTag: trento/trento-server:2.6.0-dev2-build%RELEASE%
+#!BuildTag: trento/trento-server:2.6.0-dev3
+#!BuildTag: trento/trento-server:2.6.0-dev3-build%RELEASE%
 apiVersion: v2
 name: trento-server
 description: The trento server chart contains all the components necessary to run a Trento server.
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates
-version: 2.6.0-dev2
+version: 2.6.0-dev3
 
 dependencies:
   - name: trento-web
