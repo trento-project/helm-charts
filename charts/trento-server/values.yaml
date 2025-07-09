@@ -77,4 +77,4 @@ rabbitmq:
       enabled: false
       existingSecret: rabbitmq-tls-server
       existingSecretFullChain: false
-  extraEnvVarsCM: trento-server-rabbitmq-configmap
+  extraEnvVarsCM: "{{ .Release.Name }}-rabbitmq-configmap"
