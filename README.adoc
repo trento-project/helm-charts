@@ -10,7 +10,7 @@ to Helm’s https://helm.sh/docs/[documentation] to get started.
 After that, refer to each individual chart documentation to find more
 information:
 
-* link:https://github.com/trento-project/helm-charts/blob/md_to_adoc/docs/trento-server/trento-server.adoc[trento-server]: Chart to deploy a fully
+* link:https://github.com/trento-project/helm-charts/blob/main/docs/trento-server/trento-server.adoc[trento-server]: Chart to deploy a fully
 functional Trento server, including the Web and Wanda components, plus
 other auxiliary services.
 
@@ -22,7 +22,7 @@ optionally enabled in this Helm chart to provide SSL support for secure
 communication. While it simplifies certificate management and renewal,
 it introduces additional cluster-wide resources. For detailed setup
 instructions and considerations, refer to the
-link:https://github.com/trento-project/helm-charts/blob/md_to_adoc/docs/cert-manager/cert-manager.adoc[`+docs/cert-manager/+`] cookbook.
+link:https://github.com/trento-project/helm-charts/blob/main/docs/cert-manager/cert-manager.adoc[`+docs/cert-manager/+`] cookbook.
 
 === Optional: mTLS authentication with RabbitMQ
 
