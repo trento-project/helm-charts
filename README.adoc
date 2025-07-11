@@ -1,0 +1,62 @@
+= Trento Helm Charts
+
+Helm charts to deploy Trento components in a Kubernetes cluster.
+
+== Usage
+
+https://helm.sh[Helm] must be installed to use the charts. Please refer
+to Helm’s https://helm.sh/docs/[documentation] to get started.
+
+After that, refer to each individual chart documentation to find more
+information:
+
+* link:https://github.com/trento-project/helm-charts/blob/md_to_adoc/docs/trento-server/trento-server.adoc[trento-server]: Chart to deploy a fully
+functional Trento server, including the Web and Wanda components, plus
+other auxiliary services.
+
+=== Optional: SSL with cert-manager
+
+https://cert-manager.io/[cert-manager] is a Kubernetes add-on that
+automates the management and issuance of TLS certificates. It can be
+optionally enabled in this Helm chart to provide SSL support for secure
+communication. While it simplifies certificate management and renewal,
+it introduces additional cluster-wide resources. For detailed setup
+instructions and considerations, refer to the
+link:https://github.com/trento-project/helm-charts/blob/md_to_adoc/docs/cert-manager/cert-manager.adoc[`+docs/cert-manager/+`] cookbook.
+
+=== Optional: mTLS authentication with RabbitMQ
+
+mTLS authentication with RabbitMQ can be enabled through the
+`+global.rabbitmq.auth.tls+` configuration section. This feature
+enhances security by ensuring mutual authentication between RabbitMQ and
+its clients. When mTLS is enabled, the following secrets are expected to
+exist in the Kubernetes namespace:
+
+[arabic]
+. `+rabbitmq-tls-server+`
+* `+ca.crt+`: Root CA certificate for the RabbitMQ server
+* `+tls.crt+`: Server certificate for RabbitMQ
+* `+tls.key+`: Private key for the RabbitMQ server certificate
+. `+rabbitmq-tls-client-web+`
+* `+ca.crt+`: Root CA certificate for web component
+* `+client.crt+`: Client certificate for web component
+* `+client.key+`: Private key for web client certificate
+. `+rabbitmq-tls-client-wanda+`
+* `+ca.crt+`: Root CA certificate for wanda component
+* `+client.crt+`: Client certificate for wanda component
+* `+client.key+`: Private key for wanda client certificate
+
+== Support
+
+Please only report bugs via
+https://github.com/trento-project/trento/issues[GitHub issues]; for any
+other inquiry or topic use
+https://github.com/trento-project/trento/discussions[GitHub discussion].
+
+== Contributing
+
+See xref:CONTRIBUTING.adoc[how to Contribute]
+
+== License
+
+See the LICENSE notice.
