@@ -1,4 +1,4 @@
-== Generate TLS certificates for RabbitMQ
+= Generate TLS certificates for RabbitMQ
 
 Generates certificates for RabbitMQ TLS using the official generator
 tool. Certificates are meant to be used for development and QA. Please
@@ -6,7 +6,7 @@ refer to the
 https://www.rabbitmq.com/docs/ssl#automated-certificate-generation-transcript[official
 documentation].
 
-=== Usage
+== Usage
 
 [source,bash]
 ----
