@@ -1,28 +1,29 @@
+ifndef::site-gen-antora[:relfileprefix: docs/]
 = Trento Helm Charts
 
 Helm charts to deploy Trento components in a Kubernetes cluster.
 
 == Usage
 
-https://helm.sh[Helm] must be installed to use the charts. Please refer
-to Helm’s https://helm.sh/docs/[documentation] to get started.
+link:https://helm.sh[Helm] must be installed to use the charts. Please refer
+to Helm’s link:https://helm.sh/docs/[documentation] to get started.
 
 After that, refer to each individual chart documentation to find more
 information:
 
-* link:https://github.com/trento-project/helm-charts/blob/main/docs/trento-server/trento-server.adoc[trento-server]: Chart to deploy a fully
+* xref:trento-server/trento-server.adoc[trento-server]: Chart to deploy a fully
 functional Trento server, including the Web and Wanda components, plus
 other auxiliary services.
 
 === Optional: SSL with cert-manager
 
-https://cert-manager.io/[cert-manager] is a Kubernetes add-on that
+link:https://cert-manager.io/[cert-manager] is a Kubernetes add-on that
 automates the management and issuance of TLS certificates. It can be
 optionally enabled in this Helm chart to provide SSL support for secure
 communication. While it simplifies certificate management and renewal,
 it introduces additional cluster-wide resources. For detailed setup
 instructions and considerations, refer to the
-link:https://github.com/trento-project/helm-charts/blob/main/docs/cert-manager/cert-manager.adoc[`+docs/cert-manager/+`] cookbook.
+xref:cert-manager/cert-manager.adoc[`+docs/cert-manager/+`] cookbook.
 
 === Optional: mTLS authentication with RabbitMQ
 
@@ -49,9 +50,9 @@ exist in the Kubernetes namespace:
 == Support
 
 Please only report bugs via
-https://github.com/trento-project/trento/issues[GitHub issues]; for any
+link:https://github.com/trento-project/trento/issues[GitHub issues]; for any
 other inquiry or topic use
-https://github.com/trento-project/trento/discussions[GitHub discussion].
+link:https://github.com/trento-project/trento/discussions[GitHub discussion].
 
 == Contributing
 
