@@ -70,8 +70,8 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ....
 
 Please refer to the
-https://rancher.com/docs/k3s/latest/en/installation/[K3S official
-documentation] for more information about the installation.
+link:https://rancher.com/docs/k3s/latest/en/installation/[K3S official documentation] 
+for more information about the installation.
 
 ==== Install Helm and chart dependencies
 
@@ -81,7 +81,7 @@ Install Helm:
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 ....
 
-Please refer to the https://helm.sh/docs/intro/install/[Helm official
+Please refer to the link:https://helm.sh/docs/intro/install/[Helm official
 documentation] for more information about the installation.
 
 ==== Install Trento Server
