@@ -1,8 +1,8 @@
-== Trento Server Helm Chart
+= Trento Server Helm Chart
 
-=== Installation
+== Installation
 
-==== Requirements
+=== Requirements
 
 The _Trento Server_ is intended to run in many ways, depending on users’
 already existing infrastructure, but it’s designed to be cloud-native
@@ -12,7 +12,7 @@ components in Linux containers. The suggested physical resources for
 running all the _Trento Server_ components are 2GB of RAM and 2 CPU
 cores. The _Trento Server_ needs to reach the target infrastructure.
 
-==== Quick-start installation
+=== Quick-start installation
 
 An installation script is provided to quickly get you started by
 automatically provisioning, installing and updating the latest version
@@ -42,14 +42,14 @@ updated._
 Please refer to the link:#helm-chart[Helm chart] section for more
 information about the Helm chart.
 
-==== Manual installation
+=== Manual installation
 
-===== Helm chart
+==== Helm chart
 
 The charts/trento-server directory contains the Helm chart for
 installing Trento Server in a Kubernetes cluster.
 
-===== Install K3S
+==== Install K3S
 
 If installing as root:
 [source,shell]
@@ -70,10 +70,10 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ....
 
 Please refer to the
-https://rancher.com/docs/k3s/latest/en/installation/[K3S official
-documentation] for more information about the installation.
+link:https://rancher.com/docs/k3s/latest/en/installation/[K3S official documentation] 
+for more information about the installation.
 
-===== Install Helm and chart dependencies
+==== Install Helm and chart dependencies
 
 Install Helm:
 [source,shell]
@@ -81,10 +81,10 @@ Install Helm:
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 ....
 
-Please refer to the https://helm.sh/docs/intro/install/[Helm official
+Please refer to the link:https://helm.sh/docs/intro/install/[Helm official
 documentation] for more information about the installation.
 
-===== Install Trento Server
+==== Install Trento Server
 
 Add third-party Helm repositories:
 [source,shell]
@@ -118,7 +118,7 @@ points to the Trento server._
 Now you can connect to the web server via `+http://localhost+` and point
 the agents to the cluster IP address.
 
-===== Other Helm chart usage examples
+==== Other Helm chart usage examples
 
 Use a different container image (e.g. the `+rolling+` one):
 [source,shell]
