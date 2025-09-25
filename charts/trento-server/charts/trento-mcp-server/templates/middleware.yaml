@@ -1,0 +1,17 @@
+# Copyright 2025 SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+{{ if and .Values.mcpServer.ingress.enabled (eq .Values.mcpServer.ingress.ingressClassName "traefik") }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "trento-mcp-server.fullname" . }}-strip-prefix
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "trento-mcp-server.labels" . | nindent 4 }}
+spec:
+  stripPrefix:
+    prefixes: {{- range .Values.mcpServer.ingress.hosts }}
+      - {{ (first .paths).path }}
+    {{- end }}
+{{- end }}

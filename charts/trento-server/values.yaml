@@ -32,6 +32,10 @@ trento-wanda:
   nameOverride: wanda
   enabled: true
 
+trento-mcp-server:
+  nameOverride: mcp-server
+  enabled: false
+
 postgresql:
   enabled: true
   image:

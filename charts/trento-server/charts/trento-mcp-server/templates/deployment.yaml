@@ -1,0 +1,76 @@
+# Copyright 2025 SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trento-mcp-server.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: trento-mcp-server
+  {{- include "trento-mcp-server.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mcpServer.replicas }}
+  selector:
+    matchLabels:
+      app: trento-mcp-server
+    {{- include "trento-mcp-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        app: trento-mcp-server
+      {{- include "trento-mcp-server.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - args:
+        {{- if .Values.mcpServer.args }}
+        {{- range .Values.mcpServer.args }}
+        - {{ . | quote }}
+        {{- end }}
+        {{- else }}
+        {{- if .Values.mcpServer.config.enabled }}
+        - --config
+        - {{ .Values.mcpServer.config.mountPath }}/{{ .Values.mcpServer.config.fileName }}
+        {{- else }}
+        - --port={{ .Values.mcpServer.port }}
+        - --transport={{ .Values.mcpServer.transport }}
+        - --oas-path={{ .Values.mcpServer.oasPath }}
+        - --trento-url={{ .Values.mcpServer.trentoURL }}
+        - --header-name={{ .Values.mcpServer.headerName }}
+        {{- if .Values.mcpServer.tagFilter }}
+        - --tag-filter={{ join "," .Values.mcpServer.tagFilter }}
+        {{- end }}
+        - --verbosity={{ .Values.mcpServer.verbosity }}
+      {{- if .Values.mcpServer.insecureTLS }}
+        - --insecure-tls
+      {{- end }}
+      {{- end }}
+      {{- end }}
+        env:
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: {{ quote .Values.kubernetesClusterDomain }}
+          {{- range $k, $v := .Values.mcpServer.env }}
+          - name: {{ $k }}
+            value: {{ $v | quote }}
+          {{- end }}
+        image: {{ .Values.mcpServer.image.repository }}:{{ .Values.mcpServer.image.tag | default .Chart.AppVersion }}
+        name: trento-mcp-server
+        ports:
+        - containerPort: 8080
+          name: http
+        resources: {{- toYaml .Values.mcpServer.resources | nindent 10 }}
+        volumeMounts:
+      {{- if .Values.mcpServer.config.enabled }}
+        - mountPath: {{ .Values.mcpServer.config.mountPath }}
+          name: trento-mcp-server-config-volume
+          readOnly: true
+      {{- end }}
+      imagePullSecrets: []
+      {{- if .Values.mcpServer.config.enabled }}
+      volumes:
+      - configMap:
+          name: {{ include "trento-mcp-server.fullname" . }}
+        name: trento-mcp-server-config-volume
+      {{- end }}

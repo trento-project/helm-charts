@@ -1,0 +1,148 @@
+# Copyright 2025 SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+## @section Common parameters
+
+## @param kubernetesClusterDomain The Kubernetes cluster domain used for internal service DNS names.
+kubernetesClusterDomain: cluster.local
+
+## @section MCPO component
+mcpo:
+  ## @param mcpo.enabled Enable the MCPO component.
+  enabled: false
+  ## @param mcpo.args Command-line arguments for the MCPO container.
+  args:
+    - --port=8000
+    - --config
+    - /app/config/config.json
+  image:
+    ## @param mcpo.image.repository The container image repository for the MCPO component.
+    repository: ghcr.io/open-webui/mcpo
+    ## @param mcpo.image.tag The container image tag for the MCPO component.
+    tag: main
+  resources:
+    limits:
+      ## @param mcpo.resources.limits.cpu The CPU limit for the MCPO pod.
+      cpu: "1"
+      ## @param mcpo.resources.limits.memory The memory limit for the MCPO pod.
+      memory: 1Gi
+    requests:
+      ## @param mcpo.resources.requests.cpu The CPU request for the MCPO pod.
+      cpu: 200m
+      ## @param mcpo.resources.requests.memory The memory request for the MCPO pod.
+      memory: 256Mi
+  ## @param mcpo.ports [array] Port configuration for the MCPO service.
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+  ## @param mcpo.replicas The number of pod replicas for the MCPO deployment.
+  replicas: 1
+  ## @param mcpo.type The type of Kubernetes service for MCPO (e.g., ClusterIP, NodePort).
+  type: ClusterIP
+
+## @section Trento MCP Server component
+mcpServer:
+  ingress:
+    ## @param mcpServer.ingress.enabled Enable ingress for the mcpServer service.
+    enabled: true
+    ## @param mcpServer.ingress.ingressClassName The class of the ingress controller to use.
+    ingressClassName: traefik
+    ## @param mcpServer.ingress.tls Enable TLS for the ingress.
+    tls: true
+    ## @param mcpServer.ingress.hosts [array] Ingress hosts configuration for the mcpServer service.
+    hosts:
+      ## The host for the ingress rule.
+      - host: example.com
+        paths:
+          ## The path for the ingress rule.
+          - path: /trento-mcp-server
+            ## The path type for the ingress rule (e.g., Prefix, Exact).
+            pathType: Prefix
+
+  ## @param mcpServer.args [array] Custom command-line arguments for the MCP Server container. If specified, this overrides the individual parameters below.
+  ## Example:
+  # args:
+    # - --port=8080
+    # - --transport=streamable
+    # - --oas-path=https://demo.trento-project.io/api/v1/openapi
+    # - --trento-url=https://demo.trento-project.io
+    # - --header-name=X-TRENTO-MCP-APIKEY
+    # - --tag-filter=MCP
+    # - --verbosity=info
+  args: []
+  ## @param mcpServer.port The port on which the MCP Server listens for incoming connections.
+  port: 8080
+  ## @param mcpServer.transport The transport protocol to use for MCP communication. Options: 'streamable' (default) or 'sse'.
+  transport: streamable
+  ## @param mcpServer.oasPath Path to the OpenAPI specification file within the container. This file defines the available API operations.
+  oasPath: https://demo.trento-project.io/api/v1/openapi
+  ## @param mcpServer.trentoURL URL of the target Trento server to connect to for API operations and data retrieval.
+  trentoURL: https://demo.trento-project.io
+  ## @param mcpServer.headerName The HTTP header name used to pass the Trento API key for authentication with the Trento server.
+  headerName: X-TRENTO-MCP-APIKEY
+  ## @param mcpServer.tagFilter [array] List of OpenAPI tags to filter which operations are exposed as MCP tools. Only operations with at least one matching tag will be available.
+  tagFilter:
+    - MCP
+  ## @param mcpServer.verbosity The logging verbosity level. Options: 'debug', 'info', 'warning', 'error'.
+  verbosity: info
+  ## @param mcpServer.insecureTLS Skip TLS certificate verification when connecting to HTTPS URLs. Use only in development or trusted environments.
+  insecureTLS: false
+
+  image:
+    ## @param mcpServer.image.repository The container image repository for the MCP Server component.
+    repository: ghcr.io/trento-project/trento-mcp-server
+    ## @param mcpServer.image.tag The container image tag for the MCP Server component.
+    tag: latest
+  resources:
+    limits:
+      ## @param mcpServer.resources.limits.cpu The CPU limit for the MCP Server pod.
+      cpu: 500m
+      ## @param mcpServer.resources.limits.memory The memory limit for the MCP Server pod.
+      memory: 512Mi
+    requests:
+      ## @param mcpServer.resources.requests.cpu The CPU request for the MCP Server pod.
+      cpu: 100m
+      ## @param mcpServer.resources.requests.memory The memory request for the MCP Server pod.
+      memory: 128Mi
+  ## @param mcpServer.ports [array] Port configuration for the mcpServer service.
+  ports:
+    - ## The name of the service port.
+      name: http
+      ## The port number for the service.
+      port: 80
+      ## The protocol for the service port.
+      protocol: TCP
+      ## The target port on the pod.
+      targetPort: 8080
+  ## @param mcpServer.replicas The number of pod replicas for the MCP Server deployment.
+  replicas: 1
+  ## @param mcpServer.type The type of Kubernetes service for MCP Server (e.g., ClusterIP, NodePort).
+  type: ClusterIP
+  ## @param mcpServer.env Additional environment variables to set in the MCP Server container.
+  ## Example:
+  # env:
+  #   TRENTO_MCP_PORT: "8080"
+  #   TRENTO_MCP_VERBOSITY: "debug"
+  env: {}
+
+  config:
+    ## @param mcpServer.config.enabled Enable mounting a configuration file for the MCP Server.
+    enabled: false
+    ## @param mcpServer.config.fileName Name of the configuration file inside the config map.
+    fileName: trento-mcp-server.config.yaml
+    ## @param mcpServer.config.mountPath Path where the configuration file will be mounted.
+    mountPath: /etc/trento
+    ## @param mcpServer.config.content YAML content of the configuration file.
+    content: |
+      # Example configuration file (disabled by default)
+      # port: 8080
+      # oasPath: https://demo.trento-project.io/api/v1/openapi
+      # transport: streamable
+      # trentoURL: https://demo.trento-project.io
+      # trentoHeaderName: X-TRENTO-MCP-APIKEY
+      # tagFilter:
+      #   - MCP
+      # verbosity: info
+      # insecureTLS: false

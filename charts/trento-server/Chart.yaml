@@ -16,6 +16,9 @@ dependencies:
   - name: trento-wanda
     version: ">0.0.0-0"
     condition: trento-wanda.enabled
+  - name: trento-mcp-server
+    version: ">0.0.0-0"
+    condition: trento-mcp-server.enabled
   - name: postgresql
     version: ">0.0.0"
     condition: postgresql.enabled
