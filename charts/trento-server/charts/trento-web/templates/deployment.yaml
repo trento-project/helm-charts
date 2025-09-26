@@ -28,15 +28,10 @@ spec:
       serviceAccountName: {{ include "trento-web.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
       {{- if .Values.saml.enabled }}
+      volumes:
       - name: saml-data
         emptyDir: {}
-      {{- end }}
-      {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-      - name: rabbitmq-mtls-certs
-        secret:
-          secretName: rabbitmq-tls-client-web
       {{- end }}
       initContainers:
         - name: create-trento-db
@@ -91,15 +86,10 @@ spec:
         - name: init
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
           {{- if .Values.saml.enabled }}
+          volumeMounts:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
-          {{- end }}
-          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
           {{- end }}
           envFrom:
             - configMapRef:
@@ -113,15 +103,10 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
           {{- if .Values.saml.enabled }}
+          volumeMounts:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
-          {{- end }}
-          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
           {{- end }}
           envFrom:
             - configMapRef:

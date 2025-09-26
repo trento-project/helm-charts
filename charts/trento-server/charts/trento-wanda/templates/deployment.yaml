@@ -35,11 +35,6 @@ spec:
           volumeMounts:
             - name: checks
               mountPath: /usr/share/trento/checks
-          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
-          {{- end }}
         - name: create-wanda-db
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           command:
@@ -107,30 +102,9 @@ spec:
             - name: checks
               mountPath: /usr/share/trento/checks
               readOnly: true
-          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
-            - name: rabbitmq-mtls-certs-ca
-              mountPath: /usr/local/share/ca-certificates/ca.crt
-              subPath: ca.crt
-              readOnly: true
-          {{- end }}
-          lifecycle:
-            postStart:
-              exec:
-                command: ["/bin/sh", "-c", "update-ca-certificates"]
       volumes:
         - name: checks
           emptyDir: {}
-      {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-        - name: rabbitmq-mtls-certs
-          secret:
-            secretName: rabbitmq-tls-client-wanda
-        - name: rabbitmq-mtls-certs-ca
-          secret:
-            secretName: rabbitmq-tls-client-wanda
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
