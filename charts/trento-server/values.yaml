@@ -17,11 +17,6 @@ global:
   rabbitmq:
     name: rabbitmq
     servicePort: 5672
-    auth:
-      username: "trento"
-      password: "trento"
-      tls:
-        enabled: false
 
 ### Sub Charts Specific Values ###
 trento-web:
@@ -72,9 +67,3 @@ rabbitmq:
     enabled: true
   service:
     type: LoadBalancer
-  auth:
-    tls:
-      enabled: false
-      existingSecret: rabbitmq-tls-server
-      existingSecretFullChain: false
-  extraEnvVarsCM: "{{ .Release.Name }}-rabbitmq-configmap"
