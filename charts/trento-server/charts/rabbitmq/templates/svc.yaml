@@ -45,17 +45,7 @@ spec:
   externalIPs: {{- toYaml .Values.service.externalIPs | nindent 4 }}
   {{- end }}
   ports:
-    {{- if or (.Values.service.portEnabled) (not .Values.auth.tls.enabled) }}
-    - name: {{ .Values.service.portNames.amqp }}
-      port: {{ .Values.service.ports.amqp }}
-      targetPort: amqp
-      {{- if (eq .Values.service.type "ClusterIP") }}
-      nodePort: null
-      {{- else if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePorts.amqp)) }}
-      nodePort: {{ .Values.service.nodePorts.amqp }}
-      {{- end }}
-    {{- end }}
-    {{- if .Values.auth.tls.enabled }}
+    {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
     - name: {{ .Values.service.portNames.amqpTls }}
       port: {{ .Values.service.ports.amqpTls }}
       targetPort: amqp-ssl
@@ -63,6 +53,15 @@ spec:
       nodePort: null
       {{- else if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePorts.amqpTls)) }}
       nodePort: {{ .Values.service.nodePorts.amqpTls }}
+      {{- end }}
+    {{- else }}
+    - name: {{ .Values.service.portNames.amqp }}
+      port: {{ .Values.service.ports.amqp }}
+      targetPort: amqp
+      {{- if (eq .Values.service.type "ClusterIP") }}
+      nodePort: null
+      {{- else if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePorts.amqp)) }}
+      nodePort: {{ .Values.service.nodePorts.amqp }}
       {{- end }}
     {{- end }}
     {{- if .Values.service.epmdPortEnabled }}

@@ -22,6 +22,20 @@ global:
   rabbitmq:
     name: rabbitmq
     servicePort: 5672
+    ports:
+      amqp: 5672
+      amqpTls: 5671
+    auth:
+      username: trento
+      password: trento
+    tls:
+      enabled: false
+      mtls:
+        enabled: false
+        certManager:
+          enabled: true
+          issuerName: rabbitmq-ca-issuer
+          issuerKind: Issuer
 
 ### Sub Charts Specific Values ###
 trento-web:
@@ -76,3 +90,19 @@ rabbitmq:
     enabled: true
   service:
     type: LoadBalancer
+
+  extraConfiguration: |
+    {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+    listeners.ssl.default = 5671
+    listeners.tcp = none
+
+    ssl_options.cacertfile = /etc/rabbitmq-tls/ca.crt
+    ssl_options.certfile = /etc/rabbitmq-tls/tls.crt
+    ssl_options.keyfile = /etc/rabbitmq-tls/tls.key
+    ssl_options.verify = verify_peer
+    ssl_options.fail_if_no_peer_cert = true
+    ssl_options.versions.1 = tlsv1.3
+    ssl_options.versions.2 = tlsv1.2
+    {{- else }}
+    listeners.tcp.default = 5672
+    {{- end }}
