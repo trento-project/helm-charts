@@ -22,7 +22,7 @@ spec:
     - name: {{ .Values.service.portNames.epmd }}
       port: {{ .Values.service.ports.epmd }}
       targetPort: epmd
-    {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+    {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
     - name: {{ .Values.service.portNames.amqpTls }}
       port: {{ .Values.service.ports.amqpTls }}
       targetPort: amqp-tls

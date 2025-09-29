@@ -26,8 +26,8 @@ data:
   {{- end }}
   {{- end }}
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
-  {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
-  AMQP_URL: "amqps://trento:trento@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.ports.amqpTls }}?cacertfile=/etc/certs/rabbitmq/ca.crt&certfile=/etc/certs/rabbitmq/tls.crt&keyfile=/etc/certs/rabbitmq/tls.key"
+  {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+  AMQP_URL: "amqps://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.ports.amqpTls }}?cacertfile=/etc/certs/rabbitmq/ca.crt&certfile=/etc/certs/rabbitmq/tls.crt&keyfile=/etc/certs/rabbitmq/tls.key"
   {{- else }}
   AMQP_URL: "amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.ports.amqp }}"
   {{- end }}
