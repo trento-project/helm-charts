@@ -214,7 +214,7 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
             {{- end }}
           ports:
-            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
             - name: amqp-ssl
               containerPort: {{ .Values.containerPorts.amqpTls }}
             {{- else }}
@@ -302,7 +302,7 @@ spec:
             - name: custom-init-scripts-secret
               mountPath: /docker-entrypoint-initdb.d/init-scripts-secret
             {{- end }}
-            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
             - name: rabbitmq-server-cert
               mountPath: /etc/rabbitmq-tls
               readOnly: true
@@ -323,7 +323,7 @@ spec:
               - key: tls.key
                 path: server_key.pem
         {{- end }}
-        {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+        {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
         - name: rabbitmq-server-cert
           secret:
             secretName: {{ include "common.names.fullname" . }}-server-cert

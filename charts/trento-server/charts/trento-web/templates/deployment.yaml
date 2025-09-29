@@ -33,7 +33,7 @@ spec:
       - name: saml-data
         emptyDir: {}
       {{- end }}
-      {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+      {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
       - name: web-client-cert
         secret:
           secretName: {{ include "trento-web.fullname" . }}-client-cert
@@ -113,7 +113,7 @@ spec:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
             {{- end }}
-            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
             - name: web-client-cert
               mountPath: /etc/certs/rabbitmq
               readOnly: true

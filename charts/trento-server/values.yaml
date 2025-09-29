@@ -29,7 +29,6 @@ global:
       username: trento
       password: trento
     tls:
-      enabled: false
       mtls:
         enabled: false
         certManager:

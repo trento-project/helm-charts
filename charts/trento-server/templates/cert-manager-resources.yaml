@@ -1,4 +1,4 @@
-{{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled .Values.global.rabbitmq.tls.mtls.certManager.enabled }}
+{{- if and  .Values.global.rabbitmq.tls.mtls.enabled .Values.global.rabbitmq.tls.mtls.certManager.enabled }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
