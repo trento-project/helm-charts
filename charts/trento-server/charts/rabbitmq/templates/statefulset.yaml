@@ -214,8 +214,13 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
             {{- end }}
           ports:
+            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            - name: amqp-ssl
+              containerPort: {{ .Values.containerPorts.amqpTls }}
+            {{- else }}
             - name: amqp
               containerPort: {{ .Values.containerPorts.amqp }}
+            {{- end }}
             - name: dist
               containerPort: {{ .Values.containerPorts.dist }}
             - name: stats
@@ -225,10 +230,6 @@ spec:
             {{- if .Values.metrics.enabled }}
             - name: metrics
               containerPort: {{ .Values.containerPorts.metrics }}
-            {{- end }}
-            {{- if .Values.auth.tls.enabled }}
-            - name: amqp-ssl
-              containerPort: {{ .Values.containerPorts.amqpTls }}
             {{- end }}
             {{- if .Values.extraContainerPorts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraContainerPorts "context" $) | nindent 12 }}
@@ -301,6 +302,11 @@ spec:
             - name: custom-init-scripts-secret
               mountPath: /docker-entrypoint-initdb.d/init-scripts-secret
             {{- end }}
+            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            - name: rabbitmq-server-cert
+              mountPath: /etc/rabbitmq-tls
+              readOnly: true
+            {{- end }}
         {{- if .Values.sidecars }}
         {{- include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
@@ -316,6 +322,12 @@ spec:
                 path: server_certificate.pem
               - key: tls.key
                 path: server_key.pem
+        {{- end }}
+        {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+        - name: rabbitmq-server-cert
+          secret:
+            secretName: {{ include "common.names.fullname" . }}-server-cert
+            defaultMode: 0400
         {{- end }}
         {{- if and .Values.ldap.tls.enabled .Values.ldap.tls.certificatesSecret }}
         - name: ldap-certs

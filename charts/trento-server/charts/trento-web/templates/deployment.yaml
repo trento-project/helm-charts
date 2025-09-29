@@ -28,10 +28,15 @@ spec:
       serviceAccountName: {{ include "trento-web.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.saml.enabled }}
       volumes:
+      {{- if .Values.saml.enabled }}
       - name: saml-data
         emptyDir: {}
+      {{- end }}
+      {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+      - name: web-client-cert
+        secret:
+          secretName: {{ include "trento-web.fullname" . }}-client-cert
       {{- end }}
       initContainers:
         - name: create-trento-db
@@ -58,7 +63,7 @@ spec:
                   SELECT FROM pg_database WHERE datname = 'trento'
                 )
                 \gexec
-        
+
         - name: create-trento-eventstore
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           command:
@@ -103,11 +108,16 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.saml.enabled }}
           volumeMounts:
+            {{- if .Values.saml.enabled }}
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
-          {{- end }}
+            {{- end }}
+            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            - name: web-client-cert
+              mountPath: /etc/certs/rabbitmq
+              readOnly: true
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "trento-web.fullname" . }}-configmap

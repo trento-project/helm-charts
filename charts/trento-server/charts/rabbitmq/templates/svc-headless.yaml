@@ -22,15 +22,13 @@ spec:
     - name: {{ .Values.service.portNames.epmd }}
       port: {{ .Values.service.ports.epmd }}
       targetPort: epmd
-    {{- if or (.Values.service.portEnabled) (not .Values.auth.tls.enabled) }}
-    - name: {{ .Values.service.portNames.amqp }}
-      port: {{ .Values.service.ports.amqp }}
-      targetPort: amqp
-    {{- end }}
-    {{- if .Values.auth.tls.enabled }}
+    {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
     - name: {{ .Values.service.portNames.amqpTls }}
       port: {{ .Values.service.ports.amqpTls }}
       targetPort: amqp-tls
+    {{- else }}
+    - name: {{ .Values.service.portNames.amqp }}
+      port: {{ .Values.service.ports.amqp }}
     {{- end }}
     - name: {{ .Values.service.portNames.dist }}
       port: {{ .Values.service.ports.dist }}

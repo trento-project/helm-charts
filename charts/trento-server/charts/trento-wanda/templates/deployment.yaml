@@ -102,9 +102,19 @@ spec:
             - name: checks
               mountPath: /usr/share/trento/checks
               readOnly: true
+            {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+            - name: wanda-client-cert
+              mountPath: /etc/certs/rabbitmq
+              readOnly: true
+            {{- end }}
       volumes:
         - name: checks
           emptyDir: {}
+        {{- if and .Values.global.rabbitmq.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
+        - name: wanda-client-cert
+          secret:
+            secretName: {{ include "trento-wanda.fullname" . }}-client-cert
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
