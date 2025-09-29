@@ -27,6 +27,5 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts/
     condition: prometheus.enabled
   - name: rabbitmq
-    version: ~10.3.9
-    repository: https://charts.bitnami.com/bitnami/
+    version: ">0.0.0-0"
     condition: rabbitmq.enabled
