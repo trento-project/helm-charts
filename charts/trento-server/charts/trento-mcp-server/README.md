@@ -6,61 +6,138 @@
 # Helm package for trento-mcp-server
 
 <!-- This readme has been created with this tool: https://github.com/bitnami/readme-generator-for-helm
-    > node "../readme-generator-for-helm/bin/index.js" -v ./charts/trento-server/charts/trento-mcp-server/values.yaml -r ./charts/trento-server/charts/trento-mcp-server/README.md -s ./charts/trento-server/charts/trento-mcp-server/values.schema.json
+    > node "../readme-generator-for-helm/bin/index.js" -v ./charts/trento-server/charts/trento-mcp-server/values.yaml -r ./charts/trento-server/charts/trento-mcp-server/README.md
 -->
 
 ## Parameters
 
+### Global parameters
+
+| Name                                 | Description                               | Value |
+| ------------------------------------ | ----------------------------------------- | ----- |
+| `global.trentoMcpServer.servicePort` | Global service port for Trento MCP Server | `""`  |
+
 ### Common parameters
 
-| Name                      | Description                                                        | Value           |
-| ------------------------- | ------------------------------------------------------------------ | --------------- |
-| `kubernetesClusterDomain` | The Kubernetes cluster domain used for internal service DNS names. | `cluster.local` |
+| Name                    | Description                  | Value                                      |
+| ----------------------- | ---------------------------- | ------------------------------------------ |
+| `image.repository`      | Image repository             | `ghcr.io/trento-project/trento-mcp-server` |
+| `image.tag`             | Image tag                    | `latest`                                   |
+| `image.pullPolicy`      | Image pull policy            | `Always`                                   |
+| `replicaCount`          | Number of replicas to deploy | `1`                                        |
+| `containerPorts.http`   | Port for HTTP traffic        | `5000`                                     |
+| `containerPorts.health` | Port for health check        | `8080`                                     |
 
-### MCPO component
+### MCP Server configuration
 
-| Name                             | Description                                                          | Value                                                  |
-| -------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
-| `mcpo.enabled`                   | Enable the MCPO component.                                           | `false`                                                |
-| `mcpo.args`                      | Command-line arguments for the MCPO container.                       | `["--port=8000","--config","/app/config/config.json"]` |
-| `mcpo.image.repository`          | The container image repository for the MCPO component.               | `ghcr.io/open-webui/mcpo`                              |
-| `mcpo.image.tag`                 | The container image tag for the MCPO component.                      | `main`                                                 |
-| `mcpo.resources.limits.cpu`      | The CPU limit for the MCPO pod.                                      | `1`                                                    |
-| `mcpo.resources.limits.memory`   | The memory limit for the MCPO pod.                                   | `1Gi`                                                  |
-| `mcpo.resources.requests.cpu`    | The CPU request for the MCPO pod.                                    | `200m`                                                 |
-| `mcpo.resources.requests.memory` | The memory request for the MCPO pod.                                 | `256Mi`                                                |
-| `mcpo.ports`                     | Port configuration for the MCPO service.                             | `[]`                                                   |
-| `mcpo.replicas`                  | The number of pod replicas for the MCPO deployment.                  | `1`                                                    |
-| `mcpo.type`                      | The type of Kubernetes service for MCPO (e.g., ClusterIP, NodePort). | `ClusterIP`                                            |
+| Name                          | Description                                                                      | Value                                                                                                                       |
+| ----------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `mcpServer.args`              | Array of arguments to pass to the MCP server container, overrides other settings | `[]`                                                                                                                        |
+| `mcpServer.enableHealthCheck` | Enable health check endpoint                                                     | `true`                                                                                                                      |
+| `mcpServer.transport`         | Transport protocol for the server                                                | `streamable`                                                                                                                |
+| `mcpServer.oasPath`           | List of paths to OpenAPI specification files                                     | `["https://www.trento-project.io/web/swaggerui/openapi.json","https://www.trento-project.io/wanda/swaggerui/openapi.json"]` |
+| `mcpServer.trentoURL`         | URL of the Trento server                                                         | `https://demo.trento-project.io`                                                                                            |
+| `mcpServer.headerName`        | Name of the header for the API key                                               | `X-TRENTO-MCP-APIKEY`                                                                                                       |
+| `mcpServer.tagFilter`         | List of tags to filter                                                           | `["MCP"]`                                                                                                                   |
+| `mcpServer.verbosity`         | Log level verbosity                                                              | `info`                                                                                                                      |
+| `mcpServer.insecureTLS`       | Disable TLS certificate verification                                             | `false`                                                                                                                     |
+| `config.enabled`              | Enable using a custom configuration file                                         | `false`                                                                                                                     |
+| `config.fileName`             | Name of the configuration file                                                   | `trento-mcp-server.config.yaml`                                                                                             |
+| `config.mountPath`            | Path to mount the configuration file                                             | `/etc/trento`                                                                                                               |
+| `config.content`              | Content of the configuration file                                                | `""`                                                                                                                        |
+| `env`                         | Environment variables to pass to the container                                   | `{}`                                                                                                                        |
 
-### Trento MCP Server component
+### Resource configuration
 
-| Name                                  | Description                                                                                                                                 | Value                                                  |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `mcpServer.ingress.enabled`           | Enable ingress for the mcpServer service.                                                                                                   | `true`                                                 |
-| `mcpServer.ingress.ingressClassName`  | The class of the ingress controller to use.                                                                                                 | `traefik`                                              |
-| `mcpServer.ingress.tls`               | Enable TLS for the ingress.                                                                                                                 | `true`                                                 |
-| `mcpServer.ingress.hosts`             | Ingress hosts configuration for the mcpServer service.                                                                                      | `[]`                                                   |
-| `mcpServer.args`                      | Custom command-line arguments for the MCP Server container. If specified, this overrides the individual parameters below.                   | `[]`                                                   |
-| `mcpServer.port`                      | The port on which the MCP Server listens for incoming connections.                                                                          | `8080`                                                 |
-| `mcpServer.transport`                 | The transport protocol to use for MCP communication. Options: 'streamable' (default) or 'sse'.                                              | `streamable`                                           |
-| `mcpServer.oasPath`                   | Path to the OpenAPI specification file within the container. This file defines the available API operations.                                | `https://demo.trento-project.io/api/v1/openapi`        |
-| `mcpServer.trentoURL`                 | URL of the target Trento server to connect to for API operations and data retrieval.                                                        | `https://demo.trento-project.io`                       |
-| `mcpServer.headerName`                | The HTTP header name used to pass the Trento API key for authentication with the Trento server.                                             | `X-TRENTO-MCP-APIKEY`                                  |
-| `mcpServer.tagFilter`                 | List of OpenAPI tags to filter which operations are exposed as MCP tools. Only operations with at least one matching tag will be available. | `[]`                                                   |
-| `mcpServer.verbosity`                 | The logging verbosity level. Options: 'debug', 'info', 'warning', 'error'.                                                                  | `info`                                                 |
-| `mcpServer.insecureTLS`               | Skip TLS certificate verification when connecting to HTTPS URLs. Use only in development or trusted environments.                           | `false`                                                |
-| `mcpServer.image.repository`          | The container image repository for the MCP Server component.                                                                                | `ghcr.io/trento-project/trento-mcp-server`             |
-| `mcpServer.image.tag`                 | The container image tag for the MCP Server component.                                                                                       | `latest`                                               |
-| `mcpServer.resources.limits.cpu`      | The CPU limit for the MCP Server pod.                                                                                                       | `500m`                                                 |
-| `mcpServer.resources.limits.memory`   | The memory limit for the MCP Server pod.                                                                                                    | `512Mi`                                                |
-| `mcpServer.resources.requests.cpu`    | The CPU request for the MCP Server pod.                                                                                                     | `100m`                                                 |
-| `mcpServer.resources.requests.memory` | The memory request for the MCP Server pod.                                                                                                  | `128Mi`                                                |
-| `mcpServer.ports`                     | Port configuration for the mcpServer service.                                                                                               | `[]`                                                   |
-| `mcpServer.replicas`                  | The number of pod replicas for the MCP Server deployment.                                                                                   | `1`                                                    |
-| `mcpServer.type`                      | The type of Kubernetes service for MCP Server (e.g., ClusterIP, NodePort).                                                                  | `ClusterIP`                                            |
-| `mcpServer.env`                       | Additional environment variables to set in the MCP Server container.                                                                        | `{}`                                                   |
-| `mcpServer.config.enabled`            | Enable mounting a configuration file for the MCP Server.                                                                                    | `false`                                                |
-| `mcpServer.config.fileName`           | Name of the configuration file inside the config map.                                                                                       | `trento-mcp-server.config.yaml`                        |
-| `mcpServer.config.mountPath`          | Path where the configuration file will be mounted.                                                                                          | `/etc/trento`                                          |
-| `mcpServer.config.content`            | YAML content of the configuration file.                                                                                                     | `# Example configuration file (disabled by default)`   |
+| Name                                   | Description               | Value       |
+| -------------------------------------- | ------------------------- | ----------- |
+| `resources.limits.cpu`                 | CPU limit                 | `500m`      |
+| `resources.limits.memory`              | Memory limit              | `512Mi`     |
+| `resources.limits.ephemeral-storage`   | Ephemeral storage limit   | `512Mi`     |
+| `resources.requests.cpu`               | CPU request               | `100m`      |
+| `resources.requests.memory`            | Memory request            | `128Mi`     |
+| `resources.requests.ephemeral-storage` | Ephemeral storage request | `128Mi`     |
+| `service.type`                         | Service type              | `ClusterIP` |
+| `service.port`                         | Service port              | `5000`      |
+
+### Ingress configuration
+
+| Name                  | Description               | Value   |
+| --------------------- | ------------------------- | ------- |
+| `ingress.enabled`     | Enable ingress            | `false` |
+| `ingress.className`   | Ingress class name        | `""`    |
+| `ingress.annotations` | Ingress annotations       | `{}`    |
+| `ingress.hosts`       | Ingress host rules        | `[]`    |
+| `ingress.tls`         | Ingress TLS configuration | `[]`    |
+
+### Probes
+
+| Name                                 | Description                              | Value     |
+| ------------------------------------ | ---------------------------------------- | --------- |
+| `startupProbe.enabled`               | Enable startup probe                     | `false`   |
+| `startupProbe.path`                  | Path to access on the HTTP server        | `/livez`  |
+| `startupProbe.port`                  | Port for startupProbe                    | `health`  |
+| `startupProbe.initialDelaySeconds`   | Initial delay seconds for startupProbe   | `180`     |
+| `startupProbe.periodSeconds`         | Period seconds for startupProbe          | `20`      |
+| `startupProbe.timeoutSeconds`        | Timeout seconds for startupProbe         | `5`       |
+| `startupProbe.failureThreshold`      | Failure threshold for startupProbe       | `6`       |
+| `startupProbe.successThreshold`      | Success threshold for startupProbe       | `1`       |
+| `livenessProbe.enabled`              | Enable liveness probe                    | `true`    |
+| `livenessProbe.path`                 | Path to access on the HTTP server        | `/livez`  |
+| `livenessProbe.port`                 | Port for livenessProbe                   | `health`  |
+| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe  | `180`     |
+| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe         | `20`      |
+| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe        | `5`       |
+| `livenessProbe.failureThreshold`     | Failure threshold for livenessProbe      | `6`       |
+| `livenessProbe.successThreshold`     | Success threshold for livenessProbe      | `1`       |
+| `readinessProbe.enabled`             | Enable readiness probe                   | `true`    |
+| `readinessProbe.path`                | Path to access on the HTTP server        | `/readyz` |
+| `readinessProbe.port`                | Port for readinessProbe                  | `health`  |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe | `30`      |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe        | `10`      |
+| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe       | `5`       |
+| `readinessProbe.failureThreshold`    | Failure threshold for readinessProbe     | `6`       |
+| `readinessProbe.successThreshold`    | Success threshold for readinessProbe     | `1`       |
+
+### Common pod template settings
+
+| Name                         | Description                                           | Value  |
+| ---------------------------- | ----------------------------------------------------- | ------ |
+| `imagePullSecrets`           | Image pull secrets for private registries             | `[]`   |
+| `nameOverride`               | Partially override the chart name                     | `""`   |
+| `fullnameOverride`           | Fully override the release name                       | `""`   |
+| `serviceAccount.create`      | Specifies whether a service account should be created | `true` |
+| `serviceAccount.annotations` | Annotations to add to the service account             | `{}`   |
+| `serviceAccount.name`        | The name of the service account to use                | `""`   |
+| `podAnnotations`             | Additional annotations for the pod metadata           | `{}`   |
+| `nodeSelector`               | Node selector for pod assignment                      | `{}`   |
+| `tolerations`                | Tolerations for pod assignment                        | `[]`   |
+| `affinity`                   | Affinity rules for pod assignment                     | `{}`   |
+
+### Network Policies
+
+| Name                                    | Description                                                     | Value  |
+| --------------------------------------- | --------------------------------------------------------------- | ------ |
+| `networkPolicy.enabled`                 | Specifies whether a NetworkPolicy should be created             | `true` |
+| `networkPolicy.allowExternal`           | Don't require server label for connections                      | `true` |
+| `networkPolicy.allowExternalEgress`     | Allow the pod to access any range of port and all destinations. | `true` |
+| `networkPolicy.ingressNSMatchLabels`    | Labels to match to allow traffic from other namespaces          | `{}`   |
+| `networkPolicy.ingressNSPodMatchLabels` | Pod labels to match to allow traffic from other namespaces      | `{}`   |
+
+### Security Context
+
+| Name                                                | Description                                                       | Value            |
+| --------------------------------------------------- | ----------------------------------------------------------------- | ---------------- |
+| `podSecurityContext.fsGroupChangePolicy`            | Set filesystem group change policy                                | `Always`         |
+| `podSecurityContext.sysctls`                        | Set kernel settings using the sysctl interface                    | `[]`             |
+| `podSecurityContext.supplementalGroups`             | Set filesystem extra groups                                       | `[]`             |
+| `podSecurityContext.fsGroup`                        | Set server pod's Security Context fsGroup                         | `1001`           |
+| `containerSecurityContext.seLinuxOptions`           | Set SELinux options in container                                  | `{}`             |
+| `containerSecurityContext.runAsUser`                | Set server containers' Security Context runAsUser                 | `10001`          |
+| `containerSecurityContext.runAsGroup`               | Set server containers' Security Context runAsGroup                | `10001`          |
+| `containerSecurityContext.runAsNonRoot`             | Set Controller container's Security Context runAsNonRoot          | `true`           |
+| `containerSecurityContext.privileged`               | Set primary container's Security Context privileged               | `false`          |
+| `containerSecurityContext.allowPrivilegeEscalation` | Set primary container's Security Context allowPrivilegeEscalation | `false`          |
+| `containerSecurityContext.readOnlyRootFilesystem`   | Set primary container's Security Context readOnlyRootFilesystem   | `true`           |
+| `containerSecurityContext.capabilities.drop`        | List of capabilities to be dropped                                | `["ALL"]`        |
+| `containerSecurityContext.seccompProfile.type`      | Set container's Security Context seccomp profile                  | `RuntimeDefault` |
