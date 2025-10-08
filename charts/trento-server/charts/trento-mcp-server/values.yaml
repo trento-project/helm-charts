@@ -1,148 +1,255 @@
 # Copyright 2025 SUSE LLC
 # SPDX-License-Identifier: Apache-2.0
+---
+## @section Global parameters
+##
+## @param global.trentoMcpServer.servicePort Global service port for Trento MCP Server
+global:
+  trentoMcpServer:
+    servicePort: ""
 
 ## @section Common parameters
+##
+## @param image.repository Image repository
+## @param image.tag Image tag
+## @param image.pullPolicy Image pull policy
+image:
+  repository: ghcr.io/trento-project/trento-mcp-server
+  tag: latest
+  pullPolicy: Always
 
-## @param kubernetesClusterDomain The Kubernetes cluster domain used for internal service DNS names.
-kubernetesClusterDomain: cluster.local
+## @param replicaCount Number of replicas to deploy
+replicaCount: 1
 
-## @section MCPO component
-mcpo:
-  ## @param mcpo.enabled Enable the MCPO component.
-  enabled: false
-  ## @param mcpo.args Command-line arguments for the MCPO container.
-  args:
-    - --port=8000
-    - --config
-    - /app/config/config.json
-  image:
-    ## @param mcpo.image.repository The container image repository for the MCPO component.
-    repository: ghcr.io/open-webui/mcpo
-    ## @param mcpo.image.tag The container image tag for the MCPO component.
-    tag: main
-  resources:
-    limits:
-      ## @param mcpo.resources.limits.cpu The CPU limit for the MCPO pod.
-      cpu: "1"
-      ## @param mcpo.resources.limits.memory The memory limit for the MCPO pod.
-      memory: 1Gi
-    requests:
-      ## @param mcpo.resources.requests.cpu The CPU request for the MCPO pod.
-      cpu: 200m
-      ## @param mcpo.resources.requests.memory The memory request for the MCPO pod.
-      memory: 256Mi
-  ## @param mcpo.ports [array] Port configuration for the MCPO service.
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: 8000
-  ## @param mcpo.replicas The number of pod replicas for the MCPO deployment.
-  replicas: 1
-  ## @param mcpo.type The type of Kubernetes service for MCPO (e.g., ClusterIP, NodePort).
-  type: ClusterIP
+## @param containerPorts.http Port for HTTP traffic
+## @param containerPorts.health Port for health check
+containerPorts:
+  http: 5000
+  health: 8080
 
-## @section Trento MCP Server component
+## @section MCP Server configuration
+##
+## @param mcpServer.args Array of arguments to pass to the MCP server container, overrides other settings
+## @param mcpServer.enableHealthCheck Enable health check endpoint
+## @param mcpServer.transport Transport protocol for the server
+## @param mcpServer.oasPath List of paths to OpenAPI specification files
+## @param mcpServer.trentoURL URL of the Trento server
+## @param mcpServer.headerName Name of the header for the API key
+## @param mcpServer.tagFilter List of tags to filter
+## @param mcpServer.verbosity Log level verbosity
+## @param mcpServer.insecureTLS Disable TLS certificate verification
 mcpServer:
-  ingress:
-    ## @param mcpServer.ingress.enabled Enable ingress for the mcpServer service.
-    enabled: true
-    ## @param mcpServer.ingress.ingressClassName The class of the ingress controller to use.
-    ingressClassName: traefik
-    ## @param mcpServer.ingress.tls Enable TLS for the ingress.
-    tls: true
-    ## @param mcpServer.ingress.hosts [array] Ingress hosts configuration for the mcpServer service.
-    hosts:
-      ## The host for the ingress rule.
-      - host: example.com
-        paths:
-          ## The path for the ingress rule.
-          - path: /trento-mcp-server
-            ## The path type for the ingress rule (e.g., Prefix, Exact).
-            pathType: Prefix
-
-  ## @param mcpServer.args [array] Custom command-line arguments for the MCP Server container. If specified, this overrides the individual parameters below.
-  ## Example:
-  # args:
-    # - --port=8080
-    # - --transport=streamable
-    # - --oas-path=https://demo.trento-project.io/api/v1/openapi
-    # - --trento-url=https://demo.trento-project.io
-    # - --header-name=X-TRENTO-MCP-APIKEY
-    # - --tag-filter=MCP
-    # - --verbosity=info
   args: []
-  ## @param mcpServer.port The port on which the MCP Server listens for incoming connections.
-  port: 8080
-  ## @param mcpServer.transport The transport protocol to use for MCP communication. Options: 'streamable' (default) or 'sse'.
+  enableHealthCheck: true
   transport: streamable
-  ## @param mcpServer.oasPath Path to the OpenAPI specification file within the container. This file defines the available API operations.
-  oasPath: https://demo.trento-project.io/api/v1/openapi
-  ## @param mcpServer.trentoURL URL of the target Trento server to connect to for API operations and data retrieval.
+  oasPath:
+    - https://www.trento-project.io/web/swaggerui/openapi.json
+    - https://www.trento-project.io/wanda/swaggerui/openapi.json
   trentoURL: https://demo.trento-project.io
-  ## @param mcpServer.headerName The HTTP header name used to pass the Trento API key for authentication with the Trento server.
   headerName: X-TRENTO-MCP-APIKEY
-  ## @param mcpServer.tagFilter [array] List of OpenAPI tags to filter which operations are exposed as MCP tools. Only operations with at least one matching tag will be available.
   tagFilter:
     - MCP
-  ## @param mcpServer.verbosity The logging verbosity level. Options: 'debug', 'info', 'warning', 'error'.
   verbosity: info
-  ## @param mcpServer.insecureTLS Skip TLS certificate verification when connecting to HTTPS URLs. Use only in development or trusted environments.
   insecureTLS: false
 
-  image:
-    ## @param mcpServer.image.repository The container image repository for the MCP Server component.
-    repository: ghcr.io/trento-project/trento-mcp-server
-    ## @param mcpServer.image.tag The container image tag for the MCP Server component.
-    tag: latest
-  resources:
-    limits:
-      ## @param mcpServer.resources.limits.cpu The CPU limit for the MCP Server pod.
-      cpu: 500m
-      ## @param mcpServer.resources.limits.memory The memory limit for the MCP Server pod.
-      memory: 512Mi
-    requests:
-      ## @param mcpServer.resources.requests.cpu The CPU request for the MCP Server pod.
-      cpu: 100m
-      ## @param mcpServer.resources.requests.memory The memory request for the MCP Server pod.
-      memory: 128Mi
-  ## @param mcpServer.ports [array] Port configuration for the mcpServer service.
-  ports:
-    - ## The name of the service port.
-      name: http
-      ## The port number for the service.
-      port: 80
-      ## The protocol for the service port.
-      protocol: TCP
-      ## The target port on the pod.
-      targetPort: 8080
-  ## @param mcpServer.replicas The number of pod replicas for the MCP Server deployment.
-  replicas: 1
-  ## @param mcpServer.type The type of Kubernetes service for MCP Server (e.g., ClusterIP, NodePort).
-  type: ClusterIP
-  ## @param mcpServer.env Additional environment variables to set in the MCP Server container.
-  ## Example:
-  # env:
-  #   TRENTO_MCP_PORT: "8080"
-  #   TRENTO_MCP_VERBOSITY: "debug"
-  env: {}
+## @param config.enabled Enable using a custom configuration file
+## @param config.fileName Name of the configuration file
+## @param config.mountPath Path to mount the configuration file
+## @param config.content Content of the configuration file
+config:
+  enabled: false
+  fileName: trento-mcp-server.config.yaml
+  mountPath: /etc/trento
+  content: ""
 
-  config:
-    ## @param mcpServer.config.enabled Enable mounting a configuration file for the MCP Server.
-    enabled: false
-    ## @param mcpServer.config.fileName Name of the configuration file inside the config map.
-    fileName: trento-mcp-server.config.yaml
-    ## @param mcpServer.config.mountPath Path where the configuration file will be mounted.
-    mountPath: /etc/trento
-    ## @param mcpServer.config.content YAML content of the configuration file.
-    content: |
-      # Example configuration file (disabled by default)
-      # port: 8080
-      # oasPath: https://demo.trento-project.io/api/v1/openapi
-      # transport: streamable
-      # trentoURL: https://demo.trento-project.io
-      # trentoHeaderName: X-TRENTO-MCP-APIKEY
-      # tagFilter:
-      #   - MCP
-      # verbosity: info
-      # insecureTLS: false
+## @param env Environment variables to pass to the container
+env: {}
+
+## @section Resource configuration
+##
+## @param resources.limits.cpu CPU limit
+## @param resources.limits.memory Memory limit
+## @param resources.limits.ephemeral-storage Ephemeral storage limit
+## @param resources.requests.cpu CPU request
+## @param resources.requests.memory Memory request
+## @param resources.requests.ephemeral-storage Ephemeral storage request
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+    ephemeral-storage: "512Mi"
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: "128Mi"
+
+## Service parameters
+## @param service.type Service type
+## @param service.port Service port
+service:
+  type: ClusterIP
+  port: 5000
+
+## @section Ingress configuration
+##
+## @param ingress.enabled Enable ingress
+## @param ingress.className Ingress class name
+## @param ingress.annotations [object] Ingress annotations
+## @param ingress.hosts [array] Ingress host rules
+## @param ingress.tls [array] Ingress TLS configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    []
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+
+## @section Probes
+##
+## @param startupProbe.enabled Enable startup probe
+## @param startupProbe.path Path to access on the HTTP server
+## @param startupProbe.port Port for startupProbe
+## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+## @param startupProbe.periodSeconds Period seconds for startupProbe
+## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+## @param startupProbe.failureThreshold Failure threshold for startupProbe
+## @param startupProbe.successThreshold Success threshold for startupProbe
+startupProbe:
+  enabled: false
+  path: /livez
+  port: health
+  initialDelaySeconds: 180
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## @param livenessProbe.enabled Enable liveness probe
+## @param livenessProbe.path Path to access on the HTTP server
+## @param livenessProbe.port Port for livenessProbe
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+## @param livenessProbe.successThreshold Success threshold for livenessProbe
+livenessProbe:
+  enabled: true
+  path: /livez
+  port: health
+  initialDelaySeconds: 180
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## @param readinessProbe.enabled Enable readiness probe
+## @param readinessProbe.path Path to access on the HTTP server
+## @param readinessProbe.port Port for readinessProbe
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+## @param readinessProbe.successThreshold Success threshold for readinessProbe
+readinessProbe:
+  enabled: true
+  path: /readyz
+  port: health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## @section Common pod template settings
+##
+## @param imagePullSecrets Image pull secrets for private registries
+imagePullSecrets: []
+
+## @param nameOverride Partially override the chart name
+nameOverride: ""
+
+## @param fullnameOverride Fully override the release name
+fullnameOverride: ""
+
+## @param serviceAccount.create Specifies whether a service account should be created
+## @param serviceAccount.annotations Annotations to add to the service account
+## @param serviceAccount.name The name of the service account to use
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+## @param podAnnotations Additional annotations for the pod metadata
+podAnnotations: {}
+
+## @param nodeSelector Node selector for pod assignment
+nodeSelector: {}
+
+## @param tolerations Tolerations for pod assignment
+tolerations: []
+
+## @param affinity Affinity rules for pod assignment
+affinity: {}
+
+## @section Network Policies
+##
+## Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+## @param networkPolicy.enabled Specifies whether a NetworkPolicy should be created
+## @param networkPolicy.allowExternal Don't require server label for connections
+## @param networkPolicy.allowExternalEgress Allow the pod to access any range of port and all destinations.
+## @param networkPolicy.ingressNSMatchLabels [object] Labels to match to allow traffic from other namespaces
+## @param networkPolicy.ingressNSPodMatchLabels [object] Pod labels to match to allow traffic from other namespaces
+networkPolicy:
+  enabled: true
+  allowExternal: true
+  allowExternalEgress: true
+  ingressNSMatchLabels: {}
+  ingressNSPodMatchLabels: {}
+
+## @section Security Context
+##
+## Configure Pods Security Context
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
+## @param podSecurityContext.sysctls Set kernel settings using the sysctl interface
+## @param podSecurityContext.supplementalGroups Set filesystem extra groups
+## @param podSecurityContext.fsGroup Set server pod's Security Context fsGroup
+##
+podSecurityContext:
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+
+## Configure Container Security Context
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
+## @param containerSecurityContext.runAsUser Set server containers' Security Context runAsUser
+## @param containerSecurityContext.runAsGroup Set server containers' Security Context runAsGroup
+## @param containerSecurityContext.runAsNonRoot Set Controller container's Security Context runAsNonRoot
+## @param containerSecurityContext.privileged Set primary container's Security Context privileged
+## @param containerSecurityContext.allowPrivilegeEscalation Set primary container's Security Context allowPrivilegeEscalation
+## @param containerSecurityContext.readOnlyRootFilesystem Set primary container's Security Context readOnlyRootFilesystem
+## @param containerSecurityContext.capabilities.drop List of capabilities to be dropped
+## @param containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
+containerSecurityContext:
+  seLinuxOptions: {}
+  runAsUser: 10001
+  runAsGroup: 10001
+  runAsNonRoot: true
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"

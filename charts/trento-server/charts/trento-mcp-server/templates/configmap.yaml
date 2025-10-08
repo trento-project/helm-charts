@@ -1,13 +1,16 @@
-# Copyright 2025 SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
-
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+---
+{{- if .Values.config.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "trento-mcp-server.fullname" . }}
-  namespace: {{ .Release.Namespace }}
   labels:
-  {{- include "trento-mcp-server.labels" . | nindent 4 }}
+    {{- include "trento-mcp-server.labels" . | nindent 4 }}
 data:
-  {{ .Values.mcpServer.config.fileName }}: |
-{{ .Values.mcpServer.config.content | indent 4 }}
+  {{ .Values.config.fileName }}: |
+{{ .Values.config.content | nindent 6 }}
+{{- end }}

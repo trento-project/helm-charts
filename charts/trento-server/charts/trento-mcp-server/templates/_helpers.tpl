@@ -1,7 +1,7 @@
-{*
- Copyright 2025 SUSE LLC
- SPDX-License-Identifier: Apache-2.0
-*}
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
 
 {{/*
 Expand the name of the chart.
@@ -38,6 +38,7 @@ Create chart name and version as used by the chart label.
 {{/*
 Common labels
 */}}
+
 {{- define "trento-mcp-server.labels" -}}
 helm.sh/chart: {{ include "trento-mcp-server.chart" . }}
 {{ include "trento-mcp-server.selectorLabels" . }}
@@ -65,3 +66,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return Trento MCP Server service port
+*/}}
+{{- define "trento-mcp-server.port" -}}
+{{- if .Values.global.trentoMcpServer.servicePort }}
+    {{- .Values.global.trentoMcpServer.servicePort -}}
+{{- else -}}
+    {{- .Values.service.port -}}
+{{- end -}}
+{{- end -}}

@@ -1,43 +1,71 @@
-# Copyright 2025 SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
-
-{{- if .Values.mcpServer.ingress.enabled }}
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+---
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "trento-mcp-server.fullname" . -}}
+{{- $svcPort := include "trento-mcp-server.port" . }}
+{{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
 kind: Ingress
 metadata:
-  name: {{ include "trento-mcp-server.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ $fullName }}
   labels:
-  {{- include "trento-mcp-server.labels" . | nindent 4 }}
+    {{- include "trento-mcp-server.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
   annotations:
-  {{- with .Values.mcpServer.ingress.annotations -}}
-    {{ toYaml . | nindent 4 }}
-  {{- end -}}
-    {{- if eq .Values.mcpServer.ingress.ingressClassName "traefik" }}
+    {{- toYaml . | nindent 4 }}
+    {{- if eq $.Values.ingress.className "traefik" }}
     kubernetes.io/ingress.class: traefik
     # This middleware strips the prefix from the request path
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ include "trento-mcp-server.fullname" . }}-strip-prefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Release.Namespace }}-{{ include "trento-mcp-server.fullname" $ }}-strip-prefix@kubernetescrd
     {{- end }}
+  {{- end }}
 spec:
-  ingressClassName: traefik
-  rules:
-{{- range .Values.mcpServer.ingress.hosts }}
-  - host: {{ .host }}
-    http:
-      paths:
-      {{- range .paths }}
-      - path: {{ .path }}
-        pathType: {{ .pathType }}
-        backend:
-          service:
-            name: {{ include "trento-mcp-server.fullname" $ }}
-            port:
-              name: http
-      {{- end }}
-{{- end }}
+  {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
   tls:
-  - hosts:
-  {{- range .Values.mcpServer.ingress.hosts }}
-    - {{ .host }}
-{{- end }}
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion) }}
+            pathType: {{ .pathType }}
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+              {{- else }}
+              serviceName: {{ $fullName }}
+              servicePort: {{ $svcPort }}
+              {{- end }}
+          {{- end }}
+    {{- end }}
 {{- end }}
