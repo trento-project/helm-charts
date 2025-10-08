@@ -70,7 +70,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ....
 
 Please refer to the
-link:https://rancher.com/docs/k3s/latest/en/installation/[K3S official documentation] 
+link:https://rancher.com/docs/k3s/latest/en/installation/[K3S official documentation]
 for more information about the installation.
 
 ==== Install Helm and chart dependencies
@@ -133,3 +133,19 @@ helm install trento . --set trento-web.image.repository="ghcr.io/myrepo/trento-w
 ....
 
 Please refer to the the subcharts `+values.yaml+` for an advanced usage.
+
+==== MCP Server Chart
+
+The `trento-mcp-server` subchart is disabled by default. You can enable it and configure it to point to your Trento server instance.
+
+Remember to replace `<your-trento-url>` with the public URL of your Trento server.
+[source,shell]
+....
+helm install trento . --set trento-mcp-server.enabled=true --set trento-mcp-server.mcpServer.trentoURL="https://<your-trento-url>" --set trento-mcp-server.mcpServer.oasPath[0]="https://<your-trento-url>/api/all/openapi"
+....
+
+For a full list of configurable parameters, you can check the subchart's README by running:
+[source,shell]
+....
+helm show readme ./charts/trento-server/charts/trento-mcp-server
+....
