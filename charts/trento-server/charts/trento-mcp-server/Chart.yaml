@@ -1,6 +1,5 @@
 # Copyright 2025 SUSE LLC
 # SPDX-License-Identifier: Apache-2.0
----
 apiVersion: v2
 name: trento-mcp-server
 description: Trento MCP Server chart

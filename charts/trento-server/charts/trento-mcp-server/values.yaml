@@ -1,6 +1,6 @@
 # Copyright 2025 SUSE LLC
 # SPDX-License-Identifier: Apache-2.0
----
+
 ## @section Global parameters
 ##
 ## @param global.trentoMcpServer.servicePort Global service port for Trento MCP Server
