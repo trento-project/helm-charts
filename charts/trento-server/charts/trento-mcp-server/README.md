@@ -11,50 +11,34 @@
 
 ## Parameters
 
-### Global parameters
-
-| Name                                 | Description                               | Value |
-| ------------------------------------ | ----------------------------------------- | ----- |
-| `global.trentoMcpServer.servicePort` | Global service port for Trento MCP Server | `""`  |
-
 ### Common parameters
 
-| Name                    | Description                  | Value                                      |
-| ----------------------- | ---------------------------- | ------------------------------------------ |
-| `image.repository`      | Image repository             | `ghcr.io/trento-project/trento-mcp-server` |
-| `image.tag`             | Image tag                    | `latest`                                   |
-| `image.pullPolicy`      | Image pull policy            | `Always`                                   |
-| `replicaCount`          | Number of replicas to deploy | `1`                                        |
-| `containerPorts.http`   | Port for HTTP traffic        | `5000`                                     |
-| `containerPorts.health` | Port for health check        | `8080`                                     |
+| Name                    | Description                       | Value                                      |
+| ----------------------- | --------------------------------- | ------------------------------------------ |
+| `image.repository`      | Image repository                  | `ghcr.io/trento-project/trento-mcp-server` |
+| `image.tag`             | Image tag                         | `latest`                                   |
+| `image.pullPolicy`      | Image pull policy                 | `Always`                                   |
+| `clusterDomain`         | Default Kubernetes cluster domain | `cluster.local`                            |
+| `replicaCount`          | Number of replicas to deploy      | `1`                                        |
+| `containerPorts.http`   | Port for MCP HTTP traffic         | `5000`                                     |
+| `containerPorts.health` | Port for health check             | `8080`                                     |
 
 ### MCP Server configuration
 
-| Name                          | Description                                                                      | Value                                                                                                                       |
-| ----------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `mcpServer.args`              | Array of arguments to pass to the MCP server container, overrides other settings | `[]`                                                                                                                        |
-| `mcpServer.enableHealthCheck` | Enable health check endpoint                                                     | `true`                                                                                                                      |
-| `mcpServer.transport`         | Transport protocol for the server                                                | `streamable`                                                                                                                |
-| `mcpServer.oasPath`           | List of paths to OpenAPI specification files                                     | `["https://www.trento-project.io/web/swaggerui/openapi.json","https://www.trento-project.io/wanda/swaggerui/openapi.json"]` |
-| `mcpServer.trentoURL`         | URL of the Trento server                                                         | `https://demo.trento-project.io`                                                                                            |
-| `mcpServer.headerName`        | Name of the header for the API key                                               | `X-TRENTO-MCP-APIKEY`                                                                                                       |
-| `mcpServer.tagFilter`         | List of tags to filter                                                           | `["MCP"]`                                                                                                                   |
-| `mcpServer.verbosity`         | Log level verbosity                                                              | `info`                                                                                                                      |
-| `mcpServer.insecureTLS`       | Disable TLS certificate verification                                             | `false`                                                                                                                     |
-| `env`                         | Environment variables to pass to the container                                   | `{}`                                                                                                                        |
-
-### Resource configuration
-
-| Name                                   | Description               | Value       |
-| -------------------------------------- | ------------------------- | ----------- |
-| `resources.limits.cpu`                 | CPU limit                 | `500m`      |
-| `resources.limits.memory`              | Memory limit              | `512Mi`     |
-| `resources.limits.ephemeral-storage`   | Ephemeral storage limit   | `512Mi`     |
-| `resources.requests.cpu`               | CPU request               | `100m`      |
-| `resources.requests.memory`            | Memory request            | `128Mi`     |
-| `resources.requests.ephemeral-storage` | Ephemeral storage request | `128Mi`     |
-| `service.type`                         | Service type              | `ClusterIP` |
-| `service.port`                         | Service port              | `5000`      |
+| Name                          | Description                                                                                                                         | Value                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `mcpServer.args`              | Array of arguments to pass to the MCP server container, overrides other settings                                                    | `[]`                  |
+| `mcpServer.enableHealthCheck` | Enable health check endpoint                                                                                                        | `true`                |
+| `mcpServer.headerName`        | Name of the header the MCP client should use to pass the Trento Personal Access Token                                               | `X-TRENTO-MCP-APIKEY` |
+| `mcpServer.insecureTLS`       | Disable TLS certificate verification                                                                                                | `false`               |
+| `mcpServer.oasPath`           | List of paths to OpenAPI specification files, if empty defaults to Trento Web and Wanda services                                    | `[]`                  |
+| `mcpServer.tagFilter`         | List of tags to filter                                                                                                              | `["MCP"]`             |
+| `mcpServer.transport`         | Transport protocol for the server                                                                                                   | `streamable`          |
+| `mcpServer.trentoURL`         | URL of the Trento server, if empty defaults to the value of the TRENTO_WEB_ORIGIN environment variable of the Trento Web deployment | `""`                  |
+| `mcpServer.verbosity`         | Log level verbosity                                                                                                                 | `info`                |
+| `env`                         | Environment variables to pass to the container                                                                                      | `{}`                  |
+| `service.type`                | Service type                                                                                                                        | `ClusterIP`           |
+| `service.port`                | Service port                                                                                                                        | `5000`                |
 
 ### Ingress configuration
 
@@ -65,6 +49,28 @@
 | `ingress.annotations` | Ingress annotations       | `{}`    |
 | `ingress.hosts`       | Ingress host rules        | `[]`    |
 | `ingress.tls`         | Ingress TLS configuration | `[]`    |
+
+### Global parameters
+
+| Name                                 | Description                               | Value |
+| ------------------------------------ | ----------------------------------------- | ----- |
+| `global.trentoMcpServer.servicePort` | Global service port for Trento MCP Server | `nil` |
+| `global.trentoWanda.name`            | Global name for Trento Wanda service      | `nil` |
+| `global.trentoWanda.servicePort`     | Global service port for Trento Wanda      | `nil` |
+| `global.trentoWeb.name`              | Global name for Trento Web service        | `nil` |
+| `global.trentoWeb.servicePort`       | Global service port for Trento Web        | `nil` |
+| `global.trentoWeb.trentoWebOrigin`   | URL of the public Trento Web instance     | `nil` |
+
+### Resource configuration
+
+| Name                                   | Description               | Value   |
+| -------------------------------------- | ------------------------- | ------- |
+| `resources.limits.cpu`                 | CPU limit                 | `500m`  |
+| `resources.limits.memory`              | Memory limit              | `512Mi` |
+| `resources.limits.ephemeral-storage`   | Ephemeral storage limit   | `512Mi` |
+| `resources.requests.cpu`               | CPU request               | `100m`  |
+| `resources.requests.memory`            | Memory request            | `128Mi` |
+| `resources.requests.ephemeral-storage` | Ephemeral storage request | `128Mi` |
 
 ### Probes
 

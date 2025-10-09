@@ -141,7 +141,7 @@ The `trento-mcp-server` subchart is disabled by default. You can enable it and c
 Remember to replace `<your-trento-url>` with the public URL of your Trento server.
 [source,shell]
 ....
-helm install trento . --set trento-mcp-server.enabled=true --set trento-mcp-server.mcpServer.trentoURL="https://<your-trento-url>" --set trento-mcp-server.mcpServer.oasPath[0]="https://<your-trento-url>/api/all/openapi"
+helm install trento . --set global.trentoWeb.trentoWebOrigin="trento.example.com" --set trento-mcp-server.enabled=true
 ....
 
 For a full list of configurable parameters, you can check the subchart's README by running:

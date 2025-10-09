@@ -39,12 +39,6 @@ trento-wanda:
 trento-mcp-server:
   nameOverride: mcp-server
   enabled: false
-  # mcpServer:
-  #   # Replace the below URLs with your own OpenAPI definitions if needed
-  #   oasPath:
-  #     - https:/<your-trento-url>/api/all/openapi
-  #   # Replace with public Trento server URL
-  #   trentoURL: https:/<your-trento-url>
 
 postgresql:
   enabled: true
