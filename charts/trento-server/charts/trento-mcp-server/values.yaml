@@ -35,7 +35,7 @@ containerPorts:
 ## @param mcpServer.oasPath List of paths to OpenAPI specification files, if empty defaults to Trento Web and Wanda services
 ## @param mcpServer.tagFilter List of tags to filter
 ## @param mcpServer.transport Transport protocol for the server
-## @param mcpServer.trentoURL URL of the Trento server, if empty defaults to the value of the TRENTO_WEB_ORIGIN environment variable of the Trento Web deployment
+## @param mcpServer.trentoURL URL of the Trento server. If empty, it defaults a HTTPS connection to the TRENTO_WEB_ORIGIN domain of the Trento Web deployment. Example: "https://demo.trento-project.io"
 ## @param mcpServer.verbosity Log level verbosity
 mcpServer:
   args: []
@@ -89,7 +89,7 @@ ingress:
 ## @param global.trentoWanda.servicePort Global service port for Trento Wanda
 ## @param global.trentoWeb.name Global name for Trento Web service
 ## @param global.trentoWeb.servicePort Global service port for Trento Web
-## @param global.trentoWeb.trentoWebOrigin URL of the public Trento Web instance
+## @param global.trentoWeb.trentoWebOrigin Domain of the public Trento Web instance, eg "demo.trento-project.io"
 global:
   trentoMcpServer:
     servicePort:
@@ -100,8 +100,6 @@ global:
   trentoWanda:
     name:
     servicePort:
-
-
 
 ## @section Resource configuration
 ##

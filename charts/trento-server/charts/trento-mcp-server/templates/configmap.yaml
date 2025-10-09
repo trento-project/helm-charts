@@ -26,7 +26,7 @@ data:
   TRENTO_MCP_TRENTO_URL: {{ .Values.mcpServer.trentoURL | quote }}
   {{- else }}
   ## Default Trento server (see TRENTO_WEB_ORIGIN) to connect to for API operations and data retrieval.
-  TRENTO_MCP_TRENTO_URL: {{ .Values.global.trentoWeb.trentoWebOrigin | quote }}
+  TRENTO_MCP_TRENTO_URL: {{ printf "https://%s" .Values.global.trentoWeb.trentoWebOrigin | quote }}
   {{- end }}
 
   ## The port on which the MCP Server listens for incoming connections.
