@@ -12,6 +12,8 @@ global:
   prometheus:
     name: prometheus-server
 
+trentoWebOrigin: ""
+
 alerting:
   enabled: null
   smtpServer: null

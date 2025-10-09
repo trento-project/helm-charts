@@ -72,6 +72,17 @@ Return Trento Web service port
 {{- end -}}
 {{- end -}}
 
+{{/*
+Return Trento Web URL
+*/}}
+{{- define "trentoWeb.trentoWebOrigin" -}}
+{{- if .Values.global.trentoWeb.trentoWebOrigin }}
+    {{- .Values.global.trentoWeb.trentoWebOrigin -}}
+{{- else -}}
+    {{- .Values.trentoWebOrigin -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "trento-web.accessTokenSecret" -}}
   {{- $secretName := (print .Release.Name "-auth-tokens-secret") -}}
   {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) -}}
@@ -116,5 +127,3 @@ Return Trento Web service port
     {{- (randAlphaNum 8) | b64enc -}}
   {{- end -}}
 {{- end -}}
-
-

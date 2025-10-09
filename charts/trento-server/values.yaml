@@ -4,6 +4,7 @@ global:
   trentoWeb:
     name: web
     servicePort: 4000
+    trentoWebOrigin: ""
   trentoWanda:
     name: wanda
     servicePort: 4000
