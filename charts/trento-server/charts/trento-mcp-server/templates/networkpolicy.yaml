@@ -35,6 +35,7 @@ spec:
     - ports:
         - port: {{ include "trento-mcp-server.port" . }}
         {{- if .Values.mcpServer.enableHealthCheck }}
+        # The health check port does not need to be reachable outside. It is used for health/ready probes.
         # - port: {{ .Values.containerPorts.health }}
         {{- end }}
       {{- if not .Values.networkPolicy.allowExternal }}

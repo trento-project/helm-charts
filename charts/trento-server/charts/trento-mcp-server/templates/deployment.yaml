@@ -40,34 +40,6 @@ spec:
           {{- range .Values.mcpServer.args }}
             - {{ . | quote }}
           {{- end }}
-          {{- else if .Values.config.enabled }}
-            - --config
-            - {{ .Values.config.mountPath }}/{{ .Values.config.fileName }}
-          {{- else }}
-            - --port={{ include "trento-mcp-server.port" . }}
-            {{- if .Values.mcpServer.enableHealthCheck }}
-            - --health-port={{ .Values.containerPorts.health }}
-            - --enable-health-check
-            {{- end }}
-            - --transport={{ .Values.mcpServer.transport }}
-            {{- if .Values.mcpServer.oasPath }}
-          {{- if kindIs "slice" .Values.mcpServer.oasPath }}
-              {{- range .Values.mcpServer.oasPath }}
-            - --oas-path={{ . }}
-              {{- end }}
-          {{- else }}
-            - --oas-path={{ .Values.mcpServer.oasPath }}
-          {{- end }}
-          {{- end }}
-            - --trento-url={{ .Values.mcpServer.trentoURL }}
-            - --header-name={{ .Values.mcpServer.headerName }}
-          {{- if .Values.mcpServer.tagFilter }}
-            - --tag-filter={{ join "," .Values.mcpServer.tagFilter }}
-          {{- end }}
-            - --verbosity={{ .Values.mcpServer.verbosity }}
-          {{- if .Values.mcpServer.insecureTLS }}
-            - --insecure-tls
-          {{- end }}
           {{- end }}
           {{- if .Values.env }}
           env:
@@ -76,6 +48,9 @@ spec:
               value: {{ $v | quote }}
             {{- end }}
           {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "trento-mcp-server.fullname" . }}
           ports:
             - containerPort: {{ include "trento-mcp-server.port" . }}
               name: http
@@ -98,7 +73,8 @@ spec:
           {{- end }}
           {{- if and .Values.mcpServer.enableHealthCheck .Values.livenessProbe.enabled }}
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
               port: {{ .Values.livenessProbe.port }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
@@ -120,20 +96,6 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           resources: {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-          {{- if .Values.config.enabled }}
-            - mountPath: {{ .Values.config.mountPath }}
-              name:  {{ include "trento-mcp-server.fullname" . }}-config
-              readOnly: true
-          {{- else }}
-            []
-          {{- end }}
-      {{- if .Values.config.enabled }}
-      volumes:
-        - name: {{ include "trento-mcp-server.fullname" . }}-config
-          configMap:
-            name: {{ include "trento-mcp-server.fullname" . }}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 6 }}
@@ -143,32 +105,15 @@ spec:
         {{- toYaml . | nindent 6 }}
       {{- end }}
       {{- with .Values.tolerations }}
-          volumeMounts:
-            {{- if .Values.config.enabled }}
-            - mountPath: {{ .Values.config.mountPath }}
-              name:  {{ include "trento-mcp-server.fullname" . }}-config
-              readOnly: true
-            {{- end }}
-
       {{- end }}
-
-      {{- if .Values.config.enabled }}
-      volumes:
-        - name: {{ include "trento-mcp-server.fullname" . }}-config
-          configMap:
-            name: {{ include "trento-mcp-server.fullname" . }}
-      {{- end }}
-
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-
       {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

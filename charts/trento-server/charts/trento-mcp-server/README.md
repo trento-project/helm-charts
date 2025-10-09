@@ -41,10 +41,6 @@
 | `mcpServer.tagFilter`         | List of tags to filter                                                           | `["MCP"]`                                                                                                                   |
 | `mcpServer.verbosity`         | Log level verbosity                                                              | `info`                                                                                                                      |
 | `mcpServer.insecureTLS`       | Disable TLS certificate verification                                             | `false`                                                                                                                     |
-| `config.enabled`              | Enable using a custom configuration file                                         | `false`                                                                                                                     |
-| `config.fileName`             | Name of the configuration file                                                   | `trento-mcp-server.config.yaml`                                                                                             |
-| `config.mountPath`            | Path to mount the configuration file                                             | `/etc/trento`                                                                                                               |
-| `config.content`              | Content of the configuration file                                                | `""`                                                                                                                        |
 | `env`                         | Environment variables to pass to the container                                   | `{}`                                                                                                                        |
 
 ### Resource configuration

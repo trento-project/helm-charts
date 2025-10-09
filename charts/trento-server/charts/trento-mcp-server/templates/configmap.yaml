@@ -2,7 +2,6 @@
 Copyright 2025 SUSE LLC
 SPDX-License-Identifier: Apache-2.0
 */}}
-{{- if .Values.config.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,6 +9,36 @@ metadata:
   labels:
     {{- include "trento-mcp-server.labels" . | nindent 4 }}
 data:
-  {{ .Values.config.fileName }}: |
-{{ .Values.config.content | nindent 6 }}
-{{- end }}
+  {{- if .Values.mcpServer.oasPath }}
+  ## List of comma-separated paths to the OpenAPI specification files (local or remote URLs).
+  TRENTO_MCP_OAS_PATH: {{ if kindIs "slice" .Values.mcpServer.oasPath }}{{ join "," .Values.mcpServer.oasPath | quote }}{{ else }}{{ .Values.mcpServer.oasPath | quote }}{{ end }}
+  {{- end }}
+
+  ## Target Trento server to connect to for API operations and data retrieval.
+  TRENTO_MCP_TRENTO_URL: {{ .Values.mcpServer.trentoURL | quote }}
+
+  ## The port on which the MCP Server listens for incoming connections.
+  TRENTO_MCP_PORT: {{ include "trento-mcp-server.port" . | quote }}
+
+  ## Enable the health check server.
+  TRENTO_MCP_ENABLE_HEALTH_CHECK: {{ .Values.mcpServer.enableHealthCheck | quote }}
+
+  ## The port on which the health check server listens for incoming connections.
+  TRENTO_MCP_HEALTH_PORT: {{ .Values.containerPorts.health | quote }}
+
+  ## The transport protocol to use for MCP communication. Options: 'streamable' (default) or 'sse'.
+  TRENTO_MCP_TRANSPORT: {{ .Values.mcpServer.transport | quote }}
+
+  ## The HTTP header name used to pass the Trento API key for authentication with the Trento server.
+  TRENTO_MCP_HEADER_NAME: {{ .Values.mcpServer.headerName | quote }}
+
+  {{- if .Values.mcpServer.tagFilter }}
+  ## List of OpenAPI tags to filter which operations are exposed as MCP tools. Only operations with at least one matching tag will be available.
+  TRENTO_MCP_TAG_FILTER: {{ if kindIs "slice" .Values.mcpServer.tagFilter }}{{ join "," .Values.mcpServer.tagFilter | quote }}{{ else }}{{ .Values.mcpServer.tagFilter | quote }}{{ end }}
+  {{- end }}
+
+  ##  The logging verbosity level. Options: 'debug', 'info', 'warning', 'error'.
+  TRENTO_MCP_VERBOSITY: {{ .Values.mcpServer.verbosity | quote }}
+
+  ## Skip TLS certificate verification when connecting to HTTPS URLs. Use only in development or trusted environments.
+  TRENTO_MCP_INSECURE_SKIP_TLS_VERIFY: {{ .Values.mcpServer.insecureTLS | quote }}

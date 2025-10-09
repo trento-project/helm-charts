@@ -7,6 +7,9 @@ global:
   trentoWanda:
     name: wanda
     servicePort: 4000
+  trentoMcpServer:
+    name: mcp-server
+    servicePort: 5000
   postgresql:
     name: postgresql
     servicePort: 5432
@@ -22,9 +25,6 @@ global:
       password: "trento"
       tls:
         enabled: false
-  trentoMcpServer:
-    name: mcp-server
-    servicePort: 5000
 
 ### Sub Charts Specific Values ###
 trento-web:

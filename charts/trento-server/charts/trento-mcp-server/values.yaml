@@ -52,16 +52,6 @@ mcpServer:
   verbosity: info
   insecureTLS: false
 
-## @param config.enabled Enable using a custom configuration file
-## @param config.fileName Name of the configuration file
-## @param config.mountPath Path to mount the configuration file
-## @param config.content Content of the configuration file
-config:
-  enabled: false
-  fileName: trento-mcp-server.config.yaml
-  mountPath: /etc/trento
-  content: ""
-
 ## @param env Environment variables to pass to the container
 env: {}
 

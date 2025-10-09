@@ -1,13 +1,7 @@
 Trento MCP Server Configuration:
-{{- if or .Values.mcpServer.args .Values.config.enabled }}
 {{- if .Values.mcpServer.args }}
 - Target Trento Instance: <check the --trento-url argument>
 - OpenAPI Spec: <check the --oas-path argument>
-{{- end }}
-{{- if .Values.config.enabled }}
-- Target Trento Instance: <check the trento-url value in the {{ .Values.config.mountPath }}/{{ .Values.config.fileName }} configuration file>
-- OpenAPI Spec: <check the value in the {{ .Values.config.mountPath }}/{{ .Values.config.fileName }} configuration file>
-{{- end }}
 {{- else }}
 - Target Trento Instance: {{ .Values.mcpServer.trentoURL }}
 - OpenAPI Spec: {{ .Values.mcpServer.oasPath }} (tags: {{ if .Values.mcpServer.tagFilter }}{{ join ", " .Values.mcpServer.tagFilter }}{{ else }}all{{ end }})
