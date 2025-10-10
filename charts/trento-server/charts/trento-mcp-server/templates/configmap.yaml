@@ -9,14 +9,14 @@ metadata:
   labels:
     {{- include "trento-mcp-server.labels" . | nindent 4 }}
 data:
-  {{- if .Values.mcpServer.oasPath }}
-  ## List of comma-separated paths to the OpenAPI specification files (local or remote URLs).
-  TRENTO_MCP_OAS_PATH: {{ if kindIs "slice" .Values.mcpServer.oasPath }}{{ join "," .Values.mcpServer.oasPath | quote }}{{ else }}{{ .Values.mcpServer.oasPath | quote }}{{ end }}
-  {{- else }}
   {{- $webService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWeb.name .Release.Namespace .Values.clusterDomain }}
   {{- $wandaService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWanda.name .Release.Namespace .Values.clusterDomain }}
   {{- $webPort := .Values.global.trentoWeb.servicePort | int }}
   {{- $wandaPort := .Values.global.trentoWanda.servicePort | int }}
+  {{- if .Values.mcpServer.oasPath }}
+  ## List of comma-separated paths to the OpenAPI specification files (local or remote URLs).
+  TRENTO_MCP_OAS_PATH: {{ if kindIs "slice" .Values.mcpServer.oasPath }}{{ join "," .Values.mcpServer.oasPath | quote }}{{ else }}{{ .Values.mcpServer.oasPath | quote }}{{ end }}
+  {{- else }}
   ## List of comma-separated paths to the OpenAPI specification files for TrentoWeb and Wanda services.
   TRENTO_MCP_OAS_PATH: {{ printf "http://%s:%d/api/all/openapi,http://%s:%d/api/all/openapi" $webService $webPort $wandaService $wandaPort | quote }}
   {{- end }}
@@ -25,8 +25,8 @@ data:
   ## Target Trento server to connect to for API operations and data retrieval.
   TRENTO_MCP_TRENTO_URL: {{ .Values.mcpServer.trentoURL | quote }}
   {{- else }}
-  ## Default Trento server (see TRENTO_WEB_ORIGIN) to connect to for API operations and data retrieval.
-  TRENTO_MCP_TRENTO_URL: {{ printf "https://%s" .Values.global.trentoWeb.trentoWebOrigin | quote }}
+  ## Default Trento server to connect to for API operations and data retrieval.
+  TRENTO_MCP_TRENTO_URL: {{ printf "http://%s:%d" $webService $webPort | quote }}
   {{- end }}
 
   ## The port on which the MCP Server listens for incoming connections.
