@@ -136,12 +136,11 @@ Please refer to the the subcharts `+values.yaml+` for an advanced usage.
 
 ==== MCP Server Chart
 
-The `trento-mcp-server` subchart is disabled by default. You can enable it and configure it to point to your Trento server instance.
+The `trento-mcp-server` subchart is disabled by default. You can enable it and it will automatically target your Trento installation.
 
-Remember to replace `<your-trento-url>` with the public URL of your Trento server.
 [source,shell]
 ....
-helm install trento . --set global.trentoWeb.trentoWebOrigin="trento.example.com" --set trento-mcp-server.enabled=true
+helm install trento . --set trento-mcp-server.enabled=true
 ....
 
 For a full list of configurable parameters, you can check the subchart's README by running:

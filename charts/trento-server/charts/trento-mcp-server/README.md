@@ -25,20 +25,20 @@
 
 ### MCP Server configuration
 
-| Name                          | Description                                                                                                                                                                | Value                 |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| `mcpServer.args`              | Array of arguments to pass to the MCP server container, overrides other settings                                                                                           | `[]`                  |
-| `mcpServer.enableHealthCheck` | Enable health check endpoint                                                                                                                                               | `true`                |
-| `mcpServer.headerName`        | Name of the header the MCP client should use to pass the Trento Personal Access Token                                                                                      | `X-TRENTO-MCP-APIKEY` |
-| `mcpServer.insecureTLS`       | Disable TLS certificate verification                                                                                                                                       | `false`               |
-| `mcpServer.oasPath`           | List of paths to OpenAPI specification files, if empty defaults to Trento Web and Wanda services                                                                           | `[]`                  |
-| `mcpServer.tagFilter`         | List of tags to filter                                                                                                                                                     | `["MCP"]`             |
-| `mcpServer.transport`         | Transport protocol for the server                                                                                                                                          | `streamable`          |
-| `mcpServer.trentoURL`         | URL of the Trento server. If empty, it defaults a HTTPS connection to the TRENTO_WEB_ORIGIN domain of the Trento Web deployment. Example: "https://demo.trento-project.io" | `""`                  |
-| `mcpServer.verbosity`         | Log level verbosity                                                                                                                                                        | `info`                |
-| `env`                         | Environment variables to pass to the container                                                                                                                             | `{}`                  |
-| `service.type`                | Service type                                                                                                                                                               | `ClusterIP`           |
-| `service.port`                | Service port                                                                                                                                                               | `5000`                |
+| Name                          | Description                                                                                                   | Value                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `mcpServer.args`              | Array of arguments to pass to the MCP server container, overrides other settings                              | `[]`                  |
+| `mcpServer.enableHealthCheck` | Enable health check endpoint                                                                                  | `true`                |
+| `mcpServer.headerName`        | Name of the header the MCP client should use to pass the Trento Personal Access Token                         | `X-TRENTO-MCP-APIKEY` |
+| `mcpServer.insecureTLS`       | Disable TLS certificate verification                                                                          | `false`               |
+| `mcpServer.oasPath`           | List of paths to OpenAPI specification files. If empty, it defaults to Trento Web and Wanda internal services | `[]`                  |
+| `mcpServer.tagFilter`         | List of tags to filter                                                                                        | `["MCP"]`             |
+| `mcpServer.transport`         | Transport protocol for the server                                                                             | `streamable`          |
+| `mcpServer.trentoURL`         | URL of the Trento server. If empty, it defaults to Trento Web internal service                                | `""`                  |
+| `mcpServer.verbosity`         | Log level verbosity                                                                                           | `info`                |
+| `env`                         | Environment variables to pass to the container                                                                | `{}`                  |
+| `service.type`                | Service type                                                                                                  | `ClusterIP`           |
+| `service.port`                | Service port                                                                                                  | `5000`                |
 
 ### Ingress configuration
 
@@ -52,14 +52,13 @@
 
 ### Global parameters
 
-| Name                                 | Description                                                           | Value |
-| ------------------------------------ | --------------------------------------------------------------------- | ----- |
-| `global.trentoMcpServer.servicePort` | Global service port for Trento MCP Server                             | `nil` |
-| `global.trentoWanda.name`            | Global name for Trento Wanda service                                  | `nil` |
-| `global.trentoWanda.servicePort`     | Global service port for Trento Wanda                                  | `nil` |
-| `global.trentoWeb.name`              | Global name for Trento Web service                                    | `nil` |
-| `global.trentoWeb.servicePort`       | Global service port for Trento Web                                    | `nil` |
-| `global.trentoWeb.trentoWebOrigin`   | Domain of the public Trento Web instance, eg "demo.trento-project.io" | `nil` |
+| Name                                 | Description                               | Value |
+| ------------------------------------ | ----------------------------------------- | ----- |
+| `global.trentoMcpServer.servicePort` | Global service port for Trento MCP Server | `nil` |
+| `global.trentoWanda.name`            | Global name for Trento Wanda service      | `nil` |
+| `global.trentoWanda.servicePort`     | Global service port for Trento Wanda      | `nil` |
+| `global.trentoWeb.name`              | Global name for Trento Web service        | `nil` |
+| `global.trentoWeb.servicePort`       | Global service port for Trento Web        | `nil` |
 
 ### Resource configuration
 

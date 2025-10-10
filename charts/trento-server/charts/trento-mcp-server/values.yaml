@@ -32,10 +32,10 @@ containerPorts:
 ## @param mcpServer.enableHealthCheck Enable health check endpoint
 ## @param mcpServer.headerName Name of the header the MCP client should use to pass the Trento Personal Access Token
 ## @param mcpServer.insecureTLS Disable TLS certificate verification
-## @param mcpServer.oasPath List of paths to OpenAPI specification files, if empty defaults to Trento Web and Wanda services
+## @param mcpServer.oasPath List of paths to OpenAPI specification files. If empty, it defaults to Trento Web and Wanda internal services
 ## @param mcpServer.tagFilter List of tags to filter
 ## @param mcpServer.transport Transport protocol for the server
-## @param mcpServer.trentoURL URL of the Trento server. If empty, it defaults a HTTPS connection to the TRENTO_WEB_ORIGIN domain of the Trento Web deployment. Example: "https://demo.trento-project.io"
+## @param mcpServer.trentoURL URL of the Trento server. If empty, it defaults to Trento Web internal service
 ## @param mcpServer.verbosity Log level verbosity
 mcpServer:
   args: []
@@ -89,14 +89,12 @@ ingress:
 ## @param global.trentoWanda.servicePort Global service port for Trento Wanda
 ## @param global.trentoWeb.name Global name for Trento Web service
 ## @param global.trentoWeb.servicePort Global service port for Trento Web
-## @param global.trentoWeb.trentoWebOrigin Domain of the public Trento Web instance, eg "demo.trento-project.io"
 global:
   trentoMcpServer:
     servicePort:
   trentoWeb:
     name:
     servicePort:
-    trentoWebOrigin:
   trentoWanda:
     name:
     servicePort:
