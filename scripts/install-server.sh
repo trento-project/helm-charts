@@ -310,7 +310,7 @@ install_trento_server_chart() {
         --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
         --set trento-wanda.image.repository="${wanda_image}"
         --set-string trento-web.adminUser.password="${ADMIN_PASSWORD}"
-        --set global.trentoWeb.trentoWebOrigin="${TRENTO_WEB_ORIGIN}"
+        --set trento-web.trentoWebOrigin="${TRENTO_WEB_ORIGIN}"
     )
     if [[ "$ENABLE_ALERTING" == "true" ]]; then
         args+=(
