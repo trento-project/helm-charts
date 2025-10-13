@@ -1,0 +1,18 @@
+{{- if and  .Values.global.rabbitmq.tls.mtls.enabled .Values.global.rabbitmq.tls.mtls.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "trento-wanda.fullname" . }}-client-cert
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ include "trento-wanda.fullname" . }}-client-cert
+  duration: 8760h
+  renewBefore: 720h
+  subject:
+    organizations:
+      - wanda-client
+  commonName: wanda-client
+  issuerRef:
+    name: {{ .Values.global.rabbitmq.tls.mtls.certManager.issuerName }}
+    kind: {{ .Values.global.rabbitmq.tls.mtls.certManager.issuerKind }}
+{{- end }}
