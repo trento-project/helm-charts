@@ -27,8 +27,10 @@ containerPorts:
 ## @section MCP Server configuration
 ##
 ## @param mcpServer.args Array of arguments to pass to the MCP server container, overrides other settings
+## @param mcpServer.autodiscoveryPaths Custom paths for API autodiscovery
 ## @param mcpServer.enableHealthCheck Enable health check endpoint
 ## @param mcpServer.headerName Name of the header the MCP client should use to pass the Trento Personal Access Token
+## @param mcpServer.healthApiPath The API path used for health checks on target servers, like Trento Web or Wanda
 ## @param mcpServer.insecureTLS Disable TLS certificate verification
 ## @param mcpServer.oasPath List of paths to OpenAPI specification files. If empty, it defaults to Trento Web and Wanda internal services
 ## @param mcpServer.tagFilter List of tags to filter
@@ -37,8 +39,12 @@ containerPorts:
 ## @param mcpServer.verbosity Log level verbosity
 mcpServer:
   args: []
+  autodiscoveryPaths:
+    - /api/all/openapi
+    - /wanda/api/all/openapi
   enableHealthCheck: true
   headerName: X-TRENTO-MCP-APIKEY
+  healthApiPath: /api/healthz
   insecureTLS: false
   oasPath: []
   tagFilter:

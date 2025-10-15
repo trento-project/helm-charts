@@ -10,6 +10,8 @@ metadata:
   labels:
   {{- include "trento-mcp-server.labels" . | nindent 4 }}
 spec:
+  # This middleware strips the prefix from the request path,
+  # so the backend service receives a clean path.
   stripPrefix:
     prefixes: {{- range .Values.ingress.hosts }}
       - {{ (first .paths).path }}
