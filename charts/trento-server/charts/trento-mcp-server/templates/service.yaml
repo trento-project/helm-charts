@@ -12,8 +12,8 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - name: http
-      targetPort: {{ include "trento-mcp-server.port" . }}
+      targetPort: {{ include "trentoMcpServer.port" . }}
       protocol: TCP
-      port: {{ include "trento-mcp-server.port" . }}
+      port: {{ include "trentoMcpServer.port" . }}
   selector:
     {{- include "trento-mcp-server.selectorLabels" . | nindent 4 }}

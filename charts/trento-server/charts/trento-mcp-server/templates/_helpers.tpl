@@ -70,7 +70,7 @@ Create the name of the service account to use
 {{/*
 Return Trento MCP Server service port
 */}}
-{{- define "trento-mcp-server.port" -}}
+{{- define "trentoMcpServer.port" -}}
 {{- if .Values.global.trentoMcpServer.servicePort }}
     {{- .Values.global.trentoMcpServer.servicePort -}}
 {{- else -}}

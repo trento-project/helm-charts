@@ -30,7 +30,7 @@ data:
   {{- end }}
 
   ## The port on which the MCP Server listens for incoming connections.
-  TRENTO_MCP_PORT: {{ include "trento-mcp-server.port" . | quote }}
+  TRENTO_MCP_PORT: {{ include "trentoMcpServer.port" . | quote }}
 
   ## Enable the health check server.
   TRENTO_MCP_ENABLE_HEALTH_CHECK: {{ .Values.mcpServer.enableHealthCheck | quote }}

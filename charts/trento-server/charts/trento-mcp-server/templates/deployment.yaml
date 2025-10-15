@@ -52,7 +52,7 @@ spec:
             - configMapRef:
                 name: {{ include "trento-mcp-server.fullname" . }}
           ports:
-            - containerPort: {{ include "trento-mcp-server.port" . }}
+            - containerPort: {{ include "trentoMcpServer.port" . }}
               name: http
               protocol: TCP
           {{- if .Values.mcpServer.enableHealthCheck }}

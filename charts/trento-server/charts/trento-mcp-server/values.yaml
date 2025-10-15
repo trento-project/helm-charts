@@ -1,8 +1,6 @@
 # Copyright 2025 SUSE LLC
 # SPDX-License-Identifier: Apache-2.0
 
-
-
 ## @section Common parameters
 ##
 ## @param image.repository Image repository
@@ -116,7 +114,6 @@ resources:
     cpu: 100m
     memory: 128Mi
     ephemeral-storage: "128Mi"
-
 
 ## @section Probes
 ##
