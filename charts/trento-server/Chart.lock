@@ -5,6 +5,9 @@ dependencies:
 - name: trento-wanda
   repository: ""
   version: '>0.0.0-0'
+- name: trento-mcp-server
+  repository: ""
+  version: '>0.0.0-0'
 - name: postgresql
   repository: ""
   version: '>0.0.0'
@@ -14,5 +17,5 @@ dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami/
   version: 10.3.9
-digest: sha256:2998e61c0c7b55bee282d2be9243910bdceb0d2b3e86282e3532379bda4a513b
-generated: "2024-01-15T09:32:02.973015789+01:00"
+digest: sha256:f10fe57f862dcc4f21a05e8ac82c2e0509c5764297816e4a4957e6181520584c
+generated: "2025-09-25T18:03:46.9714136+02:00"
