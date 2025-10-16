@@ -6,6 +6,7 @@ global:
   logLevel: info
   trentoWeb:
     servicePort: ""
+    origin: ""
   postgresql:
     name: postgresql
     servicePort: 5432

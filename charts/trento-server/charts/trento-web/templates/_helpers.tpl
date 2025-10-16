@@ -117,4 +117,12 @@ Return Trento Web service port
   {{- end -}}
 {{- end -}}
 
+{{- define "trento-web.trentoWebOrigin" -}}
+{{- if .Values.global.trentoWeb.origin }}
+    {{- .Values.global.trentoWeb.origin -}}
+{{- else -}}
+    {{- .Values.trentoWebOrigin -}}
+{{- end -}}
+{{- end -}}
+
 
