@@ -4,16 +4,25 @@
 
 global:
   trentoWanda:
+    name: ""
     servicePort: ""
   rabbitmq:
     name: rabbitmq
     servicePort: 5672
+    auth:
+      username: ""
+      password: ""
+      tls:
+        enabled: false
   postgresql:
     name: postgresql
     servicePort: 5432
+    postgresqlUsername: ""
+    postgresqlPassword: ""
 
 cors:
   enabled: false
+  origin: ""
 
 replicaCount: 1
 
