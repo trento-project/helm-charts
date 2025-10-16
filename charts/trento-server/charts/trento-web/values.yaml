@@ -5,12 +5,23 @@
 global:
   logLevel: info
   trentoWeb:
+    name: ""
     servicePort: ""
   postgresql:
     name: postgresql
     servicePort: 5432
+    postgresqlUsername: ""
+    postgresqlPassword: ""
   prometheus:
     name: prometheus-server
+  rabbitmq:
+    name: ""
+    servicePort: ""
+    auth:
+      username: ""
+      password: ""
+      tls:
+        enabled: false
 
 alerting:
   enabled: null
@@ -65,6 +76,8 @@ saml:
   signedEnvelopes: true
 
 chartsEnabled: true
+
+trentoWebOrigin: ""
 
 replicaCount: 1
 
