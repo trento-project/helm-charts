@@ -33,6 +33,7 @@ data:
   AMQP_URL: "amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
   {{- end }}
   TRENTO_WEB_ORIGIN: "{{ .Values.trentoWebOrigin }}"
+  CHECKS_SERVICE_BASE_URL: "/wanda"
   ENABLE_OIDC: "{{ .Values.oidc.enabled }}"
   OIDC_CLIENT_ID: "{{ .Values.oidc.clientId }}"
   OIDC_BASE_URL: "{{ .Values.oidc.baseUrl }}"
