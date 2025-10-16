@@ -7,6 +7,7 @@ global:
   trentoWeb:
     name: ""
     servicePort: ""
+    origin: ""
   postgresql:
     name: postgresql
     servicePort: 5432
