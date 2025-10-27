@@ -21,6 +21,10 @@ metadata:
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
+    {{- if eq $.Values.ingress.className "traefik" }}
+    # This middleware strips the /wanda prefix from the request path
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Release.Namespace }}-{{ include "trento-wanda.fullname" $ }}-strip-prefix@kubernetescrd
+    {{- end }}
   {{- end }}
 spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}

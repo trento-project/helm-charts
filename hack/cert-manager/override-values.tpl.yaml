@@ -15,21 +15,7 @@ trento-wanda:
     hosts:
       - host: ${TRENTO_WEB_ORIGIN}
         paths:
-        - path: /api/checks
-          pathType: ImplementationSpecific
-        - path: /api/v1/checks
-          pathType: ImplementationSpecific
-        - path: /api/v2/checks
-          pathType: ImplementationSpecific
-        - path: /api/v3/checks
-          pathType: ImplementationSpecific
-        - path: /api/groups
-          pathType: ImplementationSpecific
-        - path: /api/v1/groups
-          pathType: ImplementationSpecific
-        - path: /api/operations
-          pathType: ImplementationSpecific
-        - path: /api/v1/operations
+        - path: /wanda
           pathType: ImplementationSpecific
     tls:
       - secretName: trento-tls
