@@ -9,6 +9,10 @@ metadata:
   labels:
    {{- include "trento-mcp-server.labels" . | nindent 4 }}
 data:
+  {{ include "trento-mcp-server.configmap.data" . }}
+
+  {{- /* Helper to render the configmap data so it can be reused in NOTES */ -}}
+  {{- define "trento-mcp-server.configmap.data" -}}
   {{- $webService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWeb.name .Release.Namespace .Values.clusterDomain }}
   {{- $wandaService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWanda.name .Release.Namespace .Values.clusterDomain }}
   {{- $webPort := .Values.global.trentoWeb.servicePort | int }}
@@ -62,3 +66,4 @@ data:
 
   ## Skip TLS certificate verification when connecting to HTTPS URLs. Use only in development or trusted environments.
   TRENTO_MCP_INSECURE_SKIP_TLS_VERIFY: {{ .Values.mcpServer.insecureTLS | quote }}
+{{- end }}

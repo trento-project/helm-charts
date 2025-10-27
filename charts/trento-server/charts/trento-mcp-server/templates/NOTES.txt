@@ -1,18 +1,31 @@
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+################################################################################
+#                        BEGIN TRENTO MCP SERVER                               #
+################################################################################
+
 Trento MCP Server Configuration:
-{{- if .Values.mcpServer.args }}
+
+{{ if .Values.mcpServer.args -}}
 - Target Trento Instance: <check the --trento-url argument>
 - OpenAPI Spec: <check the --oas-path argument>
-{{- else }}
-- Target Trento Instance: {{ .Values.mcpServer.trentoURL }}
-- OpenAPI Spec: {{ .Values.mcpServer.oasPath }} (tags: {{ if .Values.mcpServer.tagFilter }}{{ join ", " .Values.mcpServer.tagFilter }}{{ else }}all{{ end }})
-{{- end }}
-
-{{- $mcpUrl := printf "http://%s-mcp-server.%s.svc.%s:%s/mcp/" (include "trento-mcp-server.fullname" .) .Release.Namespace "cluster.local" (toString .Values.service.port) }}
+{{ else }}
+{{- $cm := include "trento-mcp-server.configmap.data" . -}}
+{{- $cm = regexReplaceAll "(?m)^[ \t]*#.*\r?\n" $cm "" -}}
+{{- $cm = regexReplaceAll "(?m)^[ \t]*\r?\n" $cm "" -}}
+{{ $cm }}
+{{ end }}
+{{- $transportPath := ternary "sse" "mcp" (eq .Values.mcpServer.transport "sse") }}
+{{- $internalUrl := printf "http://%s.%s.svc.%s:%s/%s/" (include "trento-mcp-server.fullname" .) .Release.Namespace .Values.clusterDomain (toString .Values.service.port) $transportPath }}
+{{- $mcpUrl := $internalUrl }}
+{{- $externalUrl := "" }}
 {{- if .Values.ingress.enabled }}
-{{- $mcpUrl = printf "https://%s%s/mcp/" (index .Values.ingress.hosts 0).host (index (index .Values.ingress.hosts 0).paths 0).path }}
+{{- $externalUrl = printf "https://%s%s/%s/" (index .Values.ingress.hosts 0).host (index (index .Values.ingress.hosts 0).paths 0).path $transportPath }}
+{{- $mcpUrl = $externalUrl }}
 {{- end }}
-
-Add to your MCP client config:
+To use the MCP server, add the following to your MCP client config:
 
 {
     "servers": {
@@ -25,12 +38,17 @@ Add to your MCP client config:
         }
     }
 }
-{{- if .Values.args }}
+{{- if .Values.mcpServer.args }}
+
 Note: Custom command-line arguments are configured. Ensure the header name matches your server configuration.
 {{- end }}
 
 Service Access:
 {{- if .Values.ingress.enabled }}
-- External: https://{{ (index .Values.ingress.hosts 0).host }}{{ (index (index .Values.ingress.hosts 0).paths 0).path }}/mcp/
+- External: {{ $externalUrl }}
 {{- end }}
-- Internal: http://{{ include "trento-mcp-server.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/mcp/
+- Internal: {{ $internalUrl }}
+
+################################################################################
+#                             END TRENTO MCP SERVER                            #
+################################################################################
