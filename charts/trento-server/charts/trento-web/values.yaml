@@ -130,9 +130,8 @@ pruneEventsOlderThan: 10
 
 ingress:
   enabled: true
-  className: ""
+  className: "traefik"
   annotations:
-    kubernetes.io/ingress.class: "traefik"
     kubernetes.io/tls-acme: "true"
   hosts:
     - host: ""
