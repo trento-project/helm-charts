@@ -77,7 +77,7 @@
 
 | Name                                 | Description                              | Value     |
 | ------------------------------------ | ---------------------------------------- | --------- |
-| `startupProbe.enabled`               | Enable startup probe                     | `false`   |
+| `startupProbe.enabled`               | Enable startup probe                     | `true`    |
 | `startupProbe.path`                  | Path to access on the HTTP server        | `/livez`  |
 | `startupProbe.port`                  | Port for startupProbe                    | `health`  |
 | `startupProbe.initialDelaySeconds`   | Initial delay seconds for startupProbe   | `180`     |

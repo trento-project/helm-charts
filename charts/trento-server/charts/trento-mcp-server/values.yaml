@@ -132,7 +132,7 @@ resources:
 ## @param startupProbe.failureThreshold Failure threshold for startupProbe
 ## @param startupProbe.successThreshold Success threshold for startupProbe
 startupProbe:
-  enabled: false
+  enabled: true
   path: /livez
   port: health
   initialDelaySeconds: 180
