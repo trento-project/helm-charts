@@ -71,8 +71,8 @@ service:
 ## @param ingress.hosts [array] Ingress host rules
 ## @param ingress.tls [array] Ingress TLS configuration
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  className: "traefik"
   annotations:
     kubernetes.io/tls-acme: "true"
   hosts:

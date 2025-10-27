@@ -26,7 +26,6 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
     {{- if eq $.Values.ingress.className "traefik" }}
-    kubernetes.io/ingress.class: traefik
     # This middleware strips the prefix from the request path
     traefik.ingress.kubernetes.io/router.middlewares: {{ $.Release.Namespace }}-{{ include "trento-mcp-server.fullname" $ }}-strip-prefix@kubernetescrd
     {{- end }}

@@ -44,13 +44,13 @@
 
 ### Ingress configuration
 
-| Name                  | Description               | Value   |
-| --------------------- | ------------------------- | ------- |
-| `ingress.enabled`     | Enable ingress            | `false` |
-| `ingress.className`   | Ingress class name        | `""`    |
-| `ingress.annotations` | Ingress annotations       | `{}`    |
-| `ingress.hosts`       | Ingress host rules        | `[]`    |
-| `ingress.tls`         | Ingress TLS configuration | `[]`    |
+| Name                  | Description               | Value     |
+| --------------------- | ------------------------- | --------- |
+| `ingress.enabled`     | Enable ingress            | `true`    |
+| `ingress.className`   | Ingress class name        | `traefik` |
+| `ingress.annotations` | Ingress annotations       | `{}`      |
+| `ingress.hosts`       | Ingress host rules        | `[]`      |
+| `ingress.tls`         | Ingress TLS configuration | `[]`      |
 
 ### Global parameters
 
