@@ -78,28 +78,13 @@ service:
 
 ingress:
   enabled: true
-  className: ""
+  className: "traefik"
   annotations:
-    kubernetes.io/ingress.class: "traefik"
     kubernetes.io/tls-acme: "true"
   hosts:
     - host: ""
       paths:
-        - path: /api/checks
-          pathType: ImplementationSpecific
-        - path: /api/v1/checks
-          pathType: ImplementationSpecific
-        - path: /api/v2/checks
-          pathType: ImplementationSpecific
-        - path: /api/v3/checks
-          pathType: ImplementationSpecific
-        - path: /api/groups
-          pathType: ImplementationSpecific
-        - path: /api/v1/groups
-          pathType: ImplementationSpecific
-        - path: /api/operations
-          pathType: ImplementationSpecific
-        - path: /api/v1/operations
+        - path: /wanda
           pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls

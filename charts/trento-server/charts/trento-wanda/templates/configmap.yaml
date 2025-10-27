@@ -13,3 +13,4 @@ data:
   {{- if .Values.cors.enabled }}
   CORS_ORIGIN: {{ include "trentoWanda.cors_origin" . | quote }}
   {{- end }}
+  OAS_SERVER_URL: "https://{{ .Values.global.trentoWeb.origin }}/wanda"

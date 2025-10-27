@@ -7,6 +7,7 @@ global:
   trentoWeb:
     name: ""
     servicePort: ""
+    origin: ""
   postgresql:
     name: postgresql
     servicePort: 5432
@@ -130,9 +131,8 @@ pruneEventsOlderThan: 10
 
 ingress:
   enabled: true
-  className: ""
+  className: "traefik"
   annotations:
-    kubernetes.io/ingress.class: "traefik"
     kubernetes.io/tls-acme: "true"
   hosts:
     - host: ""
