@@ -135,7 +135,7 @@ startupProbe:
   enabled: true
   path: /livez
   port: health
-  initialDelaySeconds: 180
+  initialDelaySeconds: 5
   periodSeconds: 20
   timeoutSeconds: 5
   failureThreshold: 6
@@ -153,8 +153,8 @@ livenessProbe:
   enabled: true
   path: /livez
   port: health
-  initialDelaySeconds: 180
-  periodSeconds: 20
+  initialDelaySeconds: 10
+  periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
   successThreshold: 1
@@ -171,8 +171,8 @@ readinessProbe:
   enabled: true
   path: /readyz
   port: health
-  initialDelaySeconds: 30
-  periodSeconds: 10
+  initialDelaySeconds: 10
+  periodSeconds: 30
   timeoutSeconds: 5
   failureThreshold: 6
   successThreshold: 1

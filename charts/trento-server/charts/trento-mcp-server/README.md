@@ -80,7 +80,7 @@
 | `startupProbe.enabled`               | Enable startup probe                     | `true`    |
 | `startupProbe.path`                  | Path to access on the HTTP server        | `/livez`  |
 | `startupProbe.port`                  | Port for startupProbe                    | `health`  |
-| `startupProbe.initialDelaySeconds`   | Initial delay seconds for startupProbe   | `180`     |
+| `startupProbe.initialDelaySeconds`   | Initial delay seconds for startupProbe   | `5`       |
 | `startupProbe.periodSeconds`         | Period seconds for startupProbe          | `20`      |
 | `startupProbe.timeoutSeconds`        | Timeout seconds for startupProbe         | `5`       |
 | `startupProbe.failureThreshold`      | Failure threshold for startupProbe       | `6`       |
@@ -88,16 +88,16 @@
 | `livenessProbe.enabled`              | Enable liveness probe                    | `true`    |
 | `livenessProbe.path`                 | Path to access on the HTTP server        | `/livez`  |
 | `livenessProbe.port`                 | Port for livenessProbe                   | `health`  |
-| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe  | `180`     |
-| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe         | `20`      |
+| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe  | `10`      |
+| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe         | `10`      |
 | `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe        | `5`       |
 | `livenessProbe.failureThreshold`     | Failure threshold for livenessProbe      | `6`       |
 | `livenessProbe.successThreshold`     | Success threshold for livenessProbe      | `1`       |
 | `readinessProbe.enabled`             | Enable readiness probe                   | `true`    |
 | `readinessProbe.path`                | Path to access on the HTTP server        | `/readyz` |
 | `readinessProbe.port`                | Port for readinessProbe                  | `health`  |
-| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe | `30`      |
-| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe        | `10`      |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe | `10`      |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe        | `30`      |
 | `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe       | `5`       |
 | `readinessProbe.failureThreshold`    | Failure threshold for readinessProbe     | `6`       |
 | `readinessProbe.successThreshold`    | Success threshold for readinessProbe     | `1`       |
