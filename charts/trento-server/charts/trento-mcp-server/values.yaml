@@ -78,7 +78,7 @@ ingress:
   hosts:
     - host: ""
       paths:
-        - path: /
+        - path: /mcp-server-trento
           pathType: ImplementationSpecific
   tls:
     []
