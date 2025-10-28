@@ -13,8 +13,8 @@ data:
 
   {{- /* Helper to render the configmap data so it can be reused in NOTES */ -}}
   {{- define "trento-mcp-server.configmap.data" -}}
-  {{- $webService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWeb.name .Release.Namespace .Values.clusterDomain }}
-  {{- $wandaService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWanda.name .Release.Namespace .Values.clusterDomain }}
+  {{- $webService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWeb.name .Release.Namespace .Values.global.clusterDomain }}
+  {{- $wandaService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWanda.name .Release.Namespace .Values.global.clusterDomain }}
   {{- $webPort := .Values.global.trentoWeb.servicePort | int }}
   {{- $wandaPort := .Values.global.trentoWanda.servicePort | int }}
   {{- if .Values.mcpServer.oasPath }}

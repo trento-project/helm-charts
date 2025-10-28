@@ -13,15 +13,14 @@
 
 ### Common parameters
 
-| Name                    | Description                       | Value                                      |
-| ----------------------- | --------------------------------- | ------------------------------------------ |
-| `image.repository`      | Image repository                  | `ghcr.io/trento-project/trento-mcp-server` |
-| `image.tag`             | Image tag                         | `latest`                                   |
-| `image.pullPolicy`      | Image pull policy                 | `Always`                                   |
-| `clusterDomain`         | Default Kubernetes cluster domain | `cluster.local`                            |
-| `replicaCount`          | Number of replicas to deploy      | `1`                                        |
-| `containerPorts.http`   | Port for MCP HTTP traffic         | `5000`                                     |
-| `containerPorts.health` | Port for health check             | `8080`                                     |
+| Name                    | Description                  | Value                                      |
+| ----------------------- | ---------------------------- | ------------------------------------------ |
+| `image.repository`      | Image repository             | `ghcr.io/trento-project/trento-mcp-server` |
+| `image.tag`             | Image tag                    | `latest`                                   |
+| `image.pullPolicy`      | Image pull policy            | `Always`                                   |
+| `replicaCount`          | Number of replicas to deploy | `1`                                        |
+| `containerPorts.http`   | Port for MCP HTTP traffic    | `5000`                                     |
+| `containerPorts.health` | Port for health check        | `8080`                                     |
 
 ### MCP Server configuration
 
@@ -56,6 +55,7 @@
 
 | Name                                 | Description                               | Value |
 | ------------------------------------ | ----------------------------------------- | ----- |
+| `global.clusterDomain`               | Kubernetes cluster domain                 | `nil` |
 | `global.trentoMcpServer.servicePort` | Global service port for Trento MCP Server | `nil` |
 | `global.trentoWanda.name`            | Global name for Trento Wanda service      | `nil` |
 | `global.trentoWanda.servicePort`     | Global service port for Trento Wanda      | `nil` |

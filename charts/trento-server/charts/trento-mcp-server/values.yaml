@@ -11,10 +11,6 @@ image:
   tag: latest
   pullPolicy: Always
 
-## @param clusterDomain Default Kubernetes cluster domain
-##
-clusterDomain: cluster.local
-
 ## @param replicaCount Number of replicas to deploy
 replicaCount: 1
 
@@ -88,12 +84,14 @@ ingress:
 
 ## @section Global parameters
 ##
+## @param global.clusterDomain Kubernetes cluster domain
 ## @param global.trentoMcpServer.servicePort Global service port for Trento MCP Server
 ## @param global.trentoWanda.name Global name for Trento Wanda service
 ## @param global.trentoWanda.servicePort Global service port for Trento Wanda
 ## @param global.trentoWeb.name Global name for Trento Web service
 ## @param global.trentoWeb.servicePort Global service port for Trento Web
 global:
+  clusterDomain:
   trentoMcpServer:
     servicePort:
   trentoWeb:

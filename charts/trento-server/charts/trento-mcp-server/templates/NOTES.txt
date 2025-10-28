@@ -18,7 +18,8 @@ Trento MCP Server Configuration:
 {{ $cm }}
 {{ end }}
 {{- $transportPath := ternary "sse" "mcp" (eq .Values.mcpServer.transport "sse") }}
-{{- $internalUrl := printf "http://%s.%s.svc.%s:%s/%s" (include "trento-mcp-server.fullname" .) .Release.Namespace .Values.clusterDomain (toString .Values.service.port) $transportPath }}
+{{- $clusterDomain := default .Values.clusterDomain .Values.global.clusterDomain }}
+{{- $internalUrl := printf "http://%s.%s.svc.%s:%s/%s" (include "trento-mcp-server.fullname" .) .Release.Namespace $clusterDomain (toString .Values.service.port) $transportPath }}
 {{- $mcpUrl := $internalUrl }}
 {{- $externalUrl := "" }}
 {{- if .Values.ingress.enabled }}
@@ -48,7 +49,6 @@ Service Access:
 {{- if .Values.ingress.enabled }}
 - External: {{ $externalUrl }}
 {{- end }}
-- Internal: {{ $internalUrl }}
 
 ################################################################################
 #                             END TRENTO MCP SERVER                            #
