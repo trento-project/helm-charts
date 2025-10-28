@@ -11,10 +11,6 @@ image:
   tag: latest
   pullPolicy: Always
 
-## @param clusterDomain Default Kubernetes cluster domain
-##
-clusterDomain: cluster.local
-
 ## @param replicaCount Number of replicas to deploy
 replicaCount: 1
 
@@ -79,7 +75,7 @@ mcpo:
   enabled: true
   image:
     repository: ghcr.io/open-webui/mcpo
-    tag: git-91e8f94
+    tag: main
     pullPolicy: Always
   port: 8000
   rootPath: "/mcpo"
@@ -98,7 +94,7 @@ mcpo:
     annotations:
       kubernetes.io/tls-acme: "true"
     hosts:
-      - host: "ai.sap.prg2.suse.org"
+      - host: ""
         paths:
           - path: /mcpo
             pathType: ImplementationSpecific
@@ -129,7 +125,7 @@ ingress:
   hosts:
     - host: ""
       paths:
-        - path: /
+        - path: /mcp-server-trento
           pathType: ImplementationSpecific
   tls:
     []
@@ -139,12 +135,14 @@ ingress:
 
 ## @section Global parameters
 ##
+## @param global.clusterDomain Kubernetes cluster domain
 ## @param global.trentoMcpServer.servicePort Global service port for Trento MCP Server
 ## @param global.trentoWanda.name Global name for Trento Wanda service
 ## @param global.trentoWanda.servicePort Global service port for Trento Wanda
 ## @param global.trentoWeb.name Global name for Trento Web service
 ## @param global.trentoWeb.servicePort Global service port for Trento Web
 global:
+  clusterDomain:
   trentoMcpServer:
     servicePort:
   trentoWeb:
@@ -186,7 +184,7 @@ startupProbe:
   enabled: true
   path: /livez
   port: health
-  initialDelaySeconds: 180
+  initialDelaySeconds: 5
   periodSeconds: 20
   timeoutSeconds: 5
   failureThreshold: 6
@@ -204,8 +202,8 @@ livenessProbe:
   enabled: true
   path: /livez
   port: health
-  initialDelaySeconds: 180
-  periodSeconds: 20
+  initialDelaySeconds: 10
+  periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
   successThreshold: 1
@@ -222,8 +220,8 @@ readinessProbe:
   enabled: true
   path: /readyz
   port: health
-  initialDelaySeconds: 30
-  periodSeconds: 10
+  initialDelaySeconds: 10
+  periodSeconds: 30
   timeoutSeconds: 5
   failureThreshold: 6
   successThreshold: 1

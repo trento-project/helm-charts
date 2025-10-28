@@ -18,11 +18,12 @@ Trento MCP Server Configuration:
 {{ $cm }}
 {{ end }}
 {{- $transportPath := ternary "sse" "mcp" (eq .Values.mcpServer.transport "sse") }}
-{{- $internalUrl := printf "http://%s.%s.svc.%s:%s/%s/" (include "trento-mcp-server.fullname" .) .Release.Namespace .Values.clusterDomain (toString .Values.service.port) $transportPath }}
+{{- $clusterDomain := default .Values.clusterDomain .Values.global.clusterDomain }}
+{{- $internalUrl := printf "http://%s.%s.svc.%s:%s/%s" (include "trento-mcp-server.fullname" .) .Release.Namespace $clusterDomain (toString .Values.service.port) $transportPath }}
 {{- $mcpUrl := $internalUrl }}
 {{- $externalUrl := "" }}
 {{- if .Values.ingress.enabled }}
-{{- $externalUrl = printf "https://%s%s/%s/" (index .Values.ingress.hosts 0).host (index (index .Values.ingress.hosts 0).paths 0).path $transportPath }}
+{{- $externalUrl = printf "https://%s%s/%s" (index .Values.ingress.hosts 0).host (index (index .Values.ingress.hosts 0).paths 0).path $transportPath }}
 {{- $mcpUrl = $externalUrl }}
 {{- end }}
 To use the MCP server, add the following to your MCP client config:
@@ -44,6 +45,7 @@ Note: Custom command-line arguments are configured. Ensure the header name match
 {{- end }}
 
 Service Access:
+- Internal: {{ $internalUrl }}
 {{- if .Values.ingress.enabled }}
 - External: {{ $externalUrl }}
 {{- end }}

@@ -20,13 +20,13 @@ jobs:
   test-helm-charts:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: azure/setup-helm@v4
         with:
           version: v3.4.0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.13
       - name: Set up chart-testing
@@ -38,12 +38,12 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [test-helm-charts]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: compress
         run: |
           set -x
           find ./charts/ -maxdepth 1 -mindepth 1 -exec sh -c 'tar -zcf $(basename {}).tgz -C charts/ ./$(basename {})/' \;
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: charts
           path: |
@@ -54,7 +54,7 @@ jobs:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: charts
       - uses: "marvinpinto/action-automatic-releases@v1.2.1"
@@ -72,7 +72,7 @@ jobs:
     if: github.event.release
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Configure Git
@@ -108,7 +108,7 @@ jobs:
         charts: ["trento-server"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: actions-ecosystem/action-get-latest-tag@v1

@@ -1,5 +1,6 @@
 ### Global Values ###
 global:
+  clusterDomain: cluster.local
   logLevel: info
   trentoWeb:
     name: web
