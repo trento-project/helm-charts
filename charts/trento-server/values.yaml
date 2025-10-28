@@ -79,3 +79,5 @@ rabbitmq:
       existingSecret: rabbitmq-tls-server
       existingSecretFullChain: false
   extraEnvVarsCM: "{{ .Release.Name }}-rabbitmq-configmap"
+  image:
+    repository: bitnamilegacy/rabbitmq

@@ -6,7 +6,7 @@ name: trento-server
 description: The trento server chart contains all the components necessary to run a Trento server.
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
-version: 2.6.0-dev6
+version: 2.6.0-dev7
 
 dependencies:
   - name: trento-web
