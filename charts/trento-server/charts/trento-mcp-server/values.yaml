@@ -39,7 +39,7 @@ mcpServer:
     - /api/all/openapi
     - /wanda/api/all/openapi
   enableHealthCheck: true
-  headerName: X-TRENTO-MCP-APIKEY
+  headerName: Authorization
   healthApiPath: /api/healthz
   insecureTLS: false
   oasPath: []
