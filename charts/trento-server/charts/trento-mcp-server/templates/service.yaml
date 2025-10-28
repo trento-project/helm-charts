@@ -15,5 +15,11 @@ spec:
       targetPort: {{ include "trentoMcpServer.port" . }}
       protocol: TCP
       port: {{ include "trentoMcpServer.port" . }}
+    {{- if .Values.mcpo.enabled }}
+    - name: mcpo
+      targetPort: {{ .Values.mcpo.port }}
+      protocol: TCP
+      port: {{ .Values.mcpo.port }}
+    {{- end }}
   selector:
     {{- include "trento-mcp-server.selectorLabels" . | nindent 4 }}

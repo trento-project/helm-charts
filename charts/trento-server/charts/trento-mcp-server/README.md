@@ -30,7 +30,7 @@
 | `mcpServer.args`               | Array of arguments to pass to the MCP server container, overrides other settings                              | `[]`                                            |
 | `mcpServer.autodiscoveryPaths` | Custom paths for API autodiscovery                                                                            | `["/api/all/openapi","/wanda/api/all/openapi"]` |
 | `mcpServer.enableHealthCheck`  | Enable health check endpoint                                                                                  | `true`                                          |
-| `mcpServer.headerName`         | Name of the header the MCP client should use to pass the Trento Personal Access Token                         | `X-TRENTO-MCP-APIKEY`                           |
+| `mcpServer.headerName`         | Name of the header the MCP client should use to pass the Trento Personal Access Token                         | `Authorization`                                 |
 | `mcpServer.healthApiPath`      | The API path used for health checks on target servers, like Trento Web or Wanda                               | `/api/healthz`                                  |
 | `mcpServer.insecureTLS`        | Disable TLS certificate verification                                                                          | `false`                                         |
 | `mcpServer.oasPath`            | List of paths to OpenAPI specification files. If empty, it defaults to Trento Web and Wanda internal services | `[]`                                            |
@@ -38,9 +38,33 @@
 | `mcpServer.transport`          | Transport protocol for the server                                                                             | `streamable`                                    |
 | `mcpServer.trentoURL`          | URL of the Trento server. If empty, it defaults to Trento Web internal service                                | `""`                                            |
 | `mcpServer.verbosity`          | Log level verbosity                                                                                           | `info`                                          |
-| `env`                          | Environment variables to pass to the container                                                                | `{}`                                            |
-| `service.type`                 | Service type                                                                                                  | `ClusterIP`                                     |
-| `service.port`                 | Service port                                                                                                  | `5000`                                          |
+
+### MCPO sidecar configuration
+
+| Name                                    | Description                                                               | Value                     |
+| --------------------------------------- | ------------------------------------------------------------------------- | ------------------------- |
+| `mcpo.enabled`                          | Enable the MCPO sidecar container                                         | `true`                    |
+| `mcpo.image.repository`                 | MCPO image repository                                                     | `ghcr.io/open-webui/mcpo` |
+| `mcpo.image.tag`                        | MCPO image tag                                                            | `git-91e8f94`             |
+| `mcpo.image.pullPolicy`                 | MCPO image pull policy                                                    | `Always`                  |
+| `mcpo.port`                             | Listening port for MCPO HTTP server                                       | `8000`                    |
+| `mcpo.rootPath`                         | Optional root path when serving behind a reverse proxy (e.g. "/api/mcpo") | `/mcpo`                   |
+| `mcpo.pathPrefix`                       | Optional path prefix for customizing route prefix for all mounted tools   | `/`                       |
+| `mcpo.logLevel`                         | Log level for MCPO (DEBUG, INFO, WARNING, ERROR, CRITICAL)                | `DEBUG`                   |
+| `mcpo.extraArgs`                        | Additional arguments for MCPO, appended as-is                             | `[]`                      |
+| `mcpo.startupProbe.initialDelaySeconds` | Initial delay before checking main container readiness                    | `10`                      |
+| `mcpo.startupProbe.periodSeconds`       | Period between readiness checks                                           | `5`                       |
+| `mcpo.startupProbe.timeoutSeconds`      | Timeout for readiness check                                               | `3`                       |
+| `mcpo.startupProbe.successThreshold`    | Success threshold for readiness check                                     | `1`                       |
+| `mcpo.startupProbe.failureThreshold`    | Failure threshold for readiness check                                     | `30`                      |
+| `mcpo.ingress.enabled`                  | Enable MCPO ingress                                                       | `true`                    |
+| `mcpo.ingress.className`                | Ingress class name for MCPO                                               | `traefik`                 |
+| `mcpo.ingress.annotations`              | MCPO ingress annotations                                                  | `{}`                      |
+| `mcpo.ingress.hosts`                    | MCPO ingress host rules                                                   | `[]`                      |
+| `mcpo.ingress.tls`                      | MCPO ingress TLS configuration                                            | `[]`                      |
+| `env`                                   | Environment variables to pass to the container                            | `{}`                      |
+| `service.type`                          | Service type                                                              | `ClusterIP`               |
+| `service.port`                          | Service port                                                              | `5000`                    |
 
 ### Ingress configuration
 

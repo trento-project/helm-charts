@@ -34,6 +34,9 @@ spec:
   ingress:
     - ports:
         - port: {{ include "trentoMcpServer.port" . }}
+        {{- if .Values.mcpo.enabled }}
+        - port: {{ .Values.mcpo.port }}
+        {{- end }}
         {{- if .Values.mcpServer.enableHealthCheck }}
         # The health check port does not need to be reachable outside. It is used for health/ready probes.
         # - port: {{ .Values.containerPorts.health }}

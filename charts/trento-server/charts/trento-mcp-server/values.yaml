@@ -43,7 +43,7 @@ mcpServer:
     - /api/all/openapi
     - /wanda/api/all/openapi
   enableHealthCheck: true
-  headerName: X-TRENTO-MCP-APIKEY
+  headerName: Authorization
   healthApiPath: /api/healthz
   insecureTLS: false
   oasPath: []
@@ -52,6 +52,57 @@ mcpServer:
   transport: streamable
   trentoURL: ""
   verbosity: info
+
+## @section MCPO sidecar configuration
+## Enable and configure an optional mcpo sidecar that exposes the MCP server via OpenAPI for Open WebUI
+##
+## @param mcpo.enabled Enable the MCPO sidecar container
+## @param mcpo.image.repository MCPO image repository
+## @param mcpo.image.tag MCPO image tag
+## @param mcpo.image.pullPolicy MCPO image pull policy
+## @param mcpo.port Listening port for MCPO HTTP server
+## @param mcpo.rootPath Optional root path when serving behind a reverse proxy (e.g. "/api/mcpo")
+## @param mcpo.pathPrefix Optional path prefix for customizing route prefix for all mounted tools
+## @param mcpo.logLevel Log level for MCPO (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+## @param mcpo.extraArgs Additional arguments for MCPO, appended as-is
+## @param mcpo.startupProbe.initialDelaySeconds Initial delay before checking main container readiness
+## @param mcpo.startupProbe.periodSeconds Period between readiness checks
+## @param mcpo.startupProbe.timeoutSeconds Timeout for readiness check
+## @param mcpo.startupProbe.successThreshold Success threshold for readiness check
+## @param mcpo.startupProbe.failureThreshold Failure threshold for readiness check
+## @param mcpo.ingress.enabled Enable MCPO ingress
+## @param mcpo.ingress.className Ingress class name for MCPO
+## @param mcpo.ingress.annotations [object] MCPO ingress annotations
+## @param mcpo.ingress.hosts [array] MCPO ingress host rules
+## @param mcpo.ingress.tls [array] MCPO ingress TLS configuration
+mcpo:
+  enabled: true
+  image:
+    repository: ghcr.io/open-webui/mcpo
+    tag: git-91e8f94
+    pullPolicy: Always
+  port: 8000
+  rootPath: "/mcpo"
+  pathPrefix: "/"
+  logLevel: DEBUG
+  extraArgs: []
+  startupProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 30
+  ingress:
+    enabled: true
+    className: "traefik"
+    annotations:
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: "ai.sap.prg2.suse.org"
+        paths:
+          - path: /mcpo
+            pathType: ImplementationSpecific
+    tls: []
 
 ## @param env Environment variables to pass to the container
 env: {}
