@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-#!BuildTag: trento/trento-server:2.6.0-dev4
-#!BuildTag: trento/trento-server:2.6.0-dev4-build%RELEASE%
+#!BuildTag: trento/trento-server:2.6.0-dev5
+#!BuildTag: trento/trento-server:2.6.0-dev5-build%RELEASE%
 apiVersion: v2
 name: trento-server
 description: The trento server chart contains all the components necessary to run a Trento server.
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
-version: 2.6.0-dev6
+# to the chart and its templates
+version: 2.6.0-dev7
 
 dependencies:
   - name: trento-web
@@ -15,6 +16,9 @@ dependencies:
   - name: trento-wanda
     version: ">0.0.0-0"
     condition: trento-wanda.enabled
+  - name: trento-mcp-server
+    version: ">0.0.0-0"
+    condition: trento-mcp-server.enabled
   - name: postgresql
     version: ">0.0.0"
     condition: postgresql.enabled

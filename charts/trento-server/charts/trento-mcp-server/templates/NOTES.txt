@@ -1,0 +1,55 @@
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+################################################################################
+#                        BEGIN TRENTO MCP SERVER                               #
+################################################################################
+
+Trento MCP Server Configuration:
+
+{{ if .Values.mcpServer.args -}}
+- Target Trento Instance: <check the --trento-url argument>
+- OpenAPI Spec: <check the --oas-path argument>
+{{ else }}
+{{- $cm := include "trento-mcp-server.configmap.data" . -}}
+{{- $cm = regexReplaceAll "(?m)^[ \t]*#.*\r?\n" $cm "" -}}
+{{- $cm = regexReplaceAll "(?m)^[ \t]*\r?\n" $cm "" -}}
+{{ $cm }}
+{{ end }}
+{{- $transportPath := ternary "sse" "mcp" (eq .Values.mcpServer.transport "sse") }}
+{{- $clusterDomain := default .Values.clusterDomain .Values.global.clusterDomain }}
+{{- $internalUrl := printf "http://%s.%s.svc.%s:%s/%s" (include "trento-mcp-server.fullname" .) .Release.Namespace $clusterDomain (toString .Values.service.port) $transportPath }}
+{{- $mcpUrl := $internalUrl }}
+{{- $externalUrl := "" }}
+{{- if .Values.ingress.enabled }}
+{{- $externalUrl = printf "https://%s%s/%s" (index .Values.ingress.hosts 0).host (index (index .Values.ingress.hosts 0).paths 0).path $transportPath }}
+{{- $mcpUrl = $externalUrl }}
+{{- end }}
+To use the MCP server, add the following to your MCP client config:
+
+{
+    "servers": {
+        "trento": {
+            "type": "http",
+            "url": "{{ $mcpUrl }}",
+            "headers": {
+                "{{ .Values.mcpServer.headerName }}": "<your-trento-api-key>"
+            }
+        }
+    }
+}
+{{- if .Values.mcpServer.args }}
+
+Note: Custom command-line arguments are configured. Ensure the header name matches your server configuration.
+{{- end }}
+
+Service Access:
+- Internal: {{ $internalUrl }}
+{{- if .Values.ingress.enabled }}
+- External: {{ $externalUrl }}
+{{- end }}
+
+################################################################################
+#                             END TRENTO MCP SERVER                            #
+################################################################################

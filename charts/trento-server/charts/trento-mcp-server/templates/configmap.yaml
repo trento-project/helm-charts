@@ -1,0 +1,69 @@
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trento-mcp-server.fullname" . }}
+  labels:
+   {{- include "trento-mcp-server.labels" . | nindent 4 }}
+data:
+  {{ include "trento-mcp-server.configmap.data" . }}
+
+  {{- /* Helper to render the configmap data so it can be reused in NOTES */ -}}
+  {{- define "trento-mcp-server.configmap.data" -}}
+  {{- $webService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWeb.name .Release.Namespace .Values.global.clusterDomain }}
+  {{- $wandaService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWanda.name .Release.Namespace .Values.global.clusterDomain }}
+  {{- $webPort := .Values.global.trentoWeb.servicePort | int }}
+  {{- $wandaPort := .Values.global.trentoWanda.servicePort | int }}
+  {{- if .Values.mcpServer.oasPath }}
+  ## List of comma-separated paths to the OpenAPI specification files (local or remote URLs).
+  TRENTO_MCP_OAS_PATH: {{ if kindIs "slice" .Values.mcpServer.oasPath }}{{ join "," .Values.mcpServer.oasPath | quote }}{{ else }}{{ .Values.mcpServer.oasPath | quote }}{{ end }}
+  {{- else if .Values.mcpServer.trentoURL }}
+  ## TRENTO_MCP_OAS_PATH is empty when trentoURL is specified.
+  TRENTO_MCP_OAS_PATH: ""
+  {{- else }}
+  ## List of comma-separated paths to the OpenAPI specification files for TrentoWeb and Wanda internal services.
+  TRENTO_MCP_OAS_PATH: {{ printf "http://%s:%d/api/all/openapi,http://%s:%d/api/all/openapi" $webService $webPort $wandaService $wandaPort | quote }}
+  {{- end }}
+
+  ## Target Trento server to connect to. If none is specified, it will use the base path from the OAS files.
+  TRENTO_MCP_TRENTO_URL: {{ .Values.mcpServer.trentoURL | quote }}
+
+  ## Custom paths for API autodiscovery, useful when only passing a Trento URL.
+  {{- if .Values.mcpServer.autodiscoveryPaths }}
+  TRENTO_MCP_AUTODISCOVERY_PATHS: {{ if kindIs "slice" .Values.mcpServer.autodiscoveryPaths }}{{ join "," .Values.mcpServer.autodiscoveryPaths | quote }}{{ else }}{{ .Values.mcpServer.autodiscoveryPaths | quote }}{{ end }}
+  {{- else }}
+  TRENTO_MCP_AUTODISCOVERY_PATHS: ""
+  {{- end }}
+
+  ## The port on which the MCP Server listens for incoming connections.
+  TRENTO_MCP_PORT: {{ include "trentoMcpServer.port" . | quote }}
+
+  ## Enable the health check server.
+  TRENTO_MCP_ENABLE_HEALTH_CHECK: {{ .Values.mcpServer.enableHealthCheck | quote }}
+
+  ## The port on which the health check server listens for incoming connections.
+  TRENTO_MCP_HEALTH_PORT: {{ .Values.containerPorts.health | quote }}
+
+  ## The API path used for health checks on target servers, like Trento Web or Wanda.
+  TRENTO_MCP_HEALTH_API_PATH: {{ .Values.mcpServer.healthApiPath | quote }}
+
+  ## The transport protocol to use for MCP communication. Options: 'streamable' (default) or 'sse'.
+  TRENTO_MCP_TRANSPORT: {{ .Values.mcpServer.transport | quote }}
+
+  ## The HTTP header name used to pass the Trento API key for authentication with the Trento server.
+  TRENTO_MCP_HEADER_NAME: {{ .Values.mcpServer.headerName | quote }}
+
+  ## List of OpenAPI tags to filter which operations are exposed as MCP tools. Only operations with at least one matching tag will be available.
+  {{- if .Values.mcpServer.tagFilter }}
+  TRENTO_MCP_TAG_FILTER: {{ if kindIs "slice" .Values.mcpServer.tagFilter }}{{ join "," .Values.mcpServer.tagFilter | quote }}{{ else }}{{ .Values.mcpServer.tagFilter | quote }}{{ end }}
+  {{- end }}
+
+  ##  The logging verbosity level. Options: 'debug', 'info', 'warning', 'error'.
+  TRENTO_MCP_VERBOSITY: {{ .Values.mcpServer.verbosity | quote }}
+
+  ## Skip TLS certificate verification when connecting to HTTPS URLs. Use only in development or trusted environments.
+  TRENTO_MCP_INSECURE_SKIP_TLS_VERIFY: {{ .Values.mcpServer.insecureTLS | quote }}
+{{- end }}

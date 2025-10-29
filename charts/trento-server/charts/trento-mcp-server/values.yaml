@@ -1,0 +1,261 @@
+# Copyright 2025 SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+## @section Common parameters
+##
+## @param image.repository Image repository
+## @param image.tag Image tag
+## @param image.pullPolicy Image pull policy
+image:
+  repository: ghcr.io/trento-project/trento-mcp-server
+  tag: latest
+  pullPolicy: Always
+
+## @param replicaCount Number of replicas to deploy
+replicaCount: 1
+
+## @param containerPorts.http Port for MCP HTTP traffic
+## @param containerPorts.health Port for health check
+containerPorts:
+  http: 5000
+  health: 8080
+
+## @section MCP Server configuration
+##
+## @param mcpServer.args Array of arguments to pass to the MCP server container, overrides other settings
+## @param mcpServer.autodiscoveryPaths Custom paths for API autodiscovery
+## @param mcpServer.enableHealthCheck Enable health check endpoint
+## @param mcpServer.headerName Name of the header the MCP client should use to pass the Trento Personal Access Token
+## @param mcpServer.healthApiPath The API path used for health checks on target servers, like Trento Web or Wanda
+## @param mcpServer.insecureTLS Disable TLS certificate verification
+## @param mcpServer.oasPath List of paths to OpenAPI specification files. If empty, it defaults to Trento Web and Wanda internal services
+## @param mcpServer.tagFilter List of tags to filter
+## @param mcpServer.transport Transport protocol for the server
+## @param mcpServer.trentoURL URL of the Trento server. If empty, it defaults to Trento Web internal service
+## @param mcpServer.verbosity Log level verbosity
+mcpServer:
+  args: []
+  autodiscoveryPaths:
+    - /api/all/openapi
+    - /wanda/api/all/openapi
+  enableHealthCheck: true
+  headerName: Authorization
+  healthApiPath: /api/healthz
+  insecureTLS: false
+  oasPath: []
+  tagFilter:
+    - MCP
+  transport: streamable
+  trentoURL: ""
+  verbosity: info
+
+## @param env Environment variables to pass to the container
+env: {}
+
+## Service parameters
+## @param service.type Service type
+## @param service.port Service port
+service:
+  type: ClusterIP
+  port: 5000
+
+## @section Ingress configuration
+##
+## @param ingress.enabled Enable ingress
+## @param ingress.className Ingress class name
+## @param ingress.annotations [object] Ingress annotations
+## @param ingress.hosts [array] Ingress host rules
+## @param ingress.tls [array] Ingress TLS configuration
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: ""
+      paths:
+        - path: /mcp-server-trento
+          pathType: ImplementationSpecific
+  tls:
+    []
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+
+## @section Global parameters
+##
+## @param global.clusterDomain Kubernetes cluster domain
+## @param global.trentoMcpServer.servicePort Global service port for Trento MCP Server
+## @param global.trentoWanda.name Global name for Trento Wanda service
+## @param global.trentoWanda.servicePort Global service port for Trento Wanda
+## @param global.trentoWeb.name Global name for Trento Web service
+## @param global.trentoWeb.servicePort Global service port for Trento Web
+global:
+  clusterDomain:
+  trentoMcpServer:
+    servicePort:
+  trentoWeb:
+    name:
+    servicePort:
+  trentoWanda:
+    name:
+    servicePort:
+
+## @section Resource configuration
+##
+## @param resources.limits.cpu CPU limit
+## @param resources.limits.memory Memory limit
+## @param resources.limits.ephemeral-storage Ephemeral storage limit
+## @param resources.requests.cpu CPU request
+## @param resources.requests.memory Memory request
+## @param resources.requests.ephemeral-storage Ephemeral storage request
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+    ephemeral-storage: "512Mi"
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: "128Mi"
+
+## @section Probes
+##
+## @param startupProbe.enabled Enable startup probe
+## @param startupProbe.path Path to access on the HTTP server
+## @param startupProbe.port Port for startupProbe
+## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+## @param startupProbe.periodSeconds Period seconds for startupProbe
+## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+## @param startupProbe.failureThreshold Failure threshold for startupProbe
+## @param startupProbe.successThreshold Success threshold for startupProbe
+startupProbe:
+  enabled: true
+  path: /livez
+  port: health
+  initialDelaySeconds: 5
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## @param livenessProbe.enabled Enable liveness probe
+## @param livenessProbe.path Path to access on the HTTP server
+## @param livenessProbe.port Port for livenessProbe
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+## @param livenessProbe.successThreshold Success threshold for livenessProbe
+livenessProbe:
+  enabled: true
+  path: /livez
+  port: health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## @param readinessProbe.enabled Enable readiness probe
+## @param readinessProbe.path Path to access on the HTTP server
+## @param readinessProbe.port Port for readinessProbe
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+## @param readinessProbe.successThreshold Success threshold for readinessProbe
+readinessProbe:
+  enabled: true
+  path: /readyz
+  port: health
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## @section Common pod template settings
+##
+## @param imagePullSecrets Image pull secrets for private registries
+imagePullSecrets: []
+
+## @param nameOverride Partially override the chart name
+nameOverride: ""
+
+## @param fullnameOverride Fully override the release name
+fullnameOverride: ""
+
+## @param serviceAccount.create Specifies whether a service account should be created
+## @param serviceAccount.annotations Annotations to add to the service account
+## @param serviceAccount.name The name of the service account to use
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+## @param podAnnotations Additional annotations for the pod metadata
+podAnnotations: {}
+
+## @param nodeSelector Node selector for pod assignment
+nodeSelector: {}
+
+## @param tolerations Tolerations for pod assignment
+tolerations: []
+
+## @param affinity Affinity rules for pod assignment
+affinity: {}
+
+## @section Network Policies
+##
+## Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+## @param networkPolicy.enabled Specifies whether a NetworkPolicy should be created
+## @param networkPolicy.allowExternal Don't require server label for connections
+## @param networkPolicy.allowExternalEgress Allow the pod to access any range of port and all destinations.
+## @param networkPolicy.ingressNSMatchLabels [object] Labels to match to allow traffic from other namespaces
+## @param networkPolicy.ingressNSPodMatchLabels [object] Pod labels to match to allow traffic from other namespaces
+networkPolicy:
+  enabled: true
+  allowExternal: true
+  allowExternalEgress: true
+  ingressNSMatchLabels: {}
+  ingressNSPodMatchLabels: {}
+
+## @section Security Context
+##
+## Configure Pods Security Context
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
+## @param podSecurityContext.sysctls Set kernel settings using the sysctl interface
+## @param podSecurityContext.supplementalGroups Set filesystem extra groups
+## @param podSecurityContext.fsGroup Set server pod's Security Context fsGroup
+##
+podSecurityContext:
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+
+## Configure Container Security Context
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
+## @param containerSecurityContext.runAsUser Set server containers' Security Context runAsUser
+## @param containerSecurityContext.runAsGroup Set server containers' Security Context runAsGroup
+## @param containerSecurityContext.runAsNonRoot Set Controller container's Security Context runAsNonRoot
+## @param containerSecurityContext.privileged Set primary container's Security Context privileged
+## @param containerSecurityContext.allowPrivilegeEscalation Set primary container's Security Context allowPrivilegeEscalation
+## @param containerSecurityContext.readOnlyRootFilesystem Set primary container's Security Context readOnlyRootFilesystem
+## @param containerSecurityContext.capabilities.drop List of capabilities to be dropped
+## @param containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
+containerSecurityContext:
+  seLinuxOptions: {}
+  runAsUser: 10001
+  runAsGroup: 10001
+  runAsNonRoot: true
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
