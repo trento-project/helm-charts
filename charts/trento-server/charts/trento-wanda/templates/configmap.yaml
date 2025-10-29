@@ -14,3 +14,6 @@ data:
   CORS_ORIGIN: {{ include "trentoWanda.cors_origin" . | quote }}
   {{- end }}
   OAS_SERVER_URL: "https://{{ .Values.global.trentoWeb.origin }}/wanda"
+  {{- $webService := printf "%s-%s.%s.svc.%s" .Release.Name .Values.global.trentoWeb.name .Release.Namespace .Values.global.clusterDomain }}
+  {{- $webPort := .Values.global.trentoWeb.servicePort | int }}
+  AUTH_SERVER_URL: {{ printf "http://%s:%d" $webService $webPort | quote }}
