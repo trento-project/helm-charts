@@ -28,24 +28,9 @@ xref:cert-manager.adoc[`+docs/cert-manager/+`] cookbook.
 === Optional: mTLS authentication with RabbitMQ
 
 mTLS authentication with RabbitMQ can be enabled through the
-`+global.rabbitmq.auth.tls+` configuration section. This feature
-enhances security by ensuring mutual authentication between RabbitMQ and
-its clients. When mTLS is enabled, the following secrets are expected to
-exist in the Kubernetes namespace:
-
-[arabic]
-. `+rabbitmq-tls-server+`
-* `+ca.crt+`: Root CA certificate for the RabbitMQ server
-* `+tls.crt+`: Server certificate for RabbitMQ
-* `+tls.key+`: Private key for the RabbitMQ server certificate
-. `+rabbitmq-tls-client-web+`
-* `+ca.crt+`: Root CA certificate for web component
-* `+client.crt+`: Client certificate for web component
-* `+client.key+`: Private key for web client certificate
-. `+rabbitmq-tls-client-wanda+`
-* `+ca.crt+`: Root CA certificate for wanda component
-* `+client.crt+`: Client certificate for wanda component
-* `+client.key+`: Private key for wanda client certificate
+`+global.rabbitmq.tls.mtls.enabled+` flag. If enabled, the chart will take
+care of generating the needed certificates (using `+cert-manager+`) and
+configuring server and client applications accordingly.
 
 == Support
 

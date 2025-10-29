@@ -33,10 +33,10 @@ spec:
       - name: saml-data
         emptyDir: {}
       {{- end }}
-      {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-      - name: rabbitmq-mtls-certs
+      {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+      - name: web-client-cert
         secret:
-          secretName: rabbitmq-tls-client-web
+          secretName: {{ include "trento-web.fullname" . }}-client-cert
       {{- end }}
       initContainers:
         - name: create-trento-db
@@ -63,7 +63,7 @@ spec:
                   SELECT FROM pg_database WHERE datname = 'trento'
                 )
                 \gexec
-        
+
         - name: create-trento-eventstore
           image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           command:
@@ -91,15 +91,10 @@ spec:
         - name: init
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
           {{- if .Values.saml.enabled }}
+          volumeMounts:
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
-          {{- end }}
-          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
-              readOnly: true
           {{- end }}
           envFrom:
             - configMapRef:
@@ -114,15 +109,15 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
-          {{- if .Values.saml.enabled }}
+            {{- if .Values.saml.enabled }}
             - name: saml-data
               mountPath: {{ .Values.saml.spDir }}
-          {{- end }}
-          {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-            - name: rabbitmq-mtls-certs
-              mountPath: /var/rabbitmq/ssl
+            {{- end }}
+            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+            - name: web-client-cert
+              mountPath: /etc/certs/rabbitmq
               readOnly: true
-          {{- end }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "trento-web.fullname" . }}-configmap

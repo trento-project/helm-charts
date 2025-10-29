@@ -26,13 +26,13 @@ data:
   {{- end }}
   {{- end }}
   PROMETHEUS_URL: "http://{{ .Release.Name }}-{{ .Values.global.prometheus.name }}"
-  CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
-  {{- if .Values.global.rabbitmq.auth.tls.enabled }}
-  AMQP_URL: "amqps://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}?certfile=/var/rabbitmq/ssl/client.crt&keyfile=/var/rabbitmq/ssl/client.key&cacertfile=/var/rabbitmq/ssl/ca.crt&verify=verify_peer"
+  {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+  AMQP_URL: "amqps://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.ports.amqpTls }}?cacertfile=/etc/certs/rabbitmq/ca.crt&certfile=/etc/certs/rabbitmq/tls.crt&keyfile=/etc/certs/rabbitmq/tls.key"
   {{- else }}
-  AMQP_URL: "amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.servicePort }}"
+  AMQP_URL: "amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.ports.amqp }}"
   {{- end }}
-  TRENTO_WEB_ORIGIN: {{ include "trento-web.trentoWebOrigin" . | quote }}
+  CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
+  TRENTO_WEB_ORIGIN: "{{ .Values.trentoWebOrigin }}"
   OAS_SERVER_URL: https://{{ include "trento-web.trentoWebOrigin" . }}
   CHECKS_SERVICE_BASE_URL: "/wanda"
   ENABLE_OIDC: "{{ .Values.oidc.enabled }}"
