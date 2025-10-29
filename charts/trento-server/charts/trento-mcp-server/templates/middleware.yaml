@@ -1,0 +1,23 @@
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+{{ if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "trento-mcp-server.fullname" . }}-strip-prefix
+  labels:
+  {{- include "trento-mcp-server.labels" . | nindent 4 }}
+spec:
+  # This middleware strips the prefix from the request path,
+  # so the backend service receives a clean path.
+  stripPrefix:
+    prefixes: {{- range .Values.ingress.hosts }}
+      {{- $p := (first .paths).path }}
+      - {{ $p }}
+      {{- if not (regexMatch "/$" $p) }}
+      - {{ printf "%s/" $p }}
+      {{- end }}
+    {{- end }}
+{{- end }}

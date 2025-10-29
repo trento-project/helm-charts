@@ -1,5 +1,6 @@
 ### Global Values ###
 global:
+  clusterDomain: cluster.local
   logLevel: info
   trentoWeb:
     name: web
@@ -8,6 +9,9 @@ global:
   trentoWanda:
     name: wanda
     servicePort: 4000
+  trentoMcpServer:
+    name: mcp-server
+    servicePort: 5000
   postgresql:
     name: postgresql
     servicePort: 5432
@@ -32,6 +36,10 @@ trento-web:
 trento-wanda:
   nameOverride: wanda
   enabled: true
+
+trento-mcp-server:
+  nameOverride: mcp-server
+  enabled: false
 
 postgresql:
   enabled: true
