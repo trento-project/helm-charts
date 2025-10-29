@@ -44,7 +44,7 @@
 | --------------------------------------- | ------------------------------------------------------------------------- | ------------------------- |
 | `mcpo.enabled`                          | Enable the MCPO sidecar container                                         | `true`                    |
 | `mcpo.image.repository`                 | MCPO image repository                                                     | `ghcr.io/open-webui/mcpo` |
-| `mcpo.image.tag`                        | MCPO image tag                                                            | `git-91e8f94`             |
+| `mcpo.image.tag`                        | MCPO image tag                                                            | `main`                    |
 | `mcpo.image.pullPolicy`                 | MCPO image pull policy                                                    | `Always`                  |
 | `mcpo.port`                             | Listening port for MCPO HTTP server                                       | `8000`                    |
 | `mcpo.rootPath`                         | Optional root path when serving behind a reverse proxy (e.g. "/api/mcpo") | `/mcpo`                   |
