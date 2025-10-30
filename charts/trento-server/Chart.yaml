@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-#!BuildTag: trento/trento-server:2.6.0-dev8
-#!BuildTag: trento/trento-server:2.6.0-dev8-build%RELEASE%
+#!BuildTag: trento/trento-server:2.6.0-dev9
+#!BuildTag: trento/trento-server:2.6.0-dev9-build%RELEASE%
 apiVersion: v2
 name: trento-server
 description: The trento server chart contains all the components necessary to run a Trento server.
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates
-version: 2.6.0-dev8
+version: 2.6.0-dev.11
 
 dependencies:
   - name: trento-web
@@ -27,6 +27,5 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts/
     condition: prometheus.enabled
   - name: rabbitmq
-    version: ~10.3.9
-    repository: https://charts.bitnami.com/bitnami/
+    version: ">0.0.0-0"
     condition: rabbitmq.enabled

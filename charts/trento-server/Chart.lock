@@ -15,7 +15,7 @@ dependencies:
   repository: https://prometheus-community.github.io/helm-charts/
   version: 15.1.3
 - name: rabbitmq
-  repository: https://charts.bitnami.com/bitnami/
-  version: 10.3.9
-digest: sha256:f10fe57f862dcc4f21a05e8ac82c2e0509c5764297816e4a4957e6181520584c
-generated: "2025-09-25T18:03:46.9714136+02:00"
+  repository: ""
+  version: '>0.0.0-0'
+digest: sha256:2b5e0c98d51745794aebf3e6b3b43b73dbfe715ec834b6ead95e38b48e8ced6d
+generated: "2025-10-29T15:23:22.163984664+01:00"
