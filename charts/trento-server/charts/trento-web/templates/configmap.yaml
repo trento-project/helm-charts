@@ -32,7 +32,7 @@ data:
   AMQP_URL: "amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ .Release.Name }}-{{ .Values.global.rabbitmq.name }}:{{ .Values.global.rabbitmq.ports.amqp }}"
   {{- end }}
   CHARTS_ENABLED: "{{ .Values.chartsEnabled }}"
-  TRENTO_WEB_ORIGIN: "{{ .Values.trentoWebOrigin }}"
+  TRENTO_WEB_ORIGIN: {{ include "trento-web.trentoWebOrigin" . | quote }}
   OAS_SERVER_URL: https://{{ include "trento-web.trentoWebOrigin" . }}
   CHECKS_SERVICE_BASE_URL: "/wanda"
   ENABLE_OIDC: "{{ .Values.oidc.enabled }}"
