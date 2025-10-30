@@ -12,7 +12,7 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - name: http
-      targetPort: {{ include "trentoMcpServer.port" . }}
+      targetPort: http
       protocol: TCP
       port: {{ include "trentoMcpServer.port" . }}
   selector:
