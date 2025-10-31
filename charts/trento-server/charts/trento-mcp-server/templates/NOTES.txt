@@ -50,6 +50,16 @@ Service Access:
 - External: {{ $externalUrl }}
 {{- end }}
 
+{{- if .Values.mcpo.enabled }}
+MCPO Service Access:
+{{- $svcHost := printf "%s.%s.svc.%s" (include "trento-mcp-server.fullname" .) .Release.Namespace .Values.clusterDomain }}
+- Internal: http://{{ $svcHost }}:{{ .Values.mcpo.port }}
+ {{- if and .Values.mcpo.ingress.enabled }}
+ {{- $externalMcpoUrl := printf "https://%s%s" (index .Values.mcpo.ingress.hosts 0).host (index (index .Values.mcpo.ingress.hosts 0).paths 0).path }}
+- External: {{ $externalMcpoUrl }}
+ {{- end }}
+{{- end }}
+
 ################################################################################
 #                             END TRENTO MCP SERVER                            #
 ################################################################################

@@ -96,6 +96,50 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           resources: {{- toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.mcpo.enabled }}
+        - name: mcpo
+          image: "{{ .Values.mcpo.image.repository }}:{{ .Values.mcpo.image.tag }}"
+          imagePullPolicy: {{ .Values.mcpo.image.pullPolicy }}
+          args:
+            - --port
+            - "{{ .Values.mcpo.port }}"
+            {{- if .Values.mcpo.rootPath }}
+            - --root-path
+            - {{ .Values.mcpo.rootPath | quote }}
+            {{- end }}
+            {{- if .Values.mcpo.pathPrefix }}
+            - --path-prefix
+            - {{ .Values.mcpo.pathPrefix | quote }}
+            {{- end }}
+            {{- if .Values.mcpo.logLevel }}
+            - --log-level
+            - {{ .Values.mcpo.logLevel }}
+            {{- end }}
+            - --server-type
+            - {{ ternary "sse" "streamable-http" (eq .Values.mcpServer.transport "sse") }}
+            {{- range .Values.mcpo.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+            - --
+            - {{ printf "http://127.0.0.1:%s/%s" (toString (include "trentoMcpServer.port" .)) (ternary "sse" "mcp" (eq .Values.mcpServer.transport "sse")) | quote }}
+          ports:
+            - containerPort: {{ .Values.mcpo.port }}
+              name: mcpo
+              protocol: TCP
+          {{- if and .Values.mcpServer.enableHealthCheck .Values.readinessProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.containerPorts.health }}
+            initialDelaySeconds: {{ .Values.mcpo.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mcpo.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.mcpo.startupProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.mcpo.startupProbe.successThreshold }}
+            failureThreshold: {{ .Values.mcpo.startupProbe.failureThreshold }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 6 }}
