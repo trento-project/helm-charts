@@ -107,6 +107,14 @@ spec:
               find "{{ .Values.persistence.mountPath }}" -type d -exec chmod 755 {} \;
               find "{{ .Values.persistence.mountPath }}" -type f -exec chmod 644 {} \;
 
+              # The Erlang cookie must have 400 permissions to be accepted by RabbitMQ
+              # When upgrading from an older chart version, the cookie file might retain
+              # incorrect permissions, so we ensure they are set correctly at startup.
+              cookie_file="{{ .Values.persistence.mountPath }}/.erlang.cookie"
+              if [  -f $cookie_file ]; then
+                chmod 400 $cookie_file
+              fi
+
               echo "Permissions setup complete!"
           securityContext:
             runAsUser: 0
