@@ -21,6 +21,10 @@ metadata:
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
+    {{- if eq $.Values.ingress.className "traefik" }}
+    # This middleware makes sure that the /api/session/token/introspect endpoint is not accessible
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Release.Namespace }}-{{ include "trento-web.fullname" $ }}-no-introspection@kubernetescrd
+    {{- end }}
   {{- end }}
 spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
