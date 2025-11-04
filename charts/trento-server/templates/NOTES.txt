@@ -14,6 +14,7 @@ _---~            |     |  .   /+++++++\    . | .   |         ~---_
      ____--`~    '--~~__ .    |++++ __|----~    ~`---,              ___^~-__
 -~--~                   ~---__|,--~'                  ~~----_____-~'   `~----~
 
+See https://www.trento-project.io/docs/user-guide/trento-install-server.html#sec-trento-k8s-deployment for extra information about using an ingress that is not traefik.
 
 {{- if (index .Values "trento-web").enabled }}
 {{- if  (index .Values "trento-web").ingress.enabled }}
