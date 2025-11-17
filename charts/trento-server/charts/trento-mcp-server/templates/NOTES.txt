@@ -30,15 +30,25 @@ To use the MCP server, add the following to your MCP client config:
 
 {
     "servers": {
-        "trento": {
+        "mcp-server-trento": {
             "type": "http",
             "url": "{{ $mcpUrl }}",
             "headers": {
-                "{{ .Values.mcpServer.headerName }}": "<your-trento-api-key>"
+                "{{ .Values.mcpServer.headerName }}": "<your-trento-pat>"
             }
         }
     }
 }
+
+In MCPHost, you can use the following configuration:
+
+mcpServers:
+  mcp-server-trento:
+    type: remote
+    url: {{ $mcpUrl }}
+    headers:
+      - "Authorization: Bearer ${env://TRENTO_PAT}"
+
 {{- if .Values.mcpServer.args }}
 
 Note: Custom command-line arguments are configured. Ensure the header name matches your server configuration.
