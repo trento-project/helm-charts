@@ -34,7 +34,7 @@ To use the MCP server, add the following to your MCP client config:
             "type": "http",
             "url": "{{ $mcpUrl }}",
             "headers": {
-                "{{ .Values.mcpServer.headerName }}": "<your-trento-api-key>"
+                "{{ .Values.mcpServer.headerName }}": "<your-trento-pat>"
             }
         }
     }
