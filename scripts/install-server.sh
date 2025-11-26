@@ -273,7 +273,7 @@ update_helm_dependencies() {
         return
     fi
     echo "Updating Helm dependencies..."
-    helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null
     helm repo update >/dev/null
 }
 

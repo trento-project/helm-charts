@@ -89,7 +89,7 @@ documentation] for more information about the installation.
 Add third-party Helm repositories:
 [source,shell]
 ....
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 ....
 
