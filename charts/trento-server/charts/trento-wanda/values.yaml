@@ -41,7 +41,7 @@ checks:
   image:
     repository: ghcr.io/trento-project/checks
     pullPolicy: IfNotPresent
-    tag: 1.1.0
+    tag: 1.2.0
 
 secretKeyBase: ""
 imagePullSecrets: []
