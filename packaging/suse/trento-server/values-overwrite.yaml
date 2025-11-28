@@ -8,3 +8,7 @@ trento-wanda:
   checks:
     image:
       repository: registry.suse.com/trento/trento-checks
+
+trento-mcp-server:
+  image:
+    repository: registry.suse.com/trento/mcp-server-trento

@@ -15,7 +15,7 @@
 
 | Name                    | Description                  | Value                                      |
 | ----------------------- | ---------------------------- | ------------------------------------------ |
-| `image.repository`      | Image repository             | `ghcr.io/trento-project/trento-mcp-server` |
+| `image.repository`      | Image repository             | `ghcr.io/trento-project/mcp-server-trento` |
 | `image.tag`             | Image tag                    | `latest`                                   |
 | `image.pullPolicy`      | Image pull policy            | `Always`                                   |
 | `replicaCount`          | Number of replicas to deploy | `1`                                        |
