@@ -1,5 +1,46 @@
 # Changelog
 
+## [3.0.0](https://github.com/trento-project/helm-charts/tree/3.0.0) (2025-11-26)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/2.5.0...3.0.0)
+
+### Added
+
+- Rewrite introspect endpoint [\#157](https://github.com/trento-project/helm-charts/pull/157) (@nelsonkopliku)
+- Adjust chart version [\#155](https://github.com/trento-project/helm-charts/pull/155) (@nelsonkopliku)
+- Add extra AUTH\_SERVER\_URL env to wanda [\#150](https://github.com/trento-project/helm-charts/pull/150) (@nelsonkopliku)
+- \[TRNT-3845\] Add missing values in the values.yaml files [\#146](https://github.com/trento-project/helm-charts/pull/146) (@antgamdia)
+- Update wanda ingress add OAS\_SERVER\_URL usage [\#145](https://github.com/trento-project/helm-charts/pull/145) (@arbulu89)
+
+### Fixed
+
+- \[TRNT-3854\] Fix typo in mcp-server chart [\#154](https://github.com/trento-project/helm-charts/pull/154) (@antgamdia)
+- Fix trento web origin usage loading the correct value [\#153](https://github.com/trento-project/helm-charts/pull/153) (@arbulu89)
+- Fix broken link in README [\#138](https://github.com/trento-project/helm-charts/pull/138) (@EMaksy)
+- Make rabbitmq configmap name dynamic [\#136](https://github.com/trento-project/helm-charts/pull/136) (@nelsonkopliku)
+
+### Removed
+
+- Remove jwt secrets from wanda [\#158](https://github.com/trento-project/helm-charts/pull/158) (@nelsonkopliku)
+
+### Other Changes
+
+- Bump actions/checkout from 5 to 6 [\#161](https://github.com/trento-project/helm-charts/pull/161) (@dependabot[bot])
+- \[TRNT-3854\] Improve notes [\#160](https://github.com/trento-project/helm-charts/pull/160) (@antgamdia)
+- Bump helm/chart-testing-action from 2.7.0 to 2.8.0 [\#159](https://github.com/trento-project/helm-charts/pull/159) (@dependabot[bot])
+- Fix erlang cookie permissions [\#156](https://github.com/trento-project/helm-charts/pull/156) (@balanza)
+- Use ingress className instead of annotation [\#149](https://github.com/trento-project/helm-charts/pull/149) (@arbulu89)
+- Bump actions/upload-artifact from 4 to 5 [\#148](https://github.com/trento-project/helm-charts/pull/148) (@dependabot[bot])
+- Bump actions/download-artifact from 4 to 6 [\#147](https://github.com/trento-project/helm-charts/pull/147) (@dependabot[bot])
+- Use official Rabbitmq image [\#144](https://github.com/trento-project/helm-charts/pull/144) (@balanza)
+- \[TRNT-3854\] Add initial MCP Server chart [\#143](https://github.com/trento-project/helm-charts/pull/143) (@antgamdia)
+- Bump actions/setup-python from 5 to 6 [\#142](https://github.com/trento-project/helm-charts/pull/142) (@dependabot[bot])
+- Prepare docs for auto build [\#141](https://github.com/trento-project/helm-charts/pull/141) (@EMaksy)
+- Bump actions/checkout from 4 to 5 [\#140](https://github.com/trento-project/helm-charts/pull/140) (@dependabot[bot])
+- Convert Markdown to Adoc [\#137](https://github.com/trento-project/helm-charts/pull/137) (@EMaksy)
+- Setup rabbitmq tls [\#135](https://github.com/trento-project/helm-charts/pull/135) (@balanza)
+- Updated defaults for alerting settings [\#131](https://github.com/trento-project/helm-charts/pull/131) (@skrech)
+
 ## [2.5.0](https://github.com/trento-project/helm-charts/tree/2.5.0) (2025-07-01)
 
 ### What's Changed

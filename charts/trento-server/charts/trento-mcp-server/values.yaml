@@ -7,9 +7,9 @@
 ## @param image.tag Image tag
 ## @param image.pullPolicy Image pull policy
 image:
-  repository: ghcr.io/trento-project/trento-mcp-server
-  tag: latest
-  pullPolicy: Always
+  repository: ghcr.io/trento-project/mcp-server-trento
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
 
 ## @param replicaCount Number of replicas to deploy
 replicaCount: 1
