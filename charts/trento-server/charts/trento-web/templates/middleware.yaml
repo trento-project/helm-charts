@@ -3,6 +3,9 @@ Copyright 2025 SUSE LLC
 SPDX-License-Identifier: Apache-2.0
 */}}
 {{- if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") }}
+{{- $firstHost := index .Values.ingress.hosts 0 -}}
+{{- $firstPath := index $firstHost.paths 0 -}}
+{{- $basePath := $firstPath.path -}}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -10,7 +13,32 @@ metadata:
   labels:
   {{- include "trento-web.labels" . | nindent 4 }}
 spec:
+  # Block requests to the introspection endpoint
   replacePathRegex:
-    regex: "^/api/session/token/introspect$"
+    regex: "^{{ $basePath }}/api/session/token/introspect$"
     replacement: "/not-found"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "trento-web.fullname" . }}-strip-trento
+  labels:
+  {{- include "trento-web.labels" . | nindent 4 }}
+spec:
+  # Strip base path prefix from all requests so Phoenix receives clean paths
+  replacePathRegex:
+    regex: "^{{ $basePath }}(.*)$"
+    replacement: "$1"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "trento-web.fullname" . }}-set-prefix-header
+  labels:
+  {{- include "trento-web.labels" . | nindent 4 }}
+spec:
+  # Add X-Forwarded-Prefix header so Phoenix knows about the base path prefix
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Prefix: {{ $basePath }}
 {{- end }}

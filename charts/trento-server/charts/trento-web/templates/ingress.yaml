@@ -22,8 +22,8 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
     {{- if eq $.Values.ingress.className "traefik" }}
-    # This middleware makes sure that the /api/session/token/introspect endpoint is not accessible
-    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Release.Namespace }}-{{ include "trento-web.fullname" $ }}-no-introspection@kubernetescrd
+    # Middlewares: block introspect, strip /trento prefix, and set X-Forwarded-Prefix header
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Release.Namespace }}-{{ include "trento-web.fullname" $ }}-no-introspection@kubernetescrd,{{ $.Release.Namespace }}-{{ include "trento-web.fullname" $ }}-strip-trento@kubernetescrd,{{ $.Release.Namespace }}-{{ include "trento-web.fullname" $ }}-set-prefix-header@kubernetescrd
     {{- end }}
   {{- end }}
 spec:
