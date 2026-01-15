@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.1](https://github.com/trento-project/helm-charts/tree/3.0.1) (2026-01-15)
+
+[Full Changelog](https://github.com/trento-project/helm-charts/compare/3.0.0...3.0.1)
+
+### Fixed
+
+- Make values of alerting settings as strings in ConfigMap [\#166](https://github.com/trento-project/helm-charts/pull/166) (@skrech)
+
+### Other Changes
+
+- Bump actions/download-artifact from 6 to 7 [\#164](https://github.com/trento-project/helm-charts/pull/164) (@dependabot[bot])
+- Bump actions/upload-artifact from 5 to 6 [\#163](https://github.com/trento-project/helm-charts/pull/163) (@dependabot[bot])
+
 ## [3.0.0](https://github.com/trento-project/helm-charts/tree/3.0.0) (2025-11-26)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.5.0...3.0.0)
