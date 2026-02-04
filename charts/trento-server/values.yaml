@@ -67,10 +67,30 @@ prometheus:
   enabled: true
   server:
     enabled: true
+    image:
+      tag: v2.51.0
+    extraFlags:
+      - web.enable-remote-write-receiver
     extraConfigmapMounts:
     configMapOverrideName: prometheus-configmap
+    # Ingress is disabled here; we use a custom ingress in templates/prometheus-ingress.yaml
+    ingress:
+      enabled: false
   serverFiles:
     prometheus.yml: {}
+
+  # Custom ingress configuration for remote write endpoint
+  # Only exposes the remote write endpoint externally
+  # All other Prometheus endpoints remain accessible internally via ClusterIP service
+  prometheusIngress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      kubernetes.io/tls-acme: "true"
+    hosts: []
+    path: /prometheus/api/v1/write
+    pathType: Exact
+    tls: []
 
   alertmanager:
     enabled: false

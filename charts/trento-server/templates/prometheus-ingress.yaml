@@ -1,0 +1,81 @@
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
+{{- if and .Values.prometheus.enabled .Values.prometheus.prometheusIngress.enabled }}
+{{- $serviceName := printf "%s-%s" .Release.Name .Values.global.prometheus.name }}
+{{- $servicePort := 80 }}
+{{- $ingressPath := .Values.prometheus.prometheusIngress.path }}
+{{- $ingressPathType := .Values.prometheus.prometheusIngress.pathType }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-prometheus-server
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+{{- if .Values.prometheus.prometheusIngress.annotations }}
+{{ toYaml .Values.prometheus.prometheusIngress.annotations | indent 4 }}
+{{- end }}
+{{- if eq .Values.prometheus.prometheusIngress.ingressClassName "traefik" }}
+    # This middleware strips the /prometheus prefix before forwarding to Prometheus
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Release.Name }}-prometheus-strip-prefix@kubernetescrd
+{{- end }}
+spec:
+  {{- if and .Values.prometheus.prometheusIngress.ingressClassName (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.prometheus.prometheusIngress.ingressClassName }}
+  {{- end }}
+  {{- if .Values.prometheus.prometheusIngress.tls }}
+  tls:
+{{ toYaml .Values.prometheus.prometheusIngress.tls | indent 4 }}
+  {{- end }}
+  rules:
+    {{- if .Values.prometheus.prometheusIngress.hosts }}
+    {{- range .Values.prometheus.prometheusIngress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion) }}
+            pathType: {{ .pathType }}
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $servicePort }}
+              {{- else }}
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+              {{- end }}
+          {{- end }}
+    {{- end }}
+    {{- else }}
+    - http:
+        paths:
+          - path: {{ $ingressPath }}
+            {{- if and $ingressPathType (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $servicePort }}
+              {{- else }}
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+              {{- end }}
+    {{- end }}
+{{- end }}
