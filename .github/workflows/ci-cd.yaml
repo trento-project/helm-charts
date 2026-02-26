@@ -43,7 +43,7 @@ jobs:
         run: |
           set -x
           find ./charts/ -maxdepth 1 -mindepth 1 -exec sh -c 'tar -zcf $(basename {}).tgz -C charts/ ./$(basename {})/' \;
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: charts
           path: |
