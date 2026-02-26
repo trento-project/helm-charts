@@ -1,3 +1,7 @@
+{{- /*
+Copyright 2025 SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+*/}}
 {{- if and .Values.prometheus.enabled .Values.prometheus.prometheusIngress.enabled (eq .Values.prometheus.prometheusIngress.ingressClassName "traefik") }}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -11,4 +15,32 @@ spec:
   stripPrefix:
     prefixes:
       - /prometheus
+{{- if .Values.prometheus.prometheusIngress.auth.enabled }}
+{{- $username := required "prometheus.prometheusIngress.auth.username is required when auth is enabled" .Values.prometheus.prometheusIngress.auth.username }}
+{{- $password := required "prometheus.prometheusIngress.auth.password is required when auth is enabled" .Values.prometheus.prometheusIngress.auth.password }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-prometheus-auth
+  labels:
+    app.kubernetes.io/name: prometheus-auth
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+type: Opaque
+data:
+  users: {{ htpasswd $username $password | b64enc | quote }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-prometheus-auth
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-prometheus-auth
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  basicAuth:
+    secret: {{ .Release.Name }}-prometheus-auth
+{{- end }}
 {{- end }}

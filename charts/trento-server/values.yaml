@@ -91,6 +91,10 @@ prometheus:
     path: /prometheus/api/v1/write
     pathType: Exact
     tls: []
+    auth:
+      enabled: true
+      username: ""  # Required when auth.enabled is true
+      password: ""  # Required when auth.enabled is true
 
   alertmanager:
     enabled: false

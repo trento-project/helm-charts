@@ -26,8 +26,11 @@ metadata:
 {{ toYaml .Values.prometheus.prometheusIngress.annotations | indent 4 }}
 {{- end }}
 {{- if eq .Values.prometheus.prometheusIngress.ingressClassName "traefik" }}
-    # This middleware strips the /prometheus prefix before forwarding to Prometheus
+    {{- if .Values.prometheus.prometheusIngress.auth.enabled }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Release.Name }}-prometheus-auth@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-prometheus-strip-prefix@kubernetescrd
+    {{- else }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Release.Name }}-prometheus-strip-prefix@kubernetescrd
+    {{- end }}
 {{- end }}
 spec:
   {{- if and .Values.prometheus.prometheusIngress.ingressClassName (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
