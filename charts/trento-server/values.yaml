@@ -67,10 +67,32 @@ prometheus:
   enabled: true
   server:
     enabled: true
+    image:
+      tag: v2.51.0
+    prefixURL: "/prometheus"
+    extraFlags:
+      - web.enable-remote-write-receiver
     extraConfigmapMounts:
     configMapOverrideName: prometheus-configmap
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        kubernetes.io/tls-acme: "true"
+      traefikMiddlewares:
+        - prometheus-basic-auth
+      hosts: []
+      path: /prometheus
+      pathType: Prefix
+      tls: []
   serverFiles:
     prometheus.yml: {}
+
+  prometheusIngress:
+    auth:
+      enabled: true
+      username: ""   # Required when auth.enabled is true
+      password: ""   # Required when auth.enabled is true
 
   alertmanager:
     enabled: false
