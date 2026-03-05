@@ -86,8 +86,7 @@ prometheus:
     tcpSocketProbeEnabled: true
     auth:
       # type must be explicitly set to 'none' or 'basic'
-      # type: none
-      # type: basic
+      type: ""
       basic:
         username: ""
         password: ""
