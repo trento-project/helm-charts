@@ -75,21 +75,49 @@ prometheus:
     extraFlags:
       - web.enable-lifecycle
       - web.enable-remote-write-receiver
-    extraArgs:
-      web.config.file: /etc/prometheus/web-config/web-config.yml
-    extraSecretMounts:
-      - name: web-config
-        mountPath: /etc/prometheus/web-config
-        secretName: trento-prometheus-web-config
-        readOnly: true
-        subPath: ""
-    tcpSocketProbeEnabled: true
     auth:
       # type must be explicitly set to 'none' or 'basic'
       type: ""
       basic:
         username: ""
         password: ""
+    sidecarContainers:
+      auth-proxy:
+        image: nginx:alpine
+        ports:
+          - containerPort: 8081
+        volumeMounts:
+          - name: auth-proxy-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+          - name: auth-proxy-htpasswd
+            mountPath: /etc/nginx/auth
+            readOnly: true
+    extraVolumes:
+      - name: auth-proxy-config
+        configMap:
+          name: trento-prometheus-auth-config
+      - name: auth-proxy-htpasswd
+        secret:
+          secretName: trento-prometheus-auth-htpasswd
+          optional: true
+    service:
+      additionalPorts:
+        - name: auth-proxy
+          port: 8081
+          protocol: TCP
+          targetPort: 8081
+
+    ingress:
+      enabled: true
+      ingressClassName: ""
+      annotations: {}
+      hosts: []
+      path: /prometheus
+      pathType: Prefix
+      tls: []
+      # Route ingress traffic through the auth sidecar
+      servicePort: 8081
 
   alertmanager:
     enabled: false
