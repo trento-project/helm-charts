@@ -1,0 +1,61 @@
+{{- if .Values.prometheus.enabled -}}
+{{- if not (or (eq .Values.prometheus.server.auth.type "none") (eq .Values.prometheus.server.auth.type "basic")) }}
+{{- fail "Prometheus authentication must be explicitly set to 'none' or 'basic' via .Values.prometheus.server.auth.type" }}
+{{- end }}
+{{- if eq .Values.prometheus.server.auth.type "basic" }}
+{{- if not (and .Values.prometheus.server.auth.basic.username .Values.prometheus.server.auth.basic.password) }}
+{{- fail "Prometheus basic authentication requires both username and password when auth.type is 'basic'" }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trento-prometheus-auth-config
+  namespace: {{ .Release.Namespace }}
+data:
+  nginx.conf: |
+    worker_processes auto;
+    error_log /tmp/nginx-error.log warn;
+    pid /tmp/nginx.pid;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        client_body_temp_path /tmp/client_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        access_log /tmp/nginx-access.log;
+
+        server {
+            listen 8081;
+
+            location /prometheus/api/v1/write {
+                {{- if eq .Values.prometheus.server.auth.type "basic" }}
+                auth_basic "Prometheus Remote Write";
+                auth_basic_user_file /etc/nginx/auth/htpasswd;
+                {{- end }}
+
+                proxy_pass http://localhost:9090;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                client_max_body_size 50m;
+            }
+
+            location /prometheus {
+                proxy_pass http://localhost:9090;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }
+{{- end }}
