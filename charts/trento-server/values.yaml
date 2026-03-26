@@ -112,7 +112,8 @@ prometheus:
       enabled: true
       ingressClassName: ""
       annotations: {}
-      hosts: []
+      hosts:
+        - ""
       path: /prometheus
       pathType: Prefix
       tls: []
