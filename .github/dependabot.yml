@@ -3,12 +3,18 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    cooldown:
+      default-days: 14
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    cooldown:
+      default-days: 14
   - package-ecosystem: "npm"
     directory: "/web/frontend"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    cooldown:
+      default-days: 14
