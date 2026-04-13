@@ -73,7 +73,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: migrate
-        image: registry.k8s.io/kubectl:v1.33.3
+        image: "{{ .Values.prometheus.migrationHook.image.registry }}/{{ .Values.prometheus.migrationHook.image.repository }}:{{ .Values.prometheus.migrationHook.image.tag }}"
         command:
         - kubectl
         - delete
