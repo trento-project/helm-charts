@@ -132,6 +132,12 @@ prometheus:
   prometheus-node-exporter:
     enabled: false
 
+  migrationHook:
+    image:
+      registry: registry.k8s.io
+      repository: kubectl
+      tag: v1.33.3
+
 rabbitmq:
   enabled: true
   persistence:

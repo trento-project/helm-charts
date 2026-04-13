@@ -1,0 +1,86 @@
+{{- if .Values.prometheus.enabled }}
+{{- /*
+  Migrates the prometheus-server Deployment from the v15.x label schema to v25.x.
+  The v15 subchart selector used `component=server,app=prometheus,release=<name>`;
+  v25 uses `app.kubernetes.io/component=server` and friends. spec.selector is
+  immutable, so an in-place helm upgrade fails with "field is immutable".
+  This hook deletes any Deployment in the release namespace that still carries
+  the v15 label schema before helm patches the release, letting helm recreate
+  it with the new selector. The label selector explicitly requires the absence
+  of `app.kubernetes.io/component`, so it matches only pre-v25 deployments —
+  making the hook a no-op on fresh installs and already-migrated clusters.
+
+  Runs via `kubectl delete -l ...` with no shell, so it works with the
+  distroless `registry.k8s.io/kubectl` image used elsewhere in this chart.
+*/ -}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-prometheus-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-prometheus-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-prometheus-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-prometheus-migration
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-prometheus-migration
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-prometheus-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}-prometheus-migration
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: "{{ .Values.prometheus.migrationHook.image.registry }}/{{ .Values.prometheus.migrationHook.image.repository }}:{{ .Values.prometheus.migrationHook.image.tag }}"
+        command:
+        - kubectl
+        - delete
+        - deployment
+        - --namespace
+        - {{ .Release.Namespace }}
+        - --ignore-not-found
+        - --selector
+        - component=server,app=prometheus,release={{ .Release.Name }},!app.kubernetes.io/component
+{{- end }}
