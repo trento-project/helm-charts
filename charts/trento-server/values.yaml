@@ -19,6 +19,7 @@ global:
     postgresqlPassword: "postgres"
   prometheus:
     name: prometheus-server
+    pathPrefix: /prometheus
   rabbitmq:
     name: rabbitmq
     servicePort: 5672
