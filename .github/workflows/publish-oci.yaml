@@ -54,7 +54,7 @@ jobs:
       - name: Delete rolling tag so it can be recreated
         if: inputs.prerelease
         run: |
-          gh release delete latest --cleanup-tag
+          gh release delete rolling --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.gh_token }}
 
