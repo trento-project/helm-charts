@@ -52,7 +52,7 @@ jobs:
     name: Chart release on GitHub
     needs:
       - test-helm-charts
-    if: github.event.release
+    if: ${{ github.event.release && github.ref != 'refs/tags/rolling' }}
     uses: ./.github/workflows/publish-oci.yaml
     with:
       branch: main
