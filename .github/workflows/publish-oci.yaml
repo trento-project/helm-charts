@@ -46,6 +46,7 @@ jobs:
           oci_registry: ghcr.io/trento-project/helm-charts
           oci_username: trentobot
           oci_password: ${{ secrets.gh_token }}
+          github_token: ${{ secrets.gh_token }}
           # We can't control the name of the tag, so skipping release
           # in this action.
           skip_gh_release: true
