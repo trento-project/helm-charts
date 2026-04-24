@@ -37,6 +37,41 @@ entries:
     - https://github.com/trento-project/helm-charts/releases/download/3.0.2-dev5/trento-server-3.0.2-dev5.tgz
     version: 3.0.2-dev5
   - apiVersion: v2
+    created: "2026-04-24T13:20:50.244530585Z"
+    dependencies:
+    - condition: trento-web.enabled
+      name: trento-web
+      repository: ""
+      version: '>0.0.0-0'
+    - condition: trento-wanda.enabled
+      name: trento-wanda
+      repository: ""
+      version: '>0.0.0-0'
+    - condition: trento-mcp-server.enabled
+      name: trento-mcp-server
+      repository: ""
+      version: '>0.0.0-0'
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: ""
+      version: '>0.0.0'
+    - condition: prometheus.enabled
+      name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts/
+      version: ~25.21.0
+    - condition: rabbitmq.enabled
+      name: rabbitmq
+      repository: ""
+      version: '>0.0.0-0'
+    description: The trento server chart contains all the components necessary to
+      run a Trento server.
+    digest: b7b03cdb3f33a91a844b38fb016fbe59020d31d0d5ee5057120a276d6013aea7
+    name: trento-server
+    type: application
+    urls:
+    - https://github.com/trento-project/helm-charts/releases/download/3.0.2-dev5/trento-server-3.0.2-dev5.tgz
+    version: 3.0.2-dev5
+  - apiVersion: v2
     created: "2025-11-28T14:40:13.060499959Z"
     dependencies:
     - condition: trento-web.enabled
@@ -71,4 +106,4 @@ entries:
     urls:
     - https://github.com/trento-project/helm-charts/releases/download/3.0.0/trento-server-3.0.0.tgz
     version: 3.0.0
-generated: "2026-04-24T12:43:59.023505981Z"
+generated: "2026-04-24T13:20:50.244552844Z"
