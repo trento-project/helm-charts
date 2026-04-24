@@ -38,8 +38,7 @@ jobs:
     name: Chart rolling release on GitHub
     needs:
       - test-helm-charts
-    # TODO: Remove `pull_request` trigger!!!!
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: github.event_name == 'push'
     uses: ./.github/workflows/publish-oci.yaml
     with:
       branch: main
