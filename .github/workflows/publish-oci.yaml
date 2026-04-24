@@ -69,7 +69,7 @@ jobs:
           generate_release_notes: true
           make_latest: false
           files: |
-            ${{ runner.tool_cache }}/cra/linux-amd64/package/{${{ steps.chart-releaser.outputs.released_charts }}}/*
+            ${{ runner.tool_cache }}/cra/linux-amd64/package/charts/trento-server/*
 
       - name: Release version check
         if: ${{ ! inputs.prerelease }}
@@ -86,4 +86,4 @@ jobs:
           token: ${{ secrets.gh_token }}
           tag_name: ${{ steps.chart-releaser.outputs.chart_version }}
           files: |
-            ${{ runner.tool_cache }}/cra/linux-amd64/package/{${{ steps.chart-releaser.outputs.released_charts }}}/*
+            ${{ runner.tool_cache }}/cra/linux-amd64/package/charts/trento-server/*
