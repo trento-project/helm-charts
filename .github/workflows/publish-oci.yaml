@@ -1,0 +1,89 @@
+---
+name: Publish OCI chart
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        type: string
+        required: false
+        default: main
+        description: The branch to build and publish.
+      prerelease:
+        type: boolean
+        default: false
+        description: >-
+          Whether the release is a pre-release. It's expected the
+          pre-release tag to be the same over time, eg. it's moving
+          target.
+
+    secrets:
+      gh_token:
+        description: GitHub Personal Access Token to interact with GH API.
+        required: true
+      ssh_key:
+        description: >-
+          SSH key to be used for repository access. The key needs
+          write permissions to the repository.
+        required: true
+
+jobs:
+  build-and-push:
+    name: Build chart and push to OCI registry
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Need the full history because of `helm-oci-charts-releaser`
+          fetch-depth: 0
+          ref: ${{ inputs.branch }}
+          ssh-key: ${{ secrets.ssh_key }}
+
+      - name: Package chart and upload to GHCR OCI registry
+        id: chart-releaser
+        uses: bitdeps/helm-oci-charts-releaser@caedceea2a5ab997c7e5469a999811dbb3d5b070 # v0.1.5
+        with:
+          oci_registry: ghcr.io/trento-project/helm-charts
+          oci_username: trentobot
+          oci_password: ${{ secrets.gh_token }}
+          github_token: ${{ secrets.gh_token }}
+          # We can't control the name of the tag, so skipping release
+          # in this action.
+          skip_gh_release: true
+
+      - name: Delete rolling tag so it can be recreated
+        if: inputs.prerelease
+        run: |
+          gh release delete rolling --cleanup-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.gh_token }}
+
+      - name: Create pre-releaese and upload artifact
+        if: inputs.prerelease
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        with:
+          token: "${{ secrets.gh_token }}"
+          name: "Cutting Edge"
+          tag_name: rolling
+          prerelease: true
+          generate_release_notes: true
+          make_latest: false
+          files: |
+            ${{ runner.tool_cache }}/cra/linux-amd64/package/charts/trento-server/*
+
+      - name: Release version check
+        if: ${{ ! inputs.prerelease }}
+        run: |
+          if [ $(cat VERSION) != ${{ steps.chart-releaser.outputs.chart_version }} ]; then
+            echo "Version mismatch, can't proceed with the release"
+            exit 1
+          fi
+
+      - name: Upload artifact to already created release
+        if: ${{ ! inputs.prerelease }}
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        with:
+          token: ${{ secrets.gh_token }}
+          tag_name: ${{ steps.chart-releaser.outputs.chart_version }}
+          files: |
+            ${{ runner.tool_cache }}/cra/linux-amd64/package/charts/trento-server/*
