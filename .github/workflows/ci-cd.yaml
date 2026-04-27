@@ -41,7 +41,7 @@ jobs:
     if: github.event_name == 'push'
     uses: ./.github/workflows/publish-oci.yaml
     with:
-      branch: main
+      branch: ${{ github.ref_name }}
       prerelease: true
     secrets:
       gh_token: ${{ secrets.TRENTOBOT_GH_PAT }}
@@ -54,7 +54,7 @@ jobs:
     if: ${{ github.event.release && github.ref != 'refs/tags/rolling' }}
     uses: ./.github/workflows/publish-oci.yaml
     with:
-      branch: main
+      branch: ${{ github.ref_name }}
       prerelease: false
     secrets:
       gh_token: ${{ secrets.TRENTOBOT_GH_PAT }}
