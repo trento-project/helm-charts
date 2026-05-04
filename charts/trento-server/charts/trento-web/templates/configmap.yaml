@@ -70,3 +70,5 @@ data:
   SAML_SIGN_METADATA: "{{ .Values.saml.signMetadata }}"
   SAML_SIGNED_ASSERTION: "{{ .Values.saml.signedAssertion }}"
   SAML_SIGNED_ENVELOPES: "{{ .Values.saml.signedEnvelopes }}"
+  PRUNE_EVENTS_INTERVAL: "{{ .Values.pruneEventsCronjobSchedule }}"
+  PRUNE_EVENTS_OLDER_THAN: "{{ .Values.pruneEventsOlderThan }}"
