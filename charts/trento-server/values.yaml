@@ -84,7 +84,7 @@ prometheus:
         password: ""
     sidecarContainers:
       auth-proxy:
-        image: nginx:alpine
+        image: registry.suse.com/suse/nginx:1.27
         ports:
           - containerPort: 8081
         volumeMounts:
@@ -94,6 +94,8 @@ prometheus:
           - name: auth-proxy-htpasswd
             mountPath: /etc/nginx/auth
             readOnly: true
+          - name: nginx-log
+            mountPath: /var/log/nginx
     extraVolumes:
       - name: auth-proxy-config
         configMap:
@@ -102,6 +104,8 @@ prometheus:
         secret:
           secretName: trento-prometheus-auth-htpasswd
           optional: true
+      - name: nginx-log
+        emptyDir: {}
     service:
       additionalPorts:
         - name: auth-proxy
