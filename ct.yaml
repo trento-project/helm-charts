@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
 # https://github.com/helm/chart-testing
 chart-dirs:
   - charts

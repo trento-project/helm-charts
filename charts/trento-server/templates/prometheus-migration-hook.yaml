@@ -1,3 +1,7 @@
+{{- /*
+ SPDX-FileCopyrightText: SUSE LLC
+ SPDX-License-Identifier: Apache-2.0
+*/}}
 {{- if .Values.prometheus.enabled }}
 {{- /*
   Migrates the prometheus-server Deployment from the v15.x label schema to v25.x.

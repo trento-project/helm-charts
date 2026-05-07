@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
 NAME = trento-server
 
 YQ := $(shell command -v yq 2> /dev/null)

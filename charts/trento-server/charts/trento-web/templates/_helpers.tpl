@@ -1,3 +1,8 @@
+{{- /*
+ SPDX-FileCopyrightText: SUSE LLC
+ SPDX-License-Identifier: Apache-2.0
+*/}}
+
 {{/*
 Expand the name of the chart.
 */}}
@@ -124,5 +129,3 @@ Return Trento Web service port
     {{- .Values.trentoWebOrigin -}}
 {{- end -}}
 {{- end -}}
-
-

@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+header:
+  comment: on-failure
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: SUSE LLC
+    software-name: trento-helm-charts
+    content: |
+      SPDX-FileCopyrightText: SUSE LLC
+      SPDX-License-Identifier: Apache-2.0
+  paths-ignore:
+    - "**/*.adoc"
+    - "**/*.md"
+    - "**/.helmignore"
+    - "**/Chart.lock"
+    - "**/NOTES.txt"
+    - "**/_helmignore"
+    - "**/_service"
+    - ".github/CODEOWNERS"
+    - ".github/dependabot.yml"
+    - ".github_changelog_generator"
+    - "LICENSE"
+    - "NOTICE"
+    - "charts/trento-server/charts/postgresql"
+    - "charts/trento-server/charts/rabbitmq"

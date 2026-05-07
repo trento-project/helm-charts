@@ -1,3 +1,7 @@
+{{- /*
+ SPDX-FileCopyrightText: SUSE LLC
+ SPDX-License-Identifier: Apache-2.0
+*/}}
 {{- if .Values.prometheus.enabled -}}
 {{- if not (or (eq .Values.prometheus.server.auth.type "none") (eq .Values.prometheus.server.auth.type "basic")) }}
 {{- fail "Prometheus authentication must be explicitly set to 'none' or 'basic' via .Values.prometheus.server.auth.type" }}
