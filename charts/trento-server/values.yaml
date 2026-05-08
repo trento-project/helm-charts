@@ -44,14 +44,23 @@ global:
 trento-web:
   nameOverride: web
   enabled: true
+  image:
+    repository: ghcr.io/trento-project/trento-web
 
 trento-wanda:
   nameOverride: wanda
   enabled: true
+  image:
+    repository: ghcr.io/trento-project/trento-wanda
+  checks:
+    image:
+      repository: ghcr.io/trento-project/checks
 
 trento-mcp-server:
   nameOverride: mcp-server
   enabled: false
+  image:
+    repository: ghcr.io/trento-project/mcp-server-trento
 
 postgresql:
   enabled: true
