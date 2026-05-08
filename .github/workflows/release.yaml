@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - branch: %{{ github.ref_name }}
+          - branch: ${{ github.ref_name }}
             prerelease: false
           - branch: main
             prerelease: true
