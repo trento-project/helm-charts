@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   paths-check:
-    name: Custom filter check
+    name: Release check
     outputs:
       is-release: ${{ steps.filter.outputs.release }}
     steps:

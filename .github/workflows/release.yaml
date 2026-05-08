@@ -27,7 +27,7 @@ jobs:
   gh-release:
     name: Chart release on GitHub
     needs:
-      - test-helm-charts
+      - release
     strategy:
       matrix:
         include:
