@@ -16,6 +16,7 @@ concurrency:
 jobs:
   paths-check:
     name: Release check
+    runs-on: ubuntu-24.04
     outputs:
       is-release: ${{ steps.filter.outputs.release }}
     steps:
@@ -29,6 +30,7 @@ jobs:
 
   test-helm-charts:
     needs: paths-check
+    runs-on: ubuntu-24.04
     if: needs.paths-check.outputs.is-release == 'false'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
