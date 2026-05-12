@@ -34,6 +34,10 @@ jobs:
     name: Build chart and push to OCI registry
     runs-on: ubuntu-24.04
     steps:
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+        with:
+          version: v3.4.0
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # Need the full history because of `helm-oci-charts-releaser`
@@ -41,17 +45,27 @@ jobs:
           ref: ${{ inputs.branch }}
           ssh-key: ${{ secrets.ssh_key }}
 
-      - name: Package chart and upload to GHCR OCI registry
-        id: chart-releaser
-        uses: bitdeps/helm-oci-charts-releaser@caedceea2a5ab997c7e5469a999811dbb3d5b070 # v0.1.5
-        with:
-          oci_registry: ghcr.io/trento-project/helm-charts
-          oci_username: trentobot
-          oci_password: ${{ secrets.gh_token }}
-          github_token: ${{ secrets.gh_token }}
-          # We can't control the name of the tag, so skipping release
-          # in this action.
-          skip_gh_release: true
+      # --- Bundling and OCI upload section ---
+
+      - name: Package chart
+        id: package
+        run: |
+          set -e
+          outdir="$(realpath ./package)"
+          echo "outdir=$outdir" >> "$GITHUB_OUTPUT"
+
+          chart_version="$(helm show chart charts/trento-server | grep -E '^version:' | cut -d" " -f2)"
+          echo "chart_version=${chart_version}" >> "$GITHUB_OUTPUT"
+
+          helm package --dependency-update --destination "$outdir" charts/trento-server
+
+      - name: Login to GHCR registry
+        run: echo "${{ secrets.gh_token }}" | helm registry login -u trentobot --password-stdin ghcr.io
+
+      - name: Upload OCI artifact
+        run: helm push ${{ steps.package.outputs.outdir }}/*.tgz oci://ghcr.io/trento-project/helm-charts
+
+      # --- GitHub release section ---
 
       - name: Delete rolling tag so it can be recreated
         if: inputs.prerelease
@@ -71,12 +85,12 @@ jobs:
           generate_release_notes: true
           make_latest: false
           files: |
-            ${{ runner.tool_cache }}/cra/linux-amd64/package/charts/trento-server/*
+            ${{ steps.package.outputs.outdir }}/*.tgz
 
       - name: Release version check
         if: ${{ ! inputs.prerelease }}
         run: |
-          if [ $(cat VERSION) != ${{ steps.chart-releaser.outputs.chart_version }} ]; then
+          if [ $(cat VERSION) != ${{ steps.package.outputs.chart_version }} ]; then
             echo "Version mismatch, can't proceed with the release"
             exit 1
           fi
@@ -88,4 +102,4 @@ jobs:
           token: ${{ secrets.gh_token }}
           tag_name: ${{ steps.chart-releaser.outputs.chart_version }}
           files: |
-            ${{ runner.tool_cache }}/cra/linux-amd64/package/charts/trento-server/*
+            ${{ steps.package.outputs.outdir }}/*.tgz

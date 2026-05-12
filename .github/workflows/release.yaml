@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - release
+    paths:
+      - "VERSION"
+
+concurrency: ${{ github.workflow }}
+
+jobs:
+  release:
+    name: Git Release
+    uses: trento-project/.github/.github/workflows/git-release.yaml@4d274094d5ed7b7da03ada75f6e841c9d648a1b6 # v1.7.0
+    with:
+      triggering_branch: ${{ github.ref_name }}
+    secrets:
+      gh_token: ${{ secrets.TRENTOBOT_GH_PAT }}
+      ssh_key: ${{ secrets.TRENTOBOT_SSH_KEY }}
+      gpg_key: ${{ secrets.TRENTOBOT_GPG_KEY }}
+
+  gh-release:
+    name: Chart release on GitHub
+    needs:
+      - release
+    strategy:
+      matrix:
+        include:
+          - branch: ${{ github.ref_name }}
+            prerelease: false
+          - branch: main
+            prerelease: true
+    uses: ./.github/workflows/publish-oci.yaml
+    with:
+      branch: ${{ matrix.branch }}
+      prerelease: ${{ matrix.prerelease }}
+    secrets:
+      gh_token: ${{ secrets.TRENTOBOT_GH_PAT }}
+      ssh_key: ${{ secrets.TRENTOBOT_SSH_KEY }}
+
+  obs-sync:
+    name: Update OBS package (${{ matrix.name }})
+    needs:
+      - release
+    if: fromJSON(vars.OBS_ENABLED)
+    strategy:
+      matrix:
+        include:
+          - obs_project: ${{ vars.OBS_PROJECT_STABLE }}
+            name: stable
+          - obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
+            name: rolling
+    uses: trento-project/.github/.github/workflows/obs-sync.yaml@4d274094d5ed7b7da03ada75f6e841c9d648a1b6 # v1.7.0
+    with:
+      update_changelog: true
+      obs_project: ${{ matrix.obs_project }}
+      obs_package: ${{ vars.OBS_PACKAGE }}
+    secrets:
+      gh_token: ${{ secrets.TRENTOBOT_GH_PAT }}
+      obs_user: ${{ secrets.OBS_USER }}
+      obs_pass: ${{ secrets.OBS_PASS }}
+      obs_ssh_key: ${{ secrets.OBS_SSH_KEY }}
