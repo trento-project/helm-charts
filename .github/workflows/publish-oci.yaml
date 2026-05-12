@@ -51,7 +51,7 @@ jobs:
         id: package
         run: |
           set -e
-          ourdir="$(realpath ./package)"
+          outdir="$(realpath ./package)"
           echo "outdir=$outdir" >> "$GITHUB_OUTPUT"
 
           chart_version="$(helm show chart charts/trento-server | grep -E '^version:' | cut -d" " -f2)"

@@ -14,6 +14,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # We have to prevent CI from running when VERSION file is changed,
+  # eg on release trigger time. However, with Helm charts we have to
+  # modify additional files along with the VERSION file which can't be
+  # handles with the built-in paths-ignore logic in GH actions. Thus,
+  # we do the enabling/disabling logic manually.
   paths-check:
     name: Release check
     runs-on: ubuntu-24.04
