@@ -40,7 +40,7 @@ spec:
             - name: checks
               mountPath: /usr/share/trento/checks
         - name: create-wanda-db
-          image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          image: "{{ include "trento-wanda.postgresqlImage" . }}"
           command:
             - sh
             - -c

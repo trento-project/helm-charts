@@ -44,7 +44,7 @@ spec:
       {{- end }}
       initContainers:
         - name: create-trento-db
-          image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          image: "{{ include "trento-web.postgresqlImage" . }}"
           command:
             - sh
             - -c
@@ -69,7 +69,7 @@ spec:
                 \gexec
 
         - name: create-trento-eventstore
-          image: "{{ .Values.postgresql.image.registry }}/{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          image: "{{ include "trento-web.postgresqlImage" . }}"
           command:
             - sh
             - -c
