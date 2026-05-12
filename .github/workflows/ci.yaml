@@ -74,7 +74,7 @@ jobs:
       - test-helm-charts
       - paths-check
     if: fromJSON(vars.OBS_ENABLED) && github.event_name == 'push' && needs.paths-check.outputs.is-release == 'false'
-    uses: trento-project/.github/.github/workflows/obs-sync.yaml@4d274094d5ed7b7da03ada75f6e841c9d648a1b6 # v1.7.0
+    uses: trento-project/.github/.github/workflows/obs-sync.yaml@7ea6a8a1c3ed8a1f2185328219be4a724dd3686e # v1.8.0
     with:
       obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
       obs_package: ${{ vars.OBS_PACKAGE }}
