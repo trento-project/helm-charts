@@ -129,3 +129,11 @@ Return Trento Web service port
     {{- .Values.trentoWebOrigin -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Use postgresql image from the global values if set, otherwise use the local one
+*/}}
+{{- define "trento-web.postgresqlImage" -}}
+{{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.postgresql.image | default dict) -}}
+{{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
+{{- end -}}

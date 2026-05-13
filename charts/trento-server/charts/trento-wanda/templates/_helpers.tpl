@@ -101,3 +101,11 @@ Create CORS origin value
     {{- printf "http://%s-%s" .Release.Name .Values.global.trentoWanda.name -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Use postgresql image from the global values if set, otherwise use the local one
+*/}}
+{{- define "trento-wanda.postgresqlImage" -}}
+{{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.postgresql.image | default dict) -}}
+{{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
+{{- end -}}
