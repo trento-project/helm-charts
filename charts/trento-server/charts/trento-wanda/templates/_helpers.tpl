@@ -106,13 +106,6 @@ Create CORS origin value
 Use postgresql image from the global values if set, otherwise use the local one
 */}}
 {{- define "trento-wanda.postgresqlImage" -}}
-{{- $localImage := .Values.postgresql.image | default dict -}}
-{{- $globalImage := dict -}}
-{{- if .Values.global -}}
-{{- if .Values.global.postgresql -}}
-{{- $globalImage = .Values.global.postgresql.image | default dict -}}
-{{- end -}}
-{{- end -}}
-{{- $image := merge $globalImage $localImage -}}
-{{- printf "%s/%s:%s" $image.registry $image.repository $image.tag -}}
+{{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.postgresql.image | default dict) -}}
+{{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
 {{- end -}}

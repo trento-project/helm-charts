@@ -25,14 +25,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 Use postgresql image from the global values if set, otherwise use the local one
 */}}
 {{- define "postgresql.image" -}}
-{{- $localImage := .image | default dict -}}
-{{- $globalImage := dict -}}
-{{- if .Values.global -}}
-{{- if .Values.global.postgresql -}}
-{{- $globalImage = .Values.global.postgresql.image | default dict -}}
-{{- end -}}
-{{- end -}}
-{{- $imageRoot := merge $globalImage $localImage -}}
+{{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.image | default dict) -}}
 {{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
 {{- end -}}
 
