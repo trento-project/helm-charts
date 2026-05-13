@@ -94,7 +94,7 @@ postgresql:
   image:
     registry: registry.suse.com
     repository: suse/postgres
-    tag: "17.5"
+    tag: "14"
 
 secretKeyBase: ""
 imagePullSecrets: []
