@@ -8,9 +8,10 @@ set -e
 
 readonly ARGS=("$@")
 readonly PROGNAME="./install-server.sh"
-TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"3.0.1"}
-TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"3.0.0"}
-TRENTO_WANDA_VERSION=${TRENTO_WANDA_VERSION:-"2.0.0"}
+TRENTO_SERVER_CHART_VERSION=${TRENTO_SERVER_CHART_VERSION:-"3.1.0"}
+TRENTO_WEB_VERSION=${TRENTO_WEB_VERSION:-"3.1.0"}
+TRENTO_WANDA_VERSION=${TRENTO_WANDA_VERSION:-"2.1.0"}
+TRENTO_MCP_VERSION=${TRENTO_MCP_VERSION:-"1.1.0"}
 TRENTO_ROLLING_VERSION=${TRENTO_ROLLING_VERSION:-"rolling"}
 CURRENT_TTY=${TTY:-"/dev/tty"}
 
@@ -145,9 +146,10 @@ cmdline() {
     configure_alerting
 
     if [[ "$ROLLING" == "true" ]]; then
-        TRENTO_SERVER_CHART_VERSION=$TRENTO_ROLLING_VERSION
-        TRENTO_WEB_VERSION=$TRENTO_ROLLING_VERSION
-        TRENTO_WANDA_VERSION=$TRENTO_ROLLING_VERSION
+        TRENTO_SERVER_CHART_VERSION="${TRENTO_ROLLING_VERSION}"
+        TRENTO_WEB_VERSION="${TRENTO_ROLLING_VERSION}"
+        TRENTO_WANDA_VERSION="${TRENTO_ROLLING_VERSION}"
+        TRENTO_MCP_VERSION="${TRENTO_ROLLING_VERSION}"
     fi
 
     return 0
@@ -313,6 +315,7 @@ install_trento_server_chart() {
         --set trento-web.image.repository="${web_image}"
         --set trento-wanda.image.tag="${TRENTO_WANDA_VERSION}"
         --set trento-wanda.image.repository="${wanda_image}"
+        --set trento-mcp-server.image.tag="${TRENTO_MCP_VERSION}"
         --set-string trento-web.adminUser.password="${ADMIN_PASSWORD}"
         --set global.trentoWeb.origin="${TRENTO_WEB_ORIGIN}"
     )
