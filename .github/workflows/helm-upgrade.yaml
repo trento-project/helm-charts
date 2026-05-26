@@ -74,27 +74,23 @@ jobs:
 
           if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ]; then
             REGISTRY="${SUSE_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY}"
+            VERSION=$(helm show chart "oci://${REGISTRY}" 2>/dev/null | yq eval '.version' -)
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_RELEASE}" ]; then
+            REGISTRY="${OSS_CHART_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY}"
+            VERSION=$(helm show chart "oci://${REGISTRY}" 2>/dev/null | yq eval '.version' -)
           elif [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
             REGISTRY="${OSS_CHART_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY} (including prereleases)"
+            VERSION=$(helm show chart "oci://${REGISTRY}" --devel 2>/dev/null | yq eval '.version' -)
           fi
 
-          if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ] || [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
-            echo "  Querying registry: ${REGISTRY}"
-            VERSIONS=$(skopeo list-tags "docker://${REGISTRY}" | jq -r '.Tags[]' | grep -E '^[0-9]+\.[0-9]+\.[0-9]' | sort -rV)
-          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_RELEASE}" ]; then
-            echo "  Querying GitHub releases for: ${HELM_CHARTS_REPO}"
-            VERSIONS=$(gh release list --repo "${HELM_CHARTS_REPO}" --exclude-pre-releases --limit 10 --json tagName --jq '.[].tagName')
-          fi
-
-          VERSION=$(echo "$VERSIONS" | head -1)
           if [ -z "$VERSION" ]; then
-            echo "ERROR: No versions found for ${{ matrix.source }}"
+            echo "ERROR: No version found for ${{ matrix.source }}"
             exit 1
           fi
 
-          echo "  Available versions:"
-          echo "$VERSIONS" | sed 's/^/    /'
-          echo ""
           echo "Selected version: ${VERSION}"
           echo "value=${VERSION}" >> $GITHUB_OUTPUT
 
