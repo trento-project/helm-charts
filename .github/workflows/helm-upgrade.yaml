@@ -159,10 +159,17 @@ jobs:
         if: always()
         run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
 
-      - name: Build dependencies for current dev chart
+      - name: Build dependencies for dev chart upgrade
         run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add jetstack https://charts.jetstack.io
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              repo_alias="repo-$(echo "$dep_repo" | md5sum | cut -c1-8)"
+              echo "Adding helm repo: $repo_alias ($dep_repo)"
+              helm repo add "$repo_alias" "$dep_repo" 2>/dev/null || true
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
+
           helm repo update
           helm dependency build charts/trento-server
 
