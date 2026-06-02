@@ -21,6 +21,7 @@ env:
   SOURCE_SUSE_RELEASE: suse-release
   SOURCE_OSS_RELEASE: oss-release
   SOURCE_OSS_MAIN: oss-main
+  SOURCE_OBS_ARTIFACTS: obs-artifacts
 
 jobs:
   upgrade-test:
@@ -59,14 +60,77 @@ jobs:
             source: oss-release
           - name: "OSS rolling → current"
             source: oss-main
+          - name: "OBS artifacts → current"
+            source: obs-artifacts
       fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
+      - name: Prepare OBS container with replace_using_env service
+        if: matrix.source == 'obs-artifacts'
+        env:
+          OBS_CONTAINER: ghcr.io/trento-project/continuous-delivery@sha256:24b2ea3d7a2c41fb005a024a90275b3a6ea37a213a690964f5aec459d61fb807 # v1.3.0
+          OBS_CONTAINER_NEW: continuous-delivery:dev
+        run: |
+          # Install missing obs-service-replace_using_env and commit as new layer
+          # TODO: Add this package to the official continuous-delivery image
+          if docker image inspect "${OBS_CONTAINER_NEW}" > /dev/null 2>&1; then
+            echo "Using existing patched image: ${OBS_CONTAINER_NEW}"
+          else
+            echo "Installing obs-service-replace_using_env..."
+            docker run --user 0 "${OBS_CONTAINER}" \
+              zypper -n install --no-recommends obs-service-replace_using_env > /dev/null 2>&1
+
+            CONTAINER_ID=$(docker ps -lq)
+            docker commit "${CONTAINER_ID}" "${OBS_CONTAINER_NEW}" > /dev/null
+            echo "Created patched image: ${OBS_CONTAINER_NEW}"
+          fi
+
+      - name: Process OBS package artifacts
+        if: matrix.source == 'obs-artifacts'
+        env:
+          OBS_CONTAINER: continuous-delivery:dev
+          OBS_PROJECT: devel:sap:trento:factory
+          OBS_PACKAGE: trento-server-helm
+          GIT_SOURCE_URL: https://src.opensuse.org/SAP-trento/trento-server-helm
+        run: |
+          mkdir -p obs-artifacts
+
+          docker run --rm \
+            --user 0 \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e OBS_PROJECT="${OBS_PROJECT}" \
+            -e OBS_PACKAGE="${OBS_PACKAGE}" \
+            -e GIT_SOURCE_URL="${GIT_SOURCE_URL}" \
+            "${OBS_CONTAINER}" \
+            bash /workspace/.github/scripts/helm-upgrade-obs-process.sh
+
+          echo "OBS artifacts processed successfully"
+
+      - name: Prepare OBS local chart for installation
+        if: matrix.source == 'obs-artifacts'
+        run: |
+          # Copy processed OBS values
+          cp obs-artifacts/values-obs.yaml charts/trento-server/values-obs.yaml
+
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              repo_alias="repo -$(echo "$dep_repo" | md5sum | cut -c1-8)"
+              echo "Adding helm repo: $repo_alias ($dep_repo)"
+              helm repo add "$repo_alias" "$dep_repo" 2>/dev/null || true
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
+
+          helm repo update
+          helm dependency build charts/trento-server
+
       - name: Resolve chart version
         id: version
+        if: matrix.source != 'obs-artifacts'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -137,32 +201,48 @@ jobs:
 
       - name: Install chart
         run: |
-          if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ]; then
-            CHART_REF="oci://${SUSE_REGISTRY}"
-          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_RELEASE}" ]; then
-            CHART_REF="oci://${OSS_CHART_REGISTRY}"
-          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
-            CHART_REF="oci://${OSS_CHART_REGISTRY}"
-          else
-            echo "ERROR: Unknown source ${{ matrix.source }}"
-            exit 1
-          fi
+          # Configure chart reference and extra flags
+          case "${{ matrix.source }}" in
+            "${SOURCE_OBS_ARTIFACTS}")
+              CHART_REF="charts/trento-server"
+              EXTRA_FLAGS="-f charts/trento-server/values-obs.yaml"
+              ;;
+            "${SOURCE_SUSE_RELEASE}")
+              CHART_REF="oci://${SUSE_REGISTRY}"
+              EXTRA_FLAGS="--version ${{ steps.version.outputs.value }}"
+              ;;
+            "${SOURCE_OSS_RELEASE}"|"${SOURCE_OSS_MAIN}")
+              CHART_REF="oci://${OSS_CHART_REGISTRY}"
+              EXTRA_FLAGS="--version ${{ steps.version.outputs.value }}"
+              ;;
+            *)
+              echo "ERROR: Unknown source ${{ matrix.source }}"
+              exit 1
+              ;;
+          esac
 
           helm upgrade -i trento-server "$CHART_REF" --wait \
-            --version "${{ steps.version.outputs.value }}" \
             --create-namespace \
             --timeout 3m \
             --render-subchart-notes \
-            ${HELM_COMMON_FLAGS}
+            ${HELM_COMMON_FLAGS} \
+            ${EXTRA_FLAGS}
 
       - name: Check pod status after install
         if: always()
         run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
 
-      - name: Build dependencies for current dev chart
+      - name: Build dependencies for dev chart upgrade
         run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add jetstack https://charts.jetstack.io
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              repo_alias="repo-$(echo "$dep_repo" | md5sum | cut -c1-8)"
+              echo "Adding helm repo: $repo_alias ($dep_repo)"
+              helm repo add "$repo_alias" "$dep_repo" 2>/dev/null || true
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
+
           helm repo update
           helm dependency build charts/trento-server
 
@@ -190,3 +270,11 @@ jobs:
       - name: Dump diagnostics on failure
         if: failure()
         run: bash .github/scripts/helm-upgrade-helper.sh failure-diagnostics
+
+      - name: Upload OBS artifacts for inspection
+        if: always() && matrix.source == 'obs-artifacts'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: obs-processed-values
+          path: |
+            charts/trento-server/values-obs.yaml
