@@ -173,7 +173,7 @@ prometheus:
     image:
       registry: registry.suse.com
       repository: suse/kubectl
-      tag: v1.35
+      tag: "1.35"
 
 rabbitmq:
   enabled: true
