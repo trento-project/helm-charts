@@ -98,6 +98,7 @@ postgresql:
 
 prometheus:
   enabled: true
+  scrapeConfigs: null
   server:
     enabled: true
     image:

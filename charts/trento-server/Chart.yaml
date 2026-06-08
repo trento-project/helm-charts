@@ -8,7 +8,7 @@ description: The trento server chart contains all the components necessary to ru
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates
-version: 3.2.0-dev3
+version: 3.2.0-dev4
 
 dependencies:
   - name: trento-web
@@ -24,7 +24,7 @@ dependencies:
     version: ">0.0.0"
     condition: postgresql.enabled
   - name: prometheus
-    version: ~25.21.0
+    version: ~29.10.0
     repository: https://prometheus-community.github.io/helm-charts/
     condition: prometheus.enabled
   - name: rabbitmq
