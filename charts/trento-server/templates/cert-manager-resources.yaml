@@ -92,7 +92,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: wait
-        image: registry.k8s.io/kubectl:v1.33.3
+        image: registry.suse.com/suse/kubectl:1.35
         command:
         - kubectl
         - wait
