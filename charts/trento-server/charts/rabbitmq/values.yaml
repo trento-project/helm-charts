@@ -1596,9 +1596,9 @@ volumePermissions:
   ## @param volumePermissions.image.pullSecrets Specify docker-registry secret names as an array
   ##
   image:
-    registry: docker.io
-    repository: alpine
-    tag: "3.19"
+    registry: registry.suse.com
+    repository: bci/bci-busybox
+    tag: "16.0"
     digest: ""
     ## Specify a imagePullPolicy
     ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
