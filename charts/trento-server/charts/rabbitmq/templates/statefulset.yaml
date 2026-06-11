@@ -1,40 +1,45 @@
-apiVersion: apps/v1
+{{- /*
+Copyright Broadcom, Inc. All Rights Reserved.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
+apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
   name: {{ include "common.names.fullname" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
-    {{- if .Values.statefulsetLabels }}
-    {{- include "common.tplvalues.render" (dict "value" .Values.statefulsetLabels "context" $) | nindent 4 }}
-    {{- end }}
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
-  {{- if .Values.commonAnnotations }}
-  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- $labels := include "common.tplvalues.merge" ( dict "values" ( list .Values.statefulsetLabels .Values.commonLabels ) "context" . ) }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" $labels "context" $ ) | nindent 4 }}
+  {{- if or .Values.statefulsetAnnotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.statefulsetAnnotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
   {{- end }}
 spec:
-  serviceName: {{ printf "%s-headless" (include "common.names.fullname" .) }}
+  serviceName: {{ printf "%s-%s" (include "common.names.fullname" .) (default "headless" .Values.servicenameOverride) }}
   podManagementPolicy: {{ .Values.podManagementPolicy }}
   replicas: {{ .Values.replicaCount }}
   {{- if .Values.updateStrategy }}
   updateStrategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
   {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
   selector:
-    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
   template:
     metadata:
-      labels: {{- include "common.labels.standard" . | nindent 8 }}
-        {{- if .Values.podLabels }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.podLabels "context" $) | nindent 8 }}
-        {{- end }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
       annotations:
         {{- if .Values.commonAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
         {{- end }}
         checksum/config: {{ include (print $.Template.BasePath "/config-secret.yaml") . | sha256sum }}
+        {{- if (include "rabbitmq.createTlsSecret" . ) }}
+        checksum/configTLS: {{ include (print $.Template.BasePath "/tls-secrets.yaml") . | sha256sum }}
+        {{- end }}
         {{- if or (not .Values.auth.existingErlangSecret) (not .Values.auth.existingPasswordSecret) .Values.extraSecrets }}
         checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.initScripts }}
+        checksum/initScripts: {{ include (print $.Template.BasePath "/init-configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
@@ -52,10 +57,11 @@ spec:
       affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" .) | nindent 8 }}
       {{- else }}
       affinity:
-        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "context" $) | nindent 10 }}
-        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "context" $) | nindent 10 }}
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
       {{- end }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       {{- if .Values.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hostAliases "context" $) | nindent 8 }}
       {{- end }}
@@ -72,7 +78,7 @@ spec:
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
       {{- if .Values.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.podSecurityContext "context" $) | nindent 8 }}
       {{- end }}
       {{- if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy }}
@@ -81,61 +87,76 @@ spec:
       dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      enableServiceLinks: {{ .Values.enableServiceLinks }}
       initContainers:
         {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
         - name: volume-permissions
           image: {{ include "rabbitmq.volumePermissions.image" . }}
           imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy | quote }}
           command:
-            - sh
-            - -c
+            - /bin/bash
+          args:
+            - -ec
             - |
-              set -e
-              echo "Setting up RabbitMQ data directory permissions..."
-
-              # Create the base directory if it doesn't exist
               mkdir -p "{{ .Values.persistence.mountPath }}"
-
-              # Set ownership to rabbitmq user (999:999)
-              echo "Changing ownership of {{ .Values.persistence.mountPath }} to 999:999"
-              chown -R 999:999 "{{ .Values.persistence.mountPath }}"
-
-              # Set appropriate permissions
-              # Directories: 755 (rwxr-xr-x)
-              # Files: 644 (rw-r--r--)
-              echo "Setting permissions..."
-              find "{{ .Values.persistence.mountPath }}" -type d -exec chmod 755 {} \;
-              find "{{ .Values.persistence.mountPath }}" -type f -exec chmod 644 {} \;
-
-              # The Erlang cookie must have 400 permissions to be accepted by RabbitMQ
-              # When upgrading from an older chart version, the cookie file might retain
-              # incorrect permissions, so we ensure they are set correctly at startup.
-              cookie_file="{{ .Values.persistence.mountPath }}/.erlang.cookie"
-              if [  -f $cookie_file ]; then
-                chmod 400 $cookie_file
-              fi
-
-              echo "Permissions setup complete!"
-          securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
-            capabilities:
-              drop:
-                - ALL
-              add:
-                - CHOWN
-                - FOWNER
-                - DAC_OVERRIDE
+              {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
+              chown `id -u`:`id -G | cut -d " " -f2` {{ .Values.persistence.mountPath }}
+              {{- else }}
+              chown "{{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }}" "{{ .Values.persistence.mountPath }}"
+              {{- end }}
+              find "{{ .Values.persistence.mountPath }}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+              {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
+                xargs -r chown -R `id -u`:`id -G | cut -d " " -f2`
+              {{- else }}
+                xargs -r chown -R "{{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }}"
+              {{- end }}
+          {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
+          securityContext: {{- omit .Values.volumePermissions.containerSecurityContext "runAsUser" | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext: {{- .Values.volumePermissions.containerSecurityContext | toYaml | nindent 12 }}
+          {{- end }}
           {{- if .Values.volumePermissions.resources }}
-          resources: {{- toYaml .Values.volumePermissions.resources | nindent 12 }}
+          resources: {{- include "common.tplvalues.render" (dict "value" .Values.volumePermissions.resources "context" $) | nindent 12 }}
+          {{- else if ne .Values.volumePermissions.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.volumePermissions.resourcesPreset) | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
               {{- if .Values.persistence.subPath }}
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
         {{- end }}
+        - name: prepare-plugins-dir
+          image: {{ template "rabbitmq.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.resources }}
+          resources: {{- include "common.tplvalues.render" (dict "value" .Values.resources "context" $) | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              #!/bin/bash
+
+              . /opt/bitnami/scripts/liblog.sh
+
+              info "Copying plugins dir to empty dir"
+              # In order to not break the possibility of installing custom plugins, we need
+              # to make the plugins directory writable, so we need to copy it to an empty dir volume
+              cp -r --preserve=mode /opt/bitnami/rabbitmq/plugins/ /emptydir/app-plugins-dir
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /emptydir
         {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
         {{- end }}
@@ -144,7 +165,7 @@ spec:
           image: {{ template "rabbitmq.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           {{- if .Values.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.diagnosticMode.enabled }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
@@ -163,10 +184,18 @@ spec:
             preStop:
               exec:
                 command:
-                  - rabbitmqctl
-                  - stop_app
+                  - /bin/bash
+                  - -ec
+                  - |
+                    if [[ -f /opt/bitnami/scripts/rabbitmq/nodeshutdown.sh ]]; then
+                        /opt/bitnami/scripts/rabbitmq/nodeshutdown.sh -t {{ .Values.terminationGracePeriodSeconds | quote }} -d {{ ternary "true" "false" .Values.image.debug | quote }}
+                    else
+                        rabbitmqctl stop_app
+                    fi
           {{- end }}
           env:
+            - name: BITNAMI_DEBUG
+              value: {{ ternary "true" "false" (or .Values.image.debug .Values.diagnosticMode.enabled) | quote }}
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:
@@ -179,36 +208,86 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: K8S_SERVICE_NAME
-              value: {{ printf "%s-headless" (include "common.names.fullname" .) }}
-            - name: K8S_ADDRESS_TYPE
-              value: {{ .Values.clustering.addressType }}
+            {{- $svcName := printf "%s-%s" (include "common.names.fullname" .) (default "headless" .Values.servicenameOverride) }}
+            {{- if .Values.featureFlags }}
+            - name: RABBITMQ_FEATURE_FLAGS
+              value: {{ .Values.featureFlags }}
+            {{- end }}
+            - name: RABBITMQ_FORCE_BOOT
+              value: {{ ternary "yes" "no" .Values.clustering.forceBoot | quote }}
             {{- if (eq "hostname" .Values.clustering.addressType) }}
-            - name: RABBITMQ_NODENAME
-              value: "rabbit@$(MY_POD_NAME).$(K8S_SERVICE_NAME).$(MY_POD_NAMESPACE).svc.{{ .Values.clusterDomain }}"
+            - name: RABBITMQ_NODE_NAME
+              value: "rabbit@$(MY_POD_NAME).{{ $svcName }}.$(MY_POD_NAMESPACE).svc.{{ .Values.clusterDomain }}"
             {{- else }}
-            - name: RABBITMQ_NODENAME
+            - name: RABBITMQ_NODE_NAME
               value: "rabbit@$(MY_POD_NAME)"
             {{- end }}
-            - name: RABBITMQ_USE_LONGNAME
-              value: "true"
+            - name: RABBITMQ_UPDATE_PASSWORD
+              value: {{ ternary "yes" "no" .Values.auth.updatePassword | quote }}
+            - name: RABBITMQ_MNESIA_DIR
+              value: "{{ .Values.persistence.mountPath }}/$(RABBITMQ_NODE_NAME)"
+            - name: RABBITMQ_LDAP_ENABLE
+              value: {{ ternary "yes" "no" .Values.ldap.enabled | quote }}
+            {{- if .Values.ldap.enabled }}
+            - name: RABBITMQ_LDAP_TLS
+              value: {{ ternary "yes" "no" .Values.ldap.tls.enabled | quote }}
+            - name: RABBITMQ_LDAP_SERVERS
+              value: {{ .Values.ldap.servers | join "," | quote }}
+            - name: RABBITMQ_LDAP_SERVERS_PORT
+              value: {{ .Values.ldap.port | quote }}
+            - name: RABBITMQ_LDAP_USER_DN_PATTERN
+              value: {{ .Values.ldap.user_dn_pattern }}
+            {{- end }}
             {{- if .Values.logs }}
             - name: RABBITMQ_LOGS
               value: {{ .Values.logs | quote }}
             {{- end }}
+            - name: RABBITMQ_ULIMIT_NOFILES
+              value: {{ .Values.ulimitNofiles | quote }}
             {{- if and .Values.maxAvailableSchedulers }}
             - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
               value: {{ printf "+S %s:%s" (toString .Values.maxAvailableSchedulers) (toString .Values.onlineSchedulers) -}}
             {{- end }}
-            - name: RABBITMQ_ERLANG_COOKIE
+            - name: RABBITMQ_USE_LONGNAME
+              value: "true"
+            {{- if .Values.usePasswordFiles }}
+            - name: RABBITMQ_ERL_COOKIE_FILE
+              value: {{ printf "/opt/bitnami/rabbitmq/secrets/%s" (include "rabbitmq.secretErlangKey" .) }}
+            {{- else }}
+            - name: RABBITMQ_ERL_COOKIE
               valueFrom:
                 secretKeyRef:
                   name: {{ template "rabbitmq.secretErlangName" . }}
-                  key: rabbitmq-erlang-cookie
-            - name: RABBITMQ_DEFAULT_USER
-              value: {{ .Values.global.rabbitmq.auth.username | quote }}
-            - name: RABBITMQ_DEFAULT_PASS
-              value: {{ .Values.global.rabbitmq.auth.password | quote }}
+                  key: {{ template "rabbitmq.secretErlangKey" . }}
+            {{- end }}
+            {{- if and .Values.clustering.rebalance (gt (.Values.replicaCount | int) 1) }}
+            - name: RABBITMQ_CLUSTER_REBALANCE
+              value: "true"
+            {{- end }}
+            - name: RABBITMQ_LOAD_DEFINITIONS
+              value: {{ ternary "yes" "no" .Values.loadDefinition.enabled | quote }}
+            - name: RABBITMQ_DEFINITIONS_FILE
+              value: {{ .Values.loadDefinition.file | quote }}
+            - name: RABBITMQ_SECURE_PASSWORD
+              value: {{ ternary "yes" "no" (or .Values.auth.securePassword (not .Values.auth.password)) | quote }}
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.auth.username | quote }}
+            {{- if .Values.usePasswordFiles }}
+            - name: RABBITMQ_PASSWORD_FILE
+              value: {{ printf "/opt/bitnami/rabbitmq/secrets/%s" (include "rabbitmq.secretPasswordKey" .) }}
+            {{- else }}
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "rabbitmq.secretPasswordName" . }}
+                  key: {{ template "rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+            - name: RABBITMQ_PLUGINS
+              value: {{ include "rabbitmq.plugins" . | quote }}
+            {{- if .Values.communityPlugins }}
+            - name: RABBITMQ_COMMUNITY_PLUGINS
+              value: {{ .Values.communityPlugins | quote }}
+            {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -222,22 +301,31 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
             {{- end }}
           ports:
-            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
-            - name: amqp-ssl
-              containerPort: {{ .Values.containerPorts.amqpTls }}
-            {{- else }}
             - name: amqp
               containerPort: {{ .Values.containerPorts.amqp }}
-            {{- end }}
+              {{- if .Values.hostPorts.amqp }}
+              hostPort: {{ .Values.hostPorts.amqp }}
+              {{- end }}
             - name: dist
               containerPort: {{ .Values.containerPorts.dist }}
             - name: stats
               containerPort: {{ .Values.containerPorts.manager }}
+              {{- if .Values.hostPorts.manager }}
+              hostPort: {{ .Values.hostPorts.manager }}
+              {{- end }}
             - name: epmd
               containerPort: {{ .Values.containerPorts.epmd }}
-            {{- if .Values.metrics.enabled }}
             - name: metrics
               containerPort: {{ .Values.containerPorts.metrics }}
+              {{- if .Values.hostPorts.metrics }}
+              hostPort: {{ .Values.hostPorts.metrics }}
+              {{- end }}
+            {{- if .Values.auth.tls.enabled }}
+            - name: amqp-tls
+              containerPort: {{ .Values.containerPorts.amqpTls }}
+              {{- if .Values.hostPorts.amqpTls }}
+              hostPort: {{ .Values.hostPorts.amqpTls }}
+              {{- end }}
             {{- end }}
             {{- if .Values.extraContainerPorts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraContainerPorts "context" $) | nindent 12 }}
@@ -249,8 +337,13 @@ spec:
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled") "context" $) | nindent 12 }}
             exec:
               command:
-                - rabbitmq-diagnostics
-                - status
+                - /bin/bash
+                - -ec
+                {{- if or (.Values.loadDefinition.enabled) (not (contains "rabbitmq_management" .Values.plugins )) }}
+                - rabbitmq-diagnostics -q ping
+                {{- else }}
+                - curl -f --user {{ .Values.auth.username }}:{{ ternary "$(< $RABBITMQ_PASSWORD_FILE)" "$RABBITMQ_PASSWORD"  .Values.usePasswordFiles }} 127.0.0.1:{{ .Values.containerPorts.manager }}/api/health/checks/virtual-hosts
+                {{- end }}
           {{- end }}
           {{- if .Values.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customReadinessProbe "context" $) | nindent 12 }}
@@ -258,33 +351,60 @@ spec:
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.readinessProbe "enabled") "context" $) | nindent 12 }}
             exec:
               command:
-                - rabbitmq-diagnostics
-                - ping
+                - /bin/bash
+                - -ec
+                {{- if or (.Values.loadDefinition.enabled) (not (contains "rabbitmq_management" .Values.plugins )) }}
+                - rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
+                {{- else }}
+                - curl -f --user {{ .Values.auth.username }}:{{ ternary "$(< $RABBITMQ_PASSWORD_FILE)" "$RABBITMQ_PASSWORD"  .Values.usePasswordFiles }} 127.0.0.1:{{ .Values.containerPorts.manager }}/api/health/checks/local-alarms
+                {{- end }}
           {{- end }}
           {{- if .Values.customStartupProbe }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customStartupProbe "context" $) | nindent 12 }}
           {{- else if .Values.startupProbe.enabled }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.startupProbe "enabled") "context" $) | nindent 12 }}
-            exec:
-              command:
-                - rabbitmq-diagnostics
-                - ping
+            tcpSocket:
+              port: {{ternary "amqp-tls" "amqp" .Values.auth.tls.enabled }}
           {{- end }}
           {{- end }}
           {{- if .Values.resources }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
+          resources: {{- include "common.tplvalues.render" (dict "value" .Values.resources "context" $) | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: configuration
-              mountPath: /etc/rabbitmq
+              mountPath: /bitnami/rabbitmq/conf
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/rabbitmq/etc/rabbitmq
+              subPath: app-conf-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/rabbitmq/var/lib/rabbitmq
+              subPath: app-tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/rabbitmq/.rabbitmq/
+              subPath: app-erlang-cookie
+            - name: empty-dir
+              mountPath: /opt/bitnami/rabbitmq/var/log/rabbitmq
+              subPath: app-logs-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/rabbitmq/plugins
+              subPath: app-plugins-dir
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
               {{- if .Values.persistence.subPath }}
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
+            {{- if  .Values.usePasswordFiles }}
+            - name: rabbitmq-secrets
+              mountPath: /opt/bitnami/rabbitmq/secrets
+            {{- end }}
             {{- if .Values.auth.tls.enabled }}
             - name: certs
-              mountPath: /etc/rabbitmq/certs
+              mountPath: /opt/bitnami/rabbitmq/certs
             {{- end }}
             {{- if and .Values.ldap.tls.enabled .Values.ldap.tls.certificatesSecret }}
             - name: ldap-certs
@@ -292,7 +412,7 @@ spec:
             {{- end }}
             {{- if .Values.loadDefinition.enabled }}
             - name: load-definition-volume
-              mountPath: /etc/rabbitmq/definitions
+              mountPath: /app
               readOnly: true
             {{- end }}
             {{- if .Values.extraVolumeMounts }}
@@ -310,32 +430,34 @@ spec:
             - name: custom-init-scripts-secret
               mountPath: /docker-entrypoint-initdb.d/init-scripts-secret
             {{- end }}
-            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
-            - name: rabbitmq-server-cert
-              mountPath: /etc/rabbitmq-tls
-              readOnly: true
-            {{- end }}
         {{- if .Values.sidecars }}
         {{- include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
+        - name: empty-dir
+          emptyDir: {}
         {{- if .Values.auth.tls.enabled }}
         - name: certs
-          secret:
-            secretName: {{ template "rabbitmq.tlsSecretName" . }}
-            items:
-              - key: {{ ternary "tls.crt" "ca.crt" .Values.auth.tls.existingSecretFullChain }}
-                path: ca_certificate.pem
-              - key: tls.crt
-                path: server_certificate.pem
-              - key: tls.key
-                path: server_key.pem
-        {{- end }}
-        {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
-        - name: rabbitmq-server-cert
-          secret:
-            secretName: {{ include "common.names.fullname" . }}-server-cert
-            defaultMode: 0400
+          projected:
+            sources:
+              - secret:
+                  name: {{ template "rabbitmq.tlsSecretName" . }}
+                  items:
+                    {{- if not .Values.auth.tls.overrideCaCertificate }}
+                    - key: {{ ternary "tls.crt" "ca.crt" .Values.auth.tls.existingSecretFullChain }}
+                      path: ca_certificate.pem
+                    {{- end }}
+                    - key: tls.crt
+                      path: server_certificate.pem
+                    - key: tls.key
+                      path: server_key.pem
+              {{- if .Values.auth.tls.overrideCaCertificate }}
+              - secret:
+                  name: {{ .Values.auth.tls.overrideCaCertificate }}
+                  items:
+                    - key: ca.crt
+                      path: ca_certificate.pem
+              {{- end }}
         {{- end }}
         {{- if and .Values.ldap.tls.enabled .Values.ldap.tls.certificatesSecret }}
         - name: ldap-certs
@@ -343,17 +465,29 @@ spec:
             secretName: {{ .Values.ldap.tls.certificatesSecret }}
         {{- end }}
         - name: configuration
-          secret:
-            secretName: {{ printf "%s-config" (include "common.names.fullname" .) }}
-            items:
-              - key: rabbitmq.conf
-                path: rabbitmq.conf
-              {{- if .Values.advancedConfiguration }}
-              - key: advanced.config
-                path: advanced.config
+          projected:
+            sources:
+              {{- if or (and (empty .Values.configurationExistingSecret) .Values.configuration) (and (not .Values.advancedConfigurationExistingSecret) .Values.advancedConfiguration) }}
+              - secret:
+                  name: {{ printf "%s-config" (include "common.names.fullname" .) }}
               {{- end }}
-              - key: enabled_plugins
-                path: enabled_plugins
+              {{- if and .Values.advancedConfigurationExistingSecret (not .Values.advancedConfiguration) }}
+              - secret:
+                  name: {{ tpl .Values.advancedConfigurationExistingSecret . | quote }}
+              {{- end }}
+              {{- if not (empty .Values.configurationExistingSecret) }}
+              - secret:
+                  name: {{ tpl .Values.configurationExistingSecret . | quote }}
+              {{- end }}
+        {{- if .Values.usePasswordFiles }}
+        - name: rabbitmq-secrets
+          projected:
+            sources:
+              - secret:
+                  name: {{ template "rabbitmq.secretPasswordName" . }}
+              - secret:
+                  name: {{ template "rabbitmq.secretErlangName" . }}
+        {{- end }}
         {{- if .Values.loadDefinition.enabled }}
         - name: load-definition-volume
           secret:
@@ -388,13 +522,20 @@ spec:
             claimName: {{ tpl . $ }}
             {{- end }}
   {{- else }}
+  {{- if .Values.persistentVolumeClaimRetentionPolicy.enabled }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ .Values.persistentVolumeClaimRetentionPolicy.whenDeleted }}
+    whenScaled: {{ .Values.persistentVolumeClaimRetentionPolicy.whenScaled }}
+  {{- end }}
   volumeClaimTemplates:
-    - metadata:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
         name: data
-        labels: {{- include "common.labels.matchLabels" . | nindent 10 }}
+        {{- $claimLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.persistence.labels .Values.commonLabels ) "context" . ) }}
+        labels: {{- include "common.labels.matchLabels" ( dict "customLabels" $claimLabels "context" $ ) | nindent 10 }}
         {{- if .Values.persistence.annotations }}
-        annotations:
-          {{- include "common.tplvalues.render" ( dict "value" .Values.persistence.annotations "context" $) | nindent 10 }}
+        annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.persistence.annotations "context" $) | nindent 10 }}
         {{- end }}
       spec:
         accessModes:
