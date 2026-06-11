@@ -30,3 +30,5 @@ dependencies:
   - name: rabbitmq
     version: ">0.0.0-0"
     condition: rabbitmq.enabled
+  - name: common
+    version: ">0.0.0-0"
