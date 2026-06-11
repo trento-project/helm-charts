@@ -1,0 +1,26 @@
+{{- if and  .Values.global.rabbitmq.tls.mtls.enabled .Values.global.rabbitmq.tls.mtls.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "common.names.fullname" . }}-server-cert
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ include "common.names.fullname" . }}-server-cert
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
+  subject:
+    organizations:
+      - rabbitmq
+  commonName: {{ include "common.names.fullname" . }}
+  dnsNames:
+    - {{ include "common.names.fullname" . }}
+    - {{ include "common.names.fullname" . }}.{{ .Release.Namespace }}
+    - {{ include "common.names.fullname" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "common.names.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+    - localhost
+  ipAddresses:
+    - 127.0.0.1
+  issuerRef:
+    name: {{ .Values.global.rabbitmq.tls.mtls.certManager.issuerName }}
+    kind: {{ .Values.global.rabbitmq.tls.mtls.certManager.issuerKind }}
+{{- end }}

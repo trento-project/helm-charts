@@ -94,22 +94,35 @@ spec:
           image: {{ include "rabbitmq.volumePermissions.image" . }}
           imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy | quote }}
           command:
-            - /bin/bash
-          args:
-            - -ec
+            - sh
+            - -c
             - |
+              set -e
+              echo "Setting up RabbitMQ data directory permissions..."
+
+              # Create the base directory if it doesn't exist
               mkdir -p "{{ .Values.persistence.mountPath }}"
-              {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
-              chown `id -u`:`id -G | cut -d " " -f2` {{ .Values.persistence.mountPath }}
-              {{- else }}
-              chown "{{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }}" "{{ .Values.persistence.mountPath }}"
-              {{- end }}
-              find "{{ .Values.persistence.mountPath }}" -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
-              {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
-                xargs -r chown -R `id -u`:`id -G | cut -d " " -f2`
-              {{- else }}
-                xargs -r chown -R "{{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.fsGroup }}"
-              {{- end }}
+
+              # Set ownership to rabbitmq user (999:999)
+              echo "Changing ownership of {{ .Values.persistence.mountPath }} to 999:999"
+              chown -R 999:999 "{{ .Values.persistence.mountPath }}"
+
+              # Set appropriate permissions
+              # Directories: 755 (rwxr-xr-x)
+              # Files: 644 (rw-r--r--)
+              echo "Setting permissions..."
+              find "{{ .Values.persistence.mountPath }}" -type d -exec chmod 755 {} \;
+              find "{{ .Values.persistence.mountPath }}" -type f -exec chmod 644 {} \;
+
+              # The Erlang cookie must have 400 permissions to be accepted by RabbitMQ
+              # When upgrading from an older chart version, the cookie file might retain
+              # incorrect permissions, so we ensure they are set correctly at startup.
+              cookie_file="{{ .Values.persistence.mountPath }}/.erlang.cookie"
+              if [ -f $cookie_file ]; then
+                chmod 400 $cookie_file
+              fi
+
+              echo "Permissions setup complete!"
           {{- if eq ( toString ( .Values.volumePermissions.containerSecurityContext.runAsUser )) "auto" }}
           securityContext: {{- omit .Values.volumePermissions.containerSecurityContext "runAsUser" | toYaml | nindent 12 }}
           {{- else }}
@@ -130,6 +143,7 @@ spec:
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
         {{- end }}
+        {{- if false }}
         - name: prepare-plugins-dir
           image: {{ template "rabbitmq.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
@@ -157,6 +171,7 @@ spec:
           volumeMounts:
             - name: empty-dir
               mountPath: /emptydir
+        {{- end }}
         {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
         {{- end }}
@@ -187,15 +202,17 @@ spec:
                   - /bin/bash
                   - -ec
                   - |
+                    {{- if or true }}
+                    rabbitmqctl stop_app
+                    {{- else }}
                     if [[ -f /opt/bitnami/scripts/rabbitmq/nodeshutdown.sh ]]; then
                         /opt/bitnami/scripts/rabbitmq/nodeshutdown.sh -t {{ .Values.terminationGracePeriodSeconds | quote }} -d {{ ternary "true" "false" .Values.image.debug | quote }}
                     else
                         rabbitmqctl stop_app
                     fi
+                    {{- end }}
           {{- end }}
           env:
-            - name: BITNAMI_DEBUG
-              value: {{ ternary "true" "false" (or .Values.image.debug .Values.diagnosticMode.enabled) | quote }}
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:
@@ -209,85 +226,28 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             {{- $svcName := printf "%s-%s" (include "common.names.fullname" .) (default "headless" .Values.servicenameOverride) }}
-            {{- if .Values.featureFlags }}
-            - name: RABBITMQ_FEATURE_FLAGS
-              value: {{ .Values.featureFlags }}
-            {{- end }}
-            - name: RABBITMQ_FORCE_BOOT
-              value: {{ ternary "yes" "no" .Values.clustering.forceBoot | quote }}
-            {{- if (eq "hostname" .Values.clustering.addressType) }}
-            - name: RABBITMQ_NODE_NAME
-              value: "rabbit@$(MY_POD_NAME).{{ $svcName }}.$(MY_POD_NAMESPACE).svc.{{ .Values.clusterDomain }}"
-            {{- else }}
-            - name: RABBITMQ_NODE_NAME
-              value: "rabbit@$(MY_POD_NAME)"
-            {{- end }}
-            - name: RABBITMQ_UPDATE_PASSWORD
-              value: {{ ternary "yes" "no" .Values.auth.updatePassword | quote }}
-            - name: RABBITMQ_MNESIA_DIR
-              value: "{{ .Values.persistence.mountPath }}/$(RABBITMQ_NODE_NAME)"
-            - name: RABBITMQ_LDAP_ENABLE
-              value: {{ ternary "yes" "no" .Values.ldap.enabled | quote }}
-            {{- if .Values.ldap.enabled }}
-            - name: RABBITMQ_LDAP_TLS
-              value: {{ ternary "yes" "no" .Values.ldap.tls.enabled | quote }}
-            - name: RABBITMQ_LDAP_SERVERS
-              value: {{ .Values.ldap.servers | join "," | quote }}
-            - name: RABBITMQ_LDAP_SERVERS_PORT
-              value: {{ .Values.ldap.port | quote }}
-            - name: RABBITMQ_LDAP_USER_DN_PATTERN
-              value: {{ .Values.ldap.user_dn_pattern }}
-            {{- end }}
-            {{- if .Values.logs }}
-            - name: RABBITMQ_LOGS
-              value: {{ .Values.logs | quote }}
-            {{- end }}
-            - name: RABBITMQ_ULIMIT_NOFILES
-              value: {{ .Values.ulimitNofiles | quote }}
-            {{- if and .Values.maxAvailableSchedulers }}
-            - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
-              value: {{ printf "+S %s:%s" (toString .Values.maxAvailableSchedulers) (toString .Values.onlineSchedulers) -}}
-            {{- end }}
+            - name: K8S_SERVICE_NAME
+              value: "{{ $svcName }}"
+            - name: K8S_ADDRESS_TYPE
+              value: {{ .Values.clustering.addressType | quote }}
+            - name: RABBITMQ_NODENAME
+              value: "rabbit@$(MY_POD_NAME).$(K8S_SERVICE_NAME).$(MY_POD_NAMESPACE).svc.{{ .Values.clusterDomain }}"
             - name: RABBITMQ_USE_LONGNAME
               value: "true"
-            {{- if .Values.usePasswordFiles }}
-            - name: RABBITMQ_ERL_COOKIE_FILE
-              value: {{ printf "/opt/bitnami/rabbitmq/secrets/%s" (include "rabbitmq.secretErlangKey" .) }}
-            {{- else }}
-            - name: RABBITMQ_ERL_COOKIE
+            - name: RABBITMQ_LOGS
+              value: "-"
+            - name: RABBITMQ_ERLANG_COOKIE
               valueFrom:
                 secretKeyRef:
                   name: {{ template "rabbitmq.secretErlangName" . }}
                   key: {{ template "rabbitmq.secretErlangKey" . }}
-            {{- end }}
-            {{- if and .Values.clustering.rebalance (gt (.Values.replicaCount | int) 1) }}
-            - name: RABBITMQ_CLUSTER_REBALANCE
-              value: "true"
-            {{- end }}
-            - name: RABBITMQ_LOAD_DEFINITIONS
-              value: {{ ternary "yes" "no" .Values.loadDefinition.enabled | quote }}
-            - name: RABBITMQ_DEFINITIONS_FILE
-              value: {{ .Values.loadDefinition.file | quote }}
-            - name: RABBITMQ_SECURE_PASSWORD
-              value: {{ ternary "yes" "no" (or .Values.auth.securePassword (not .Values.auth.password)) | quote }}
-            - name: RABBITMQ_USERNAME
+            - name: RABBITMQ_DEFAULT_USER
               value: {{ .Values.auth.username | quote }}
-            {{- if .Values.usePasswordFiles }}
-            - name: RABBITMQ_PASSWORD_FILE
-              value: {{ printf "/opt/bitnami/rabbitmq/secrets/%s" (include "rabbitmq.secretPasswordKey" .) }}
-            {{- else }}
-            - name: RABBITMQ_PASSWORD
+            - name: RABBITMQ_DEFAULT_PASS
               valueFrom:
                 secretKeyRef:
                   name: {{ template "rabbitmq.secretPasswordName" . }}
                   key: {{ template "rabbitmq.secretPasswordKey" . }}
-            {{- end }}
-            - name: RABBITMQ_PLUGINS
-              value: {{ include "rabbitmq.plugins" . | quote }}
-            {{- if .Values.communityPlugins }}
-            - name: RABBITMQ_COMMUNITY_PLUGINS
-              value: {{ .Values.communityPlugins | quote }}
-            {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -301,11 +261,13 @@ spec:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
             {{- end }}
           ports:
+            {{- if not (or .Values.auth.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled) }}
             - name: amqp
               containerPort: {{ .Values.containerPorts.amqp }}
               {{- if .Values.hostPorts.amqp }}
               hostPort: {{ .Values.hostPorts.amqp }}
               {{- end }}
+            {{- end }}
             - name: dist
               containerPort: {{ .Values.containerPorts.dist }}
             - name: stats
@@ -320,7 +282,7 @@ spec:
               {{- if .Values.hostPorts.metrics }}
               hostPort: {{ .Values.hostPorts.metrics }}
               {{- end }}
-            {{- if .Values.auth.tls.enabled }}
+            {{- if or .Values.auth.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
             - name: amqp-tls
               containerPort: {{ .Values.containerPorts.amqpTls }}
               {{- if .Values.hostPorts.amqpTls }}
@@ -339,7 +301,7 @@ spec:
               command:
                 - /bin/bash
                 - -ec
-                {{- if or (.Values.loadDefinition.enabled) (not (contains "rabbitmq_management" .Values.plugins )) }}
+                {{- if or (.Values.loadDefinition.enabled) (not (contains "rabbitmq_management" .Values.plugins )) true }}
                 - rabbitmq-diagnostics -q ping
                 {{- else }}
                 - curl -f --user {{ .Values.auth.username }}:{{ ternary "$(< $RABBITMQ_PASSWORD_FILE)" "$RABBITMQ_PASSWORD"  .Values.usePasswordFiles }} 127.0.0.1:{{ .Values.containerPorts.manager }}/api/health/checks/virtual-hosts
@@ -353,7 +315,7 @@ spec:
               command:
                 - /bin/bash
                 - -ec
-                {{- if or (.Values.loadDefinition.enabled) (not (contains "rabbitmq_management" .Values.plugins )) }}
+                {{- if or (.Values.loadDefinition.enabled) (not (contains "rabbitmq_management" .Values.plugins )) true }}
                 - rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
                 {{- else }}
                 - curl -f --user {{ .Values.auth.username }}:{{ ternary "$(< $RABBITMQ_PASSWORD_FILE)" "$RABBITMQ_PASSWORD"  .Values.usePasswordFiles }} 127.0.0.1:{{ .Values.containerPorts.manager }}/api/health/checks/local-alarms
@@ -374,35 +336,17 @@ spec:
           {{- end }}
           volumeMounts:
             - name: configuration
-              mountPath: /bitnami/rabbitmq/conf
-            - name: empty-dir
-              mountPath: /tmp
-              subPath: tmp-dir
-            - name: empty-dir
-              mountPath: /opt/bitnami/rabbitmq/etc/rabbitmq
-              subPath: app-conf-dir
-            - name: empty-dir
-              mountPath: /opt/bitnami/rabbitmq/var/lib/rabbitmq
-              subPath: app-tmp-dir
-            - name: empty-dir
-              mountPath: /opt/bitnami/rabbitmq/.rabbitmq/
-              subPath: app-erlang-cookie
-            - name: empty-dir
-              mountPath: /opt/bitnami/rabbitmq/var/log/rabbitmq
-              subPath: app-logs-dir
-            - name: empty-dir
-              mountPath: /opt/bitnami/rabbitmq/plugins
-              subPath: app-plugins-dir
+              mountPath: /etc/rabbitmq
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
               {{- if .Values.persistence.subPath }}
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
-            {{- if  .Values.usePasswordFiles }}
-            - name: rabbitmq-secrets
-              mountPath: /opt/bitnami/rabbitmq/secrets
-            {{- end }}
-            {{- if .Values.auth.tls.enabled }}
+            {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+            - name: certs
+              mountPath: /etc/rabbitmq-tls
+              readOnly: true
+            {{- else if .Values.auth.tls.enabled }}
             - name: certs
               mountPath: /opt/bitnami/rabbitmq/certs
             {{- end }}
@@ -436,7 +380,12 @@ spec:
       volumes:
         - name: empty-dir
           emptyDir: {}
-        {{- if .Values.auth.tls.enabled }}
+        {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
+        - name: certs
+          secret:
+            secretName: {{ printf "%s-rabbitmq-server-cert" .Release.Name }}
+            defaultMode: 0400
+        {{- else if .Values.auth.tls.enabled }}
         - name: certs
           projected:
             sources:
@@ -485,8 +434,14 @@ spec:
             sources:
               - secret:
                   name: {{ template "rabbitmq.secretPasswordName" . }}
+                  items:
+                    - key: {{ template "rabbitmq.secretPasswordKey" . }}
+                      path: {{ template "rabbitmq.secretPasswordKey" . }}
               - secret:
                   name: {{ template "rabbitmq.secretErlangName" . }}
+                  items:
+                    - key: {{ template "rabbitmq.secretErlangKey" . }}
+                      path: {{ template "rabbitmq.secretErlangKey" . }}
         {{- end }}
         {{- if .Values.loadDefinition.enabled }}
         - name: load-definition-volume

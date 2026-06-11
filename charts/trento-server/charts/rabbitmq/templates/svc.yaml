@@ -44,7 +44,7 @@ spec:
   externalIPs: {{- toYaml .Values.service.externalIPs | nindent 4 }}
   {{- end }}
   ports:
-    {{- if or (.Values.service.portEnabled) (not .Values.auth.tls.enabled) }}
+    {{- if or (.Values.service.portEnabled) (not (or .Values.auth.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled)) }}
     - name: {{ .Values.service.portNames.amqp }}
       port: {{ .Values.service.ports.amqp }}
       targetPort: amqp
@@ -54,7 +54,7 @@ spec:
       nodePort: {{ .Values.service.nodePorts.amqp }}
       {{- end }}
     {{- end }}
-    {{- if .Values.auth.tls.enabled }}
+    {{- if or .Values.auth.tls.enabled .Values.global.rabbitmq.tls.mtls.enabled }}
     - name: {{ .Values.service.portNames.amqpTls }}
       port: {{ .Values.service.ports.amqpTls }}
       targetPort: amqp-tls
