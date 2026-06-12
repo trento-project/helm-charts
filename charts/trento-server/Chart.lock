@@ -17,5 +17,8 @@ dependencies:
 - name: rabbitmq
   repository: ""
   version: '>0.0.0-0'
-digest: sha256:c795e4248b9df257fa91a2150b4972ada2796c9432f563fe213a8a9b33fefe55
-generated: "2026-06-12T17:03:44.5477922+02:00"
+- name: common
+  repository: ""
+  version: '>0.0.0-0'
+digest: sha256:2f49b16e6a840c86d92928c45890653c4702e63af0a58f64f3cbdd1788aaefbb
+generated: "2026-06-12T17:42:43.8957499+02:00"
