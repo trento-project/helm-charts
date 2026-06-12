@@ -68,15 +68,109 @@ trento-mcp-server:
 
 postgresql:
   enabled: true
-  persistence:
-    mountPath: /var/lib/postgresql/data
+  architecture: replication
   postgresqlDataDir: /var/lib/postgresql/data/trento
-  securityContext:
-    fsGroup: 0
-  containerSecurityContext:
-    runAsUser: 0
+  auth:
+    # Use direct env vars (POSTGRES_PASSWORD) instead of password files (POSTGRES_PASSWORD_FILE)
+    # The SUSE/official PostgreSQL images don't support the _FILE suffix convention used by Bitnami
+    usePasswordFiles: false
+  metrics:
+    # Override DATA_SOURCE_URI to connect to 'trento' database instead of hardcoded 'postgres'
+    extraEnvVars:
+      - name: DATA_SOURCE_URI
+        value: "127.0.0.1:5432/trento?sslmode=disable"
   primary:
-    extraInitContainers:
+    persistence:
+      mountPath: /var/lib/postgresql/data
+    podSecurityContext:
+      fsGroup: 0
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+    # Custom probes to:
+    # 1. Check specific 'trento' database (not just PostgreSQL server)
+    # 2. Remove Bitnami-specific .initialized file check that fails with SUSE image
+    customLivenessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - exec pg_isready -U "postgres" -d "dbname=trento" -h 127.0.0.1 -p 5432
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      successThreshold: 1
+    customReadinessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - -e
+          - |
+            exec pg_isready -U "postgres" -d "dbname=trento" -h 127.0.0.1 -p 5432
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      successThreshold: 1
+    initContainers:
+      # Runs pg_upgrade in-place before PostgreSQL starts when the major version changes.
+      # PGAUTO_ONESHOT exits immediately with no-op when no upgrade is needed, so this is safe on every restart.
+      # Image tag must match global.postgresql.image.tag (e.g. "17-debian").
+      # https://github.com/bitnami/charts/issues/14926#issuecomment-3192189184
+      - name: upgrade-postgres
+        image: "pgautoupgrade/pgautoupgrade:{{ .Values.global.postgresql.image.tag }}-debian"
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: data
+            mountPath: /var/lib/postgresql/data
+        env:
+          - name: PGAUTO_ONESHOT
+            value: "yes"
+          - name: POSTGRES_DB
+            value: postgres
+          - name: PGDATA
+            value: /var/lib/postgresql/data/trento
+  readReplicas:
+    persistence:
+      mountPath: /var/lib/postgresql/data
+    podSecurityContext:
+      fsGroup: 0
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+    # Custom probes to:
+    # 1. Check specific 'trento' database (not just PostgreSQL server)
+    # 2. Remove Bitnami-specific .initialized file check that fails with SUSE image
+    customLivenessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - exec pg_isready -U "postgres" -d "dbname=trento" -h 127.0.0.1 -p 5432
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      successThreshold: 1
+    customReadinessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - -e
+          - |
+            exec pg_isready -U "postgres" -d "dbname=trento" -h 127.0.0.1 -p 5432
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      successThreshold: 1
+    initContainers:
       # Runs pg_upgrade in-place before PostgreSQL starts when the major version changes.
       # PGAUTO_ONESHOT exits immediately with no-op when no upgrade is needed, so this is safe on every restart.
       # Image tag must match global.postgresql.image.tag (e.g. "17-debian").
