@@ -121,9 +121,9 @@ diagnosticMode:
 ## @param image.debug Specify if debug values should be set
 ##
 image:
-  registry: docker.io
-  repository: bitnami/postgresql
-  tag: 17.6.0-debian-12-r4
+  registry: registry.suse.com
+  repository: suse/postgres
+  tag: "17.5"
   digest: ""
   ## Specify a imagePullPolicy
   ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
@@ -1610,9 +1610,9 @@ volumePermissions:
   ## @param volumePermissions.image.pullSecrets Init container volume-permissions image pull secrets
   ##
   image:
-    registry: docker.io
-    repository: bitnami/os-shell
-    tag: 12-debian-12-r51
+    registry: registry.suse.com
+    repository: bci/bci-busybox
+    tag: "16.0"
     digest: ""
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
@@ -1719,9 +1719,9 @@ metrics:
   ## @param metrics.image.pullSecrets Specify image pull secrets
   ##
   image:
-    registry: docker.io
-    repository: bitnami/postgres-exporter
-    tag: 0.17.1-debian-12-r16
+    registry: quay.io
+    repository: prometheuscommunity/postgres-exporter
+    tag: v0.17.1
     digest: ""
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
