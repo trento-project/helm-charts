@@ -13,12 +13,12 @@ dependencies:
   version: '>0.0.0'
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts/
-  version: 29.10.0
+  version: 29.10.1
 - name: rabbitmq
   repository: ""
   version: '>0.0.0-0'
 - name: common
   repository: ""
   version: '>0.0.0-0'
-digest: sha256:aaef1ab64b71fa1e130e32e487102e7383b8706441f4ad6b2550a8d335d6e274
-generated: "2026-06-11T13:12:47.5406749+02:00"
+digest: sha256:2f49b16e6a840c86d92928c45890653c4702e63af0a58f64f3cbdd1788aaefbb
+generated: "2026-06-12T17:42:43.8957499+02:00"
