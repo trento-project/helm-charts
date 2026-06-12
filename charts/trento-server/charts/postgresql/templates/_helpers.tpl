@@ -50,7 +50,8 @@ We truncate at 63 chars because of the DNS naming spec.
 Return the proper PostgreSQL image name
 */}}
 {{- define "postgresql.v1.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+{{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.image | default dict) -}}
+{{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
