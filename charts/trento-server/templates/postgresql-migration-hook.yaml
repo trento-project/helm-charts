@@ -93,9 +93,9 @@ spec:
 
           if [ "$OLD_SELECTOR" = "primary" ]; then
             echo "Found old selector label 'role: primary', migration needed"
-            echo "Deleting StatefulSet with --cascade=orphan to preserve pods..."
-            kubectl delete statefulset {{ .Release.Name }}-postgresql -n {{ .Release.Namespace }} --cascade=orphan
-            echo "StatefulSet deleted successfully. Pods are preserved and will be adopted by the new StatefulSet."
+            echo "Deleting StatefulSet and pods (PVCs will be preserved)..."
+            kubectl delete statefulset {{ .Release.Name }}-postgresql -n {{ .Release.Namespace }}
+            echo "StatefulSet deleted successfully. New StatefulSet will be created with updated selectors."
           else
             echo "StatefulSet already uses new selector, no migration needed"
           fi
