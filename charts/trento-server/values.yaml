@@ -72,6 +72,10 @@ postgresql:
   postgresqlDataDir: /var/lib/postgresql/data/trento
   auth:
     usePasswordFiles: false
+    secretKeys:
+      adminPasswordKey: postgresql-password
+      userPasswordKey: postgresql-password
+      replicationPasswordKey: replication-password
   migrationHook:
     image:
       registry: registry.suse.com

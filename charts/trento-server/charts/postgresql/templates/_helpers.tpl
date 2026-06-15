@@ -33,19 +33,17 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{/*
 Create the default FQDN for PostgreSQL primary headless service
 We truncate at 63 chars because of the DNS naming spec.
-MODIFIED: Use -headless suffix for backward compatibility
 */}}
 {{- define "postgresql.v1.primary.svc.headless" -}}
-{{- printf "%s-headless" (include "postgresql.v1.primary.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-hl" (include "postgresql.v1.primary.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create the default FQDN for PostgreSQL read-only replicas headless service
 We truncate at 63 chars because of the DNS naming spec.
-MODIFIED: Use -headless suffix for backward compatibility
 */}}
 {{- define "postgresql.v1.readReplica.svc.headless" -}}
-{{- printf "%s-headless" (include "postgresql.v1.readReplica.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-hl" (include "postgresql.v1.readReplica.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -78,7 +76,9 @@ Return the proper Docker Image Registry Secret Names
 
 {{/*
 Return the name for a custom user to create
-MODIFIED: Support old postgresqlUsername field for backward compatibility
+CUSTOMIZATION: Added support for old .Values.global.postgresql.postgresqlUsername field
+for backward compatibility with chart version 10.x
+Original: Only checked .Values.global.postgresql.auth.username
 */}}
 {{- define "postgresql.v1.username" -}}
 {{- if .Values.global.postgresql.postgresqlUsername -}}
@@ -133,6 +133,9 @@ Get the replication-password key.
 
 {{/*
 Get the admin-password key.
+CUSTOMIZATION: Changed default key name from "postgres-password" to "postgresql-password"
+for backward compatibility with chart version 10.x
+Original: {{- "postgres-password" -}}
 */}}
 {{- define "postgresql.v1.adminPasswordKey" -}}
 {{- if or .Values.global.postgresql.auth.existingSecret .Values.auth.existingSecret -}}
@@ -182,6 +185,9 @@ Get metrics-password key.
 
 {{/*
 Return true if a secret object should be created
+CUSTOMIZATION: Added .Values.global.postgresql.postgresqlPassword to password lookup
+for backward compatibility with chart version 10.x
+Original: Only checked .Values.global.postgresql.auth.postgresPassword and .Values.global.postgresql.auth.password
 */}}
 {{- define "postgresql.v1.createSecret" -}}
 {{- $customUser := include "postgresql.v1.username" . -}}
@@ -374,6 +380,7 @@ Get the readiness probe command
 {{- else }}
   exec pg_isready -U {{ default "postgres" $customUser | quote }} {{- if .Values.tls.enabled }} -d "sslcert={{ include "postgresql.v1.tlsCert" . }} sslkey={{ include "postgresql.v1.tlsCertKey" . }}"{{- end }} -h 127.0.0.1 -p {{ .Values.containerPorts.postgresql }}
 {{- end }}
+  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
 {{- end -}}
 
 {{/*
