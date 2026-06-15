@@ -79,7 +79,9 @@ Return the proper Docker Image Registry Secret Names
 Return the name for a custom user to create
 */}}
 {{- define "postgresql.v1.username" -}}
-{{- if .Values.global.postgresql.auth.username -}}
+{{- if .Values.global.postgresql.postgresqlUsername -}}
+    {{- .Values.global.postgresql.postgresqlUsername -}}
+{{- else if .Values.global.postgresql.auth.username -}}
     {{- .Values.global.postgresql.auth.username -}}
 {{- else -}}
     {{- .Values.auth.username -}}
@@ -370,7 +372,6 @@ Get the readiness probe command
 {{- else }}
   exec pg_isready -U {{ default "postgres" $customUser | quote }} {{- if .Values.tls.enabled }} -d "sslcert={{ include "postgresql.v1.tlsCert" . }} sslkey={{ include "postgresql.v1.tlsCertKey" . }}"{{- end }} -h 127.0.0.1 -p {{ .Values.containerPorts.postgresql }}
 {{- end }}
-  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
 {{- end -}}
 
 {{/*
