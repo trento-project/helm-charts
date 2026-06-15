@@ -185,6 +185,8 @@ rabbitmq:
     enabled: true
   service:
     type: LoadBalancer
+  volumePermissions:
+    enabled: true
 
   extraConfiguration: |
     {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
