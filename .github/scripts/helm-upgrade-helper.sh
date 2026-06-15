@@ -246,6 +246,62 @@ show_web_init_logs() {
   fi
 }
 
+check_hook_jobs() {
+  banner "                         HELM HOOK JOBS STATUS                          "
+  echo ""
+
+  section "=== All hook jobs ==="
+  kubectl get jobs -n "$TRENTO_NAMESPACE" \
+    -l 'helm.sh/hook' \
+    -o wide 2>/dev/null || echo "No hook jobs found"
+
+  section "=== Hook job details ==="
+  local hook_jobs
+  hook_jobs=$(kubectl get jobs -n "$TRENTO_NAMESPACE" \
+    -l 'helm.sh/hook' \
+    -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || echo "")
+
+  if [ -n "$hook_jobs" ]; then
+    for job in $hook_jobs; do
+      echo ""
+      echo "────────────────────────────────────────────────────────────────────────"
+      echo "Hook Job: $job"
+      echo "────────────────────────────────────────────────────────────────────────"
+
+      # Show job status
+      kubectl get job "$job" -n "$TRENTO_NAMESPACE" -o yaml 2>/dev/null | grep -A 10 "^status:" || echo "No status available"
+
+      # Get pod for this job
+      local pod_name
+      pod_name=$(kubectl get pods -n "$TRENTO_NAMESPACE" \
+        -l "job-name=$job" \
+        -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+
+      if [ -n "$pod_name" ]; then
+        echo ""
+        echo "--- Pod: $pod_name ---"
+        echo "Pod Status:"
+        kubectl get pod "$pod_name" -n "$TRENTO_NAMESPACE" -o wide 2>/dev/null || echo "Pod not found"
+
+        echo ""
+        echo "Pod Logs:"
+        kubectl logs "$pod_name" -n "$TRENTO_NAMESPACE" --all-containers=true 2>/dev/null || echo "No logs available"
+
+        echo ""
+        echo "Previous Pod Logs (if exists):"
+        kubectl logs "$pod_name" -n "$TRENTO_NAMESPACE" --all-containers=true --previous 2>/dev/null || echo "No previous logs"
+      else
+        echo "No pod found for job $job"
+      fi
+    done
+  else
+    echo "✅ No hook jobs found in namespace $TRENTO_NAMESPACE"
+  fi
+
+  echo ""
+  banner "                      HOOK JOBS CHECK COMPLETE                          "
+}
+
 post_upgrade_diagnostics() {
   banner "                         POST-UPGRADE DIAGNOSTICS                       "
   show_pods_status
@@ -272,6 +328,9 @@ main() {
     compare-container-versions)
       compare_container_versions
       ;;
+    check-hook-jobs)
+      check_hook_jobs
+      ;;
     post-upgrade-diagnostics)
       post_upgrade_diagnostics
       ;;
@@ -287,6 +346,7 @@ main() {
       printf '%s\n' "Commands:" >&2
       printf '%s\n' "  post-install-diagnostics" >&2
       printf '%s\n' "  compare-container-versions" >&2
+      printf '%s\n' "  check-hook-jobs" >&2
       printf '%s\n' "  post-upgrade-diagnostics" >&2
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
