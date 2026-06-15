@@ -140,7 +140,7 @@ Get the admin-password key.
         {{- printf "%s" (tpl .Values.auth.secretKeys.adminPasswordKey $) -}}
     {{- end -}}
 {{- else -}}
-    {{- "postgres-password" -}}
+    {{- "postgresql-postgres-password" -}}
 {{- end -}}
 {{- end -}}
 
@@ -159,7 +159,7 @@ Get the user-password key.
         {{- end -}}
     {{- end -}}
 {{- else -}}
-    {{- "password" -}}
+    {{- "postgresql-password" -}}
 {{- end -}}
 {{- end -}}
 
