@@ -33,6 +33,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{/*
 Create the default FQDN for PostgreSQL primary headless service
 We truncate at 63 chars because of the DNS naming spec.
+MODIFIED: Use -headless suffix for backward compatibility
 */}}
 {{- define "postgresql.v1.primary.svc.headless" -}}
 {{- printf "%s-headless" (include "postgresql.v1.primary.fullname" .) | trunc 63 | trimSuffix "-" -}}
@@ -41,6 +42,7 @@ We truncate at 63 chars because of the DNS naming spec.
 {{/*
 Create the default FQDN for PostgreSQL read-only replicas headless service
 We truncate at 63 chars because of the DNS naming spec.
+MODIFIED: Use -headless suffix for backward compatibility
 */}}
 {{- define "postgresql.v1.readReplica.svc.headless" -}}
 {{- printf "%s-headless" (include "postgresql.v1.readReplica.fullname" .) | trunc 63 | trimSuffix "-" -}}
@@ -50,8 +52,7 @@ We truncate at 63 chars because of the DNS naming spec.
 Return the proper PostgreSQL image name
 */}}
 {{- define "postgresql.v1.image" -}}
-{{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.image | default dict) -}}
-{{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
@@ -77,6 +78,7 @@ Return the proper Docker Image Registry Secret Names
 
 {{/*
 Return the name for a custom user to create
+MODIFIED: Support old postgresqlUsername field for backward compatibility
 */}}
 {{- define "postgresql.v1.username" -}}
 {{- if .Values.global.postgresql.postgresqlUsername -}}
@@ -140,7 +142,7 @@ Get the admin-password key.
         {{- printf "%s" (tpl .Values.auth.secretKeys.adminPasswordKey $) -}}
     {{- end -}}
 {{- else -}}
-    {{- "postgresql-postgres-password" -}}
+    {{- "postgresql-password" -}}
 {{- end -}}
 {{- end -}}
 
@@ -159,7 +161,7 @@ Get the user-password key.
         {{- end -}}
     {{- end -}}
 {{- else -}}
-    {{- "postgresql-password" -}}
+    {{- "password" -}}
 {{- end -}}
 {{- end -}}
 
@@ -183,7 +185,7 @@ Return true if a secret object should be created
 */}}
 {{- define "postgresql.v1.createSecret" -}}
 {{- $customUser := include "postgresql.v1.username" . -}}
-{{- $postgresPassword := include "common.secrets.lookup" (dict "secret" (include "postgresql.v1.chart.fullname" .) "key" .Values.auth.secretKeys.adminPasswordKey "defaultValue" (ternary (coalesce .Values.global.postgresql.auth.postgresPassword .Values.auth.postgresPassword .Values.global.postgresql.auth.password .Values.auth.password) (coalesce .Values.global.postgresql.auth.postgresPassword .Values.auth.postgresPassword) (or (empty $customUser) (eq $customUser "postgres"))) "context" $) -}}
+{{- $postgresPassword := include "common.secrets.lookup" (dict "secret" (include "postgresql.v1.chart.fullname" .) "key" .Values.auth.secretKeys.adminPasswordKey "defaultValue" (ternary (coalesce .Values.global.postgresql.postgresqlPassword .Values.global.postgresql.auth.postgresPassword .Values.auth.postgresPassword .Values.global.postgresql.auth.password .Values.auth.password) (coalesce .Values.global.postgresql.postgresqlPassword .Values.global.postgresql.auth.postgresPassword .Values.auth.postgresPassword) (or (empty $customUser) (eq $customUser "postgres"))) "context" $) -}}
 {{- if and (not (or .Values.global.postgresql.auth.existingSecret .Values.auth.existingSecret)) (or $postgresPassword .Values.auth.enablePostgresUser (and (not (empty $customUser)) (ne $customUser "postgres")) (eq .Values.architecture "replication") (and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw))) -}}
     {{- true -}}
 {{- end -}}
