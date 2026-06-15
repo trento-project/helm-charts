@@ -90,6 +90,9 @@ postgresql:
       runAsUser: 0
       runAsGroup: 0
       runAsNonRoot: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop: []
     initContainers:
       # Runs pg_upgrade in-place before PostgreSQL starts when the major version changes.
       # PGAUTO_ONESHOT exits immediately with no-op when no upgrade is needed, so this is safe on every restart.
