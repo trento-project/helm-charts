@@ -71,9 +71,8 @@ postgresql:
   architecture: replication
   postgresqlDataDir: /var/lib/postgresql/data/trento
   auth:
-    # Use direct env vars (POSTGRES_PASSWORD) instead of password files (POSTGRES_PASSWORD_FILE)
-    # The SUSE/official PostgreSQL images don't support the _FILE suffix convention used by Bitnami
     usePasswordFiles: false
+    replicationPassword: "postgres"
   metrics:
     # Override DATA_SOURCE_URI to connect to 'trento' database instead of hardcoded 'postgres'
     extraEnvVars:
@@ -88,9 +87,6 @@ postgresql:
       runAsUser: 0
       runAsGroup: 0
       runAsNonRoot: false
-    # Custom probes to:
-    # 1. Check specific 'trento' database (not just PostgreSQL server)
-    # 2. Remove Bitnami-specific .initialized file check that fails with SUSE image
     customLivenessProbe:
       exec:
         command:
@@ -143,9 +139,6 @@ postgresql:
       runAsUser: 0
       runAsGroup: 0
       runAsNonRoot: false
-    # Custom probes to:
-    # 1. Check specific 'trento' database (not just PostgreSQL server)
-    # 2. Remove Bitnami-specific .initialized file check that fails with SUSE image
     customLivenessProbe:
       exec:
         command:
