@@ -35,7 +35,7 @@ Create the default FQDN for PostgreSQL primary headless service
 We truncate at 63 chars because of the DNS naming spec.
 */}}
 {{- define "postgresql.v1.primary.svc.headless" -}}
-{{- printf "%s-hl" (include "postgresql.v1.primary.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-headless" (include "postgresql.v1.primary.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -43,7 +43,7 @@ Create the default FQDN for PostgreSQL read-only replicas headless service
 We truncate at 63 chars because of the DNS naming spec.
 */}}
 {{- define "postgresql.v1.readReplica.svc.headless" -}}
-{{- printf "%s-hl" (include "postgresql.v1.readReplica.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-headless" (include "postgresql.v1.readReplica.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
