@@ -312,11 +312,36 @@ post_upgrade_diagnostics() {
   banner "                      DIAGNOSTICS COMPLETE                              "
 }
 
+show_init_container_logs() {
+  section "=== Init container logs for all pods ==="
+  local pod
+  for pod in $(kubectl get pods -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[*].metadata.name}'); do
+    echo ""
+    echo "════════════════════════════════════════════════════════════════════════"
+    echo "Pod: $pod - Init Containers"
+    echo "════════════════════════════════════════════════════════════════════════"
+
+    local init_containers
+    init_containers=$(kubectl get pod "$pod" -n "$TRENTO_NAMESPACE" -o jsonpath='{.spec.initContainers[*].name}' 2>/dev/null || echo "")
+
+    if [ -n "$init_containers" ]; then
+      for container in $init_containers; do
+        echo ""
+        echo "--- Init Container: $container ---"
+        kubectl logs "$pod" -n "$TRENTO_NAMESPACE" -c "$container" --tail=200 2>/dev/null || echo "No logs available for init container $container"
+      done
+    else
+      echo "No init containers found"
+    fi
+  done
+}
+
 failure_diagnostics() {
   banner "                    FAILURE DIAGNOSTICS - FULL LOGS                     "
   echo ""
   show_pods_status
   show_events "all"
+  show_init_container_logs
   show_pod_logs 0 "Full " true "════════════════════════════════════════════════════════════════════════"
 }
 
