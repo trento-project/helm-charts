@@ -203,8 +203,6 @@ spec:
           args: {{- include "common.tplvalues.render" (dict "value" .Values.primary.args "context" $) | nindent 12 }}
           {{- end }}
           env:
-            - name: BITNAMI_DEBUG
-              value: {{ ternary "true" "false" (or .Values.image.debug .Values.diagnosticMode.enabled) | quote }}
             - name: POSTGRESQL_PORT_NUMBER
               value: {{ .Values.containerPorts.postgresql | quote }}
             - name: POSTGRESQL_VOLUME_DIR
@@ -463,12 +461,7 @@ spec:
             - name: empty-dir
               mountPath: /tmp
               subPath: tmp-dir
-            - name: empty-dir
-              mountPath: /opt/bitnami/postgresql/conf
-              subPath: app-conf-dir
-            - name: empty-dir
-              mountPath: /opt/bitnami/postgresql/tmp
-              subPath: app-tmp-dir
+            {{- /* CUSTOMIZATION: Removed Bitnami-specific /opt/bitnami/postgresql/* mounts - not needed for SUSE postgres */ -}}
             {{- if or .Values.primary.preInitDb.scriptsConfigMap .Values.primary.preInitDb.scripts }}
             - name: custom-preinit-scripts
               mountPath: /docker-entrypoint-preinitdb.d/

@@ -375,12 +375,12 @@ Get the readiness probe command
 {{- define "postgresql.v1.readinessProbeCommand" -}}
 {{- $customUser := include "postgresql.v1.username" . -}}
 - |
+{{- /* CUSTOMIZATION: Removed Bitnami-specific .initialized file check - not needed for SUSE postgres */ -}}
 {{- if (include "postgresql.v1.database" .) }}
   exec pg_isready -U {{ default "postgres" $customUser | quote }} -d "dbname={{ include "postgresql.v1.database" . }} {{- if .Values.tls.enabled }} sslcert={{ include "postgresql.v1.tlsCert" . }} sslkey={{ include "postgresql.v1.tlsCertKey" . }}{{- end }}" -h 127.0.0.1 -p {{ .Values.containerPorts.postgresql }}
 {{- else }}
   exec pg_isready -U {{ default "postgres" $customUser | quote }} {{- if .Values.tls.enabled }} -d "sslcert={{ include "postgresql.v1.tlsCert" . }} sslkey={{ include "postgresql.v1.tlsCertKey" . }}"{{- end }} -h 127.0.0.1 -p {{ .Values.containerPorts.postgresql }}
 {{- end }}
-  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
 {{- end -}}
 
 {{/*
