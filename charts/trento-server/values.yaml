@@ -73,6 +73,11 @@ postgresql:
   auth:
     usePasswordFiles: false
     replicationPassword: "postgres"
+  migrationHook:
+    image:
+      registry: registry.suse.com
+      repository: bci/bci-micro
+      tag: "latest"
   metrics:
     # Override DATA_SOURCE_URI to connect to 'trento' database instead of hardcoded 'postgres'
     extraEnvVars:
