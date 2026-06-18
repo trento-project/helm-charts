@@ -90,7 +90,8 @@ build_helm_deps() {
   local chart_path="$1"
 
   log_info "Building Helm dependencies for $chart_path"
-  if ! helm dependency build "$chart_path" --skip-refresh 2>&1 | grep -v "^WARNING" > /dev/null; then
+  local output
+  if ! output=$(helm dependency build "$chart_path" --skip-refresh 2>&1); then
     log_error "Failed to build Helm dependencies"
     return 1
   fi
@@ -187,7 +188,7 @@ output_json() {
 # === VERSION COMPARISON ===
 # Parse version and suffix from tag
 # Input: tag (e.g., "3.12.6-management-alpine" or "v3.12.6")
-# Output: "3.12.6|−management-alpine"
+# Output: "3.12.6|-management-alpine"
 parse_version() {
   local tag="$1"
 
