@@ -71,16 +71,15 @@ setup_helm_repos() {
     return 0
   fi
 
-  grep "repository: http" "$chart_path/Chart.yaml" \
+  while read -r repo_url; do
+    # shellcheck disable=SC2155
+    local repo_name="repo-$(echo "$repo_url" | md5sum | cut -c1-8)"
+    if ! helm repo add "$repo_name" "$repo_url" >/dev/null 2>&1; then
+      log_warning "Failed to add Helm repo: $repo_url"
+    fi
+  done < <(grep "repository: http" "$chart_path/Chart.yaml" \
     | sed 's/.*repository: //' \
-    | sort -u \
-    | while read -r repo_url; do
-      # shellcheck disable=SC2155
-      local repo_name="repo-$(echo "$repo_url" | md5sum | cut -c1-8)"
-      if ! helm repo add "$repo_name" "$repo_url" >/dev/null 2>&1; then
-        log_warning "Failed to add Helm repo: $repo_url"
-      fi
-    done
+    | sort -u)
 
   return 0
 }
@@ -135,7 +134,7 @@ safe_git_checkout() {
   local stash_name="cve-scan-tmp"
 
   local has_changes=0
-  if ! git diff --quiet; then
+  if ! git diff --quiet || ! git diff --cached --quiet; then
     has_changes=1
     log_info "Stashing local changes"
     if ! git stash push -m "$stash_name" >/dev/null 2>&1; then
