@@ -148,20 +148,39 @@ jobs:
             exit 1
           fi
 
+          # Workaround for oss-main: use ghcr.io checks image repository
+          if [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
+            EXTRA_FLAGS="--set trento-wanda.checks.image.repository=ghcr.io/trento-project/checks"
+          else
+            EXTRA_FLAGS=""
+          fi
+
           helm upgrade -i trento-server "$CHART_REF" --wait \
             --version "${{ steps.version.outputs.value }}" \
             --create-namespace \
             --timeout 3m \
             --render-subchart-notes \
-            ${HELM_COMMON_FLAGS}
+            ${HELM_COMMON_FLAGS} \
+            ${EXTRA_FLAGS}
 
-      - name: Wait for RabbitMQ to be ready
+      - name: Ensure RabbitMQ connection without startup errors
         run: |
           echo "Waiting for RabbitMQ to be ready..."
           kubectl wait --for=condition=ready pod \
             -l app.kubernetes.io/name=rabbitmq \
             -n ${{ env.TRENTO_NAMESPACE }} \
             --timeout=60s
+
+          echo "Restarting Wanda to get clean logs after RabbitMQ is ready..."
+          kubectl delete pod \
+            -l app.kubernetes.io/name=wanda \
+            -n ${{ env.TRENTO_NAMESPACE }}
+
+          echo "Waiting for Wanda to be ready..."
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=wanda \
+            -n ${{ env.TRENTO_NAMESPACE }} \
+            --timeout=120s
 
       - name: Check pod status after install
         if: always()
