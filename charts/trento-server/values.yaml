@@ -58,7 +58,7 @@ trento-wanda:
     repository: ghcr.io/trento-project/trento-wanda
   checks:
     image:
-      repository: ghcr.io/trento-project/trento-checks
+      repository: ghcr.io/trento-project/checks
 
 trento-mcp-server:
   nameOverride: mcp-server
