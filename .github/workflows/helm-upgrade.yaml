@@ -163,24 +163,6 @@ jobs:
             ${HELM_COMMON_FLAGS} \
             ${EXTRA_FLAGS}
 
-      - name: Ensure RabbitMQ connection without startup errors
-        run: |
-          echo "Waiting for RabbitMQ to be ready..."
-          kubectl wait --for=condition=ready pod \
-            -l app.kubernetes.io/name=rabbitmq \
-            -n ${{ env.TRENTO_NAMESPACE }} \
-            --timeout=60s
-
-          echo "Restarting Wanda to get clean logs after RabbitMQ is ready..."
-          kubectl delete pod \
-            -l app.kubernetes.io/name=wanda \
-            -n ${{ env.TRENTO_NAMESPACE }}
-
-          echo "Waiting for Wanda to be ready..."
-          kubectl wait --for=condition=ready pod \
-            -l app.kubernetes.io/name=wanda \
-            -n ${{ env.TRENTO_NAMESPACE }} \
-            --timeout=120s
 
       - name: Check pod status after install
         if: always()
