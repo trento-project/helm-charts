@@ -23,7 +23,7 @@ global:
     image:
       registry: registry.suse.com
       repository: suse/postgres
-      tag: "14"
+      tag: "16" # FIXME: dummy change for testing CI, revert ASAP
   prometheus:
     name: prometheus-server
     pathPrefix: /prometheus
