@@ -21,9 +21,9 @@ global:
     postgresqlUsername: "postgres"
     postgresqlPassword: "postgres"
     image:
-      registry: registry.suse.com
-      repository: suse/postgres
-      tag: "16" # FIXME: dummy change for testing CI, revert ASAP
+      registry: docker.io # FIXME: dummy change for testing CI, revert ASAP
+      repository: postgres # FIXME: dummy change for testing CI, revert ASAP
+      tag: "16.14-alpine3.22" # FIXME: dummy change for testing CI, revert ASAP
   prometheus:
     name: prometheus-server
     pathPrefix: /prometheus
