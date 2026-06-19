@@ -65,6 +65,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create k3s cluster
+        uses: jupyterhub/action-k3s-helm@502a9ff4d816dad543e359971fe2c3128d0f4c6e # v4
+        with:
+          k3s-version: ${{ env.K3S_VERSION }}
+          helm-version: ${{ env.HELM_VERSION }}
+          metrics-enabled: false
+
       - name: Resolve chart version
         id: version
         env:
@@ -94,13 +101,6 @@ jobs:
           echo "Selected version: ${VERSION}"
           echo "value=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Create k3s cluster
-        uses: jupyterhub/action-k3s-helm@502a9ff4d816dad543e359971fe2c3128d0f4c6e # v4
-        with:
-          k3s-version: ${{ env.K3S_VERSION }}
-          helm-version: ${{ env.HELM_VERSION }}
-          metrics-enabled: false
-
       - name: Install cert-manager
         run: |
           helm install cert-manager oci://quay.io/jetstack/charts/cert-manager \
@@ -109,7 +109,7 @@ jobs:
             --create-namespace \
             --set crds.enabled=true
           kubectl wait --for=condition=available --timeout=300s \
-            deployment/cert-manager -n cert-manager
+            --all deployments -n cert-manager
 
       - name: Prepare cert-manager resources and values for ingress
         run: |
