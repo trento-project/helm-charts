@@ -6,6 +6,10 @@
 # Shared utilities for CVE scanning and remediation workflows
 set -euo pipefail
 
+# Guard against double-sourcing (readonly declarations fail on re-execution).
+[[ -n "${_HELPERS_SH_SOURCED:-}" ]] && return 0
+readonly _HELPERS_SH_SOURCED=1
+
 # === CONSTANTS ===
 # shellcheck disable=SC2034
 readonly DEFAULT_CHART_PATH="charts/trento-server"
@@ -40,27 +44,100 @@ readonly CVE_PR_LABEL="dependencies"
 readonly NIST_CVE_URL="https://nvd.nist.gov/vuln/detail"
 
 # === LOGGING FUNCTIONS ===
+
+# Print an informational message to stderr.
+# Args: $1+ (string) - message text
 log_info() { echo "ℹ️  $*" >&2; }
+
+# Print a success message to stderr.
+# Args: $1+ (string) - message text
 log_success() { echo "✅ $*" >&2; }
+
+# Print an error message to stderr.
+# Args: $1+ (string) - message text
 log_error() { echo "❌ $*" >&2; }
+
+# Print a warning message to stderr.
+# Args: $1+ (string) - message text
 log_warning() { echo "⚠️  $*" >&2; }
 
-# === IMAGE SANITIZATION ===
-# Sanitize image name for use in filenames and IDs
-# Uses consistent MD5 hashing for deterministic output
+# === IMAGE UTILITIES ===
+
+# Sanitize image name for use in filenames and IDs using MD5 hash.
+# Args: $1 (string) - full image reference to hash
+# Outputs: 12-character MD5 hash (deterministic across invocations)
 sanitize_image_name() {
   local image="$1"
   echo -n "$image" | md5sum | cut -c1-12
 }
 
-# Extract base image name (registry + repo, no tag/version)
+# Extract base image name (registry + repo without tag/version).
+# Args: $1 (string) - full image reference including optional tag
+# Outputs: sanitized base name with non-alphanumeric chars replaced by dashes
 get_image_base_name() {
   local image="$1"
   echo "$image" | sed -E 's/:.*//; s/[^a-zA-Z0-9-]/-/g'
 }
 
+# Parse image reference into base image and tag.
+# Args: $1 (string) - full image reference (e.g., "registry/repo:tag")
+# Outputs: "base_image|tag" format
+parse_image_ref() {
+  local image_ref="$1"
+  local base_image tag
+
+  if [[ "$image_ref" == *:* ]]; then
+    base_image="${image_ref%:*}"
+    tag="${image_ref##*:}"
+  else
+    base_image="$image_ref"
+    tag="latest"
+  fi
+
+  echo "$base_image|$tag"
+}
+
+# Check if a tag has a valid semantic version.
+# Args: $1 (string) - image tag to evaluate
+# Returns: 0 if semantic, 1 if not
+is_semantic_version_tag() {
+  local tag="$1"
+  local parsed parsed_version
+
+  parsed=$(parse_version "$tag")
+  parsed_version="${parsed%|*}"
+
+  if [[ -z "$parsed_version" ]] || [[ ! "$parsed_version" =~ ^[0-9] ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Extract image name (last component after /).
+# Args: $1 (string) - full image reference (e.g., "ghcr.io/org/name:tag")
+# Outputs: image name only (e.g., "name" from "ghcr.io/org/name")
+extract_image_name() {
+  local image_ref="$1"
+  echo "${image_ref##*/}"
+}
+
+# Convert bash array elements to a JSON array.
+# Args: $1+ (string) - zero or more strings to include; reads from stdin if no args given
+# Outputs: compact JSON array of the provided strings
+array_to_json() {
+  if [ $# -eq 0 ]; then
+    jq -Rs 'split("\n") | map(select(length > 0))'
+  else
+    printf '%s\n' "$@" | jq -Rs 'split("\n") | map(select(length > 0))'
+  fi
+}
+
 # === HELM OPERATIONS ===
-# Setup Helm repositories from Chart.yaml dependencies
+
+# Setup Helm repositories from Chart.yaml dependencies.
+# Args: $1 (string) - path to the Helm chart directory
+# Returns: 0 on success, 1 on failure
 setup_helm_repos() {
   local chart_path="$1"
 
@@ -84,13 +161,14 @@ setup_helm_repos() {
   return 0
 }
 
-# Build Helm dependencies
+# Build Helm chart dependencies.
+# Args: $1 (string) - path to the Helm chart directory
+# Returns: 0 on success, 1 on failure
 build_helm_deps() {
   local chart_path="$1"
 
   log_info "Building Helm dependencies for $chart_path"
-  local output
-  if ! output=$(helm dependency build "$chart_path" --skip-refresh 2>&1); then
+  if ! helm dependency build "$chart_path" --skip-refresh >/dev/null 2>&1; then
     log_error "Failed to build Helm dependencies"
     return 1
   fi
@@ -99,8 +177,9 @@ build_helm_deps() {
   return 0
 }
 
-# === IMAGE EXTRACTION ===
-# Extract all images from Helm chart template
+# Extract all images from Helm chart template.
+# Args: $1 (string) - path to the Helm chart directory
+# Outputs: image references (one per line) in sorted order
 extract_images_from_chart() {
   local chart_path="$1"
 
@@ -110,15 +189,19 @@ extract_images_from_chart() {
     | sort -u
 }
 
-# Extract images and output as JSON array (for GitHub Actions matrix)
+# Extract images and output as JSON array (for GitHub Actions matrix).
+# Args: $1 (string) - path to the Helm chart directory
+# Outputs: compact JSON array of image reference strings
 extract_images_json() {
   local chart_path="$1"
 
   extract_images_from_chart "$chart_path" | jq -R . | jq -s -c .
 }
 
-# Complete extraction pipeline: setup repos, build deps, extract images
-# Returns JSON array of images
+# Complete extraction pipeline: setup repos, build deps, extract images.
+# Args: $1 (string) - path to the Helm chart directory
+# Returns: 0 on success, 1 on failure
+# Outputs: compact JSON array of image reference strings
 extract_all_images() {
   local chart_path="$1"
 
@@ -127,8 +210,23 @@ extract_all_images() {
   extract_images_json "$chart_path"
 }
 
+# === CVE EXTRACTION ===
+
+# Extract CVE IDs from SARIF vulnerability scan results.
+# Args: $1 (string) - path to the SARIF file to parse
+# Outputs: CVE IDs (one per line), sorted and unique
+extract_cves_from_sarif() {
+  local sarif_file="$1"
+  jq -r '.runs[]? | .results[]? | .ruleId' "$sarif_file" 2>/dev/null | \
+    grep -E '^CVE-' | sort -u || echo ""
+}
+
 # === GIT OPERATIONS ===
-# Safely checkout a different branch, stashing changes if needed
+
+# Safely checkout a different branch, stashing uncommitted changes if present.
+# Args: $1 (string) - git ref (branch name, tag, or commit SHA) to checkout
+# Returns: 0 on success, 1 on failure
+# Outputs: echoes 1 if changes were stashed, 0 if not
 safe_git_checkout() {
   local target_ref="$1"
   local stash_name="cve-scan-tmp"
@@ -154,7 +252,9 @@ safe_git_checkout() {
   echo "$has_changes"
 }
 
-# Restore from git stash after checkout
+# Restore from git stash after checkout (use with safe_git_checkout).
+# Args: $1 (int) - result from safe_git_checkout (1 if stashed, 0 if not)
+# Returns: 0 on success, 1 on failure
 restore_from_stash() {
   local had_stash="$1"
 
@@ -169,8 +269,12 @@ restore_from_stash() {
   return 0
 }
 
-# === JSON OPERATIONS ===
-# Validate and pretty-print JSON
+# === JSON UTILITIES ===
+
+# Validate JSON format and write to file with pretty-printing.
+# Args: $1 (string) - destination file path to write
+#       $2 (string) - JSON string to validate and write
+# Returns: 0 on success, 1 on failure
 output_json() {
   local file="$1"
   local json="$2"
@@ -185,9 +289,10 @@ output_json() {
 }
 
 # === VERSION COMPARISON ===
-# Parse version and suffix from tag
-# Input: tag (e.g., "3.12.6-management-alpine" or "v3.12.6")
-# Output: "3.12.6|−management-alpine"
+
+# Parse version number and suffix from a tag string.
+# Args: $1 (string) - version tag to parse (with or without leading "v")
+# Outputs: version|suffix format (e.g., "3.12.6|-management-alpine")
 parse_version() {
   local tag="$1"
 
@@ -204,31 +309,28 @@ parse_version() {
   fi
 }
 
-# Internal helper: coerce version string to X.Y.Z format
-# Input: version string without 'v' prefix (e.g., "1.2" or "3")
-# Output: coerced version (e.g., "1.2.0") or empty string if invalid format
+# Internal helper: coerce version string to X.Y.Z format.
+# Args: $1 (string) - version string with 1–3 numeric components
+# Outputs: zero-padded X.Y.Z version string, or nothing if the input is not numeric
 _coerce_version_string() {
   local version="$1"
 
   if [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-    # Already X.Y.Z format
     echo "$version"
   elif [[ "$version" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
-    # X.Y format -> X.Y.0
     echo "${version}.0"
   elif [[ "$version" =~ ^([0-9]+)$ ]]; then
-    # X format -> X.0.0
     echo "${version}.0.0"
   fi
-  # Return empty string for invalid format
 }
 
-# Validate if a tag is a valid semantic version using semver-tool
+# Validate if a tag is a valid semantic version using semver-tool.
+# Args: $1 (string) - version tag to validate (with or without leading "v")
+# Returns: 0 if valid semantic version, 1 otherwise
 is_valid_semver() {
   local tag="$1"
   local version="${tag#v}"
 
-  # Coerce to X.Y.Z format
   local coerced
   coerced=$(_coerce_version_string "$version")
   [[ -z "$coerced" ]] && return 1
@@ -237,19 +339,22 @@ is_valid_semver() {
   /usr/bin/semver validate "$coerced" >/dev/null 2>&1
 }
 
-# Coerce tag to X.Y.Z format
+# Coerce tag to X.Y.Z semantic version format.
+# Args: $1 (string) - version tag to coerce (with or without leading "v")
+# Outputs: X.Y.Z version string, or the original tag if it cannot be coerced
 coerce_to_semver() {
   local tag="$1"
   local version="${tag#v}"
 
-  # Coerce to X.Y.Z format, fallback to original if invalid
   local coerced
   coerced=$(_coerce_version_string "$version")
   echo "${coerced:-$version}"
 }
 
-# Compare two semantic versions using semver tool
-# Returns: 0 if equal, 1 if v1 > v2, 2 if v1 < v2
+# Compare two semantic version strings.
+# Args: $1 (string) - first version string (v1)
+#       $2 (string) - second version string (v2)
+# Returns: 0 if equal, 1 if v1 > v2, 2 if v1 < v2, 3 if invalid input
 compare_semver() {
   local v1="$1"
   local v2="$2"
@@ -263,12 +368,10 @@ compare_semver() {
   cv1=$(coerce_to_semver "$v1")
   cv2=$(coerce_to_semver "$v2")
 
-  # If they're equal, return immediately
   if [ "$cv1" = "$cv2" ]; then
     return 0
   fi
 
-  # Use semver compare to get the comparison result
   result=$(/usr/bin/semver compare "$cv1" "$cv2" 2>/dev/null)
 
   if [ "$result" = "-1" ]; then
@@ -280,7 +383,10 @@ compare_semver() {
   fi
 }
 
-# List all tags for a container image (newest first)
+# List all valid semantic version tags for a container image.
+# Args: $1 (string) - image reference without tag (e.g., "registry/repo")
+# Returns: 0 on success, 1 on failure
+# Outputs: valid version tags (one per line), newest first
 list_image_tags() {
   local image_ref="$1"
 
@@ -299,25 +405,27 @@ list_image_tags() {
   return 0
 }
 
-# === CLEANUP & WORKFLOW HELPERS ===
+# === WORKFLOW UTILITIES ===
 
-# Global for trap cleanup
+# Global for trap cleanup - array of files to remove on exit
 _trap_cleanup_files=()
 
-# Cleanup temp files on trap
+# Internal helper: remove registered cleanup files on trap signal.
+# Reads: _trap_cleanup_files (array) - paths of temporary files to delete, set by trap_cleanup
 _cleanup_on_trap() {
   rm -f "${_trap_cleanup_files[@]}" 2>/dev/null || true
 }
 
-# Setup trap for automatic temp file cleanup
-# Usage: trap_cleanup file1 file2 ...
+# Setup trap for automatic temporary file cleanup on exit/interrupt.
+# Args: $1+ (string) - paths of temporary files to delete on EXIT, INT, or TERM
 trap_cleanup() {
   _trap_cleanup_files=("$@")
   trap _cleanup_on_trap EXIT INT TERM
 }
 
-# Write to GITHUB_OUTPUT if it exists
-# Usage: github_output "key" "value"
+# Write key-value pairs to GitHub Actions output file.
+# Args: $1 (string) - output variable name
+#       $2 (string) - output variable value
 github_output() {
   local key="$1"
   local value="$2"
