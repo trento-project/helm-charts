@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
+
+# SPDX-FileCopyrightText: SUSE LLC
 # SPDX-License-Identifier: Apache-2.0
+
+# Test suite for helpers.sh
 
 setup() {
   SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
