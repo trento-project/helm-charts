@@ -204,24 +204,48 @@ parse_version() {
   fi
 }
 
+# Internal helper: coerce version string to X.Y.Z format
+# Input: version string without 'v' prefix (e.g., "1.2" or "3")
+# Output: coerced version (e.g., "1.2.0") or empty string if invalid format
+_coerce_version_string() {
+  local version="$1"
+
+  if [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    # Already X.Y.Z format
+    echo "$version"
+  elif [[ "$version" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
+    # X.Y format -> X.Y.0
+    echo "${version}.0"
+  elif [[ "$version" =~ ^([0-9]+)$ ]]; then
+    # X format -> X.0.0
+    echo "${version}.0.0"
+  fi
+  # Return empty string for invalid format
+}
+
 # Validate if a tag is a valid semantic version using semver-tool
 is_valid_semver() {
   local tag="$1"
   local version="${tag#v}"
 
-  # Use semver --coerce to normalize to X.Y.Z format
+  # Coerce to X.Y.Z format
   local coerced
-  coerced=$(semver --coerce "$version" 2>/dev/null)
+  coerced=$(_coerce_version_string "$version")
+  [[ -z "$coerced" ]] && return 1
 
-  [ -n "$coerced" ]
+  # Validate using explicit semver-tool path to avoid npm semver conflicts.
+  /usr/bin/semver validate "$coerced" >/dev/null 2>&1
 }
 
-# Coerce tag to X.Y.Z format using semver binary
+# Coerce tag to X.Y.Z format
 coerce_to_semver() {
   local tag="$1"
   local version="${tag#v}"
 
-  semver --coerce "$version" 2>/dev/null || echo "$version"
+  # Coerce to X.Y.Z format, fallback to original if invalid
+  local coerced
+  coerced=$(_coerce_version_string "$version")
+  echo "${coerced:-$version}"
 }
 
 # Compare two semantic versions using semver tool
@@ -231,23 +255,28 @@ compare_semver() {
   local v2="$2"
 
   if [[ -z "$v1" || -z "$v2" ]]; then
+    log_error "compare_semver requires two non-empty version strings. Got: '$v1' and '$v2'"
+    return 3
+  fi
+
+  local cv1 cv2 result
+  cv1=$(coerce_to_semver "$v1")
+  cv2=$(coerce_to_semver "$v2")
+
+  # If they're equal, return immediately
+  if [ "$cv1" = "$cv2" ]; then
     return 0
   fi
 
-  local sorted
-  sorted=$(semver --coerce "$v1" "$v2" 2>/dev/null)
+  # Use semver compare to get the comparison result
+  result=$(/usr/bin/semver compare "$cv1" "$cv2" 2>/dev/null)
 
-  local lowest
-  lowest=$(echo "$sorted" | head -1)
-
-  if [ "$lowest" = "$v1" ]; then
-    if [ "$v1" = "$v2" ]; then
-      return 0  # equal
-    else
-      return 2  # v1 < v2
-    fi
-  else
+  if [ "$result" = "-1" ]; then
+    return 2  # v1 < v2
+  elif [ "$result" = "1" ]; then
     return 1  # v1 > v2
+  else
+    return 0  # equal
   fi
 }
 
@@ -296,18 +325,4 @@ github_output() {
   if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     echo "${key}=${value}" >> "$GITHUB_OUTPUT"
   fi
-}
-
-# Validate target tag is not null or empty
-# Usage: validate_target_tag "$target_tag"
-# Returns: 0 if valid, 1 if invalid
-validate_target_tag() {
-  local target_tag="$1"
-
-  if [ -z "$target_tag" ] || [ "$target_tag" = "null" ]; then
-    log_error "No target tag in upgrade plan"
-    return 1
-  fi
-
-  return 0
 }
