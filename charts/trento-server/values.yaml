@@ -58,7 +58,7 @@ trento-wanda:
     repository: ghcr.io/trento-project/trento-wanda
   checks:
     image:
-      repository: ghcr.io/trento-project/checks
+      repository: ghcr.io/trento-project/trento-checks
 
 trento-mcp-server:
   nameOverride: mcp-server
@@ -79,7 +79,7 @@ postgresql:
     extraInitContainers:
       # Runs pg_upgrade in-place before PostgreSQL starts when the major version changes.
       # PGAUTO_ONESHOT exits immediately with no-op when no upgrade is needed, so this is safe on every restart.
-      # Image tag must match global.postgresql.image.tag (e.g. "17-debian").
+      # Image tag uses global.postgresql.image.tag with "-debian" appended automatically.
       # https://github.com/bitnami/charts/issues/14926#issuecomment-3192189184
       - name: upgrade-postgres
         image: "pgautoupgrade/pgautoupgrade:{{ .Values.global.postgresql.image.tag }}-debian"
@@ -87,14 +87,14 @@ postgresql:
           runAsUser: 0
         volumeMounts:
           - name: data
-            mountPath: /var/lib/postgresql/data
+            mountPath: "{{ .Values.persistence.mountPath }}"
         env:
           - name: PGAUTO_ONESHOT
             value: "yes"
           - name: POSTGRES_DB
-            value: postgres
+            value: "{{ if .Values.global.postgresql.postgresqlDatabase }}{{ .Values.global.postgresql.postgresqlDatabase }}{{ else if .Values.postgresqlDatabase }}{{ .Values.postgresqlDatabase }}{{ else }}postgres{{ end }}"
           - name: PGDATA
-            value: /var/lib/postgresql/data/trento
+            value: "{{ .Values.postgresqlDataDir }}"
 
 prometheus:
   enabled: true
