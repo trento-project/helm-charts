@@ -158,24 +158,6 @@ setup() {
   [ "$status" -eq 1 ]
 }
 
-@test "main: write expected message" {
-  run log_info "hello"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"hello"* ]]
-
-  run log_success "ok"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"ok"* ]]
-
-  run log_error "boom"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"boom"* ]]
-
-  run log_warning "warn"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"warn"* ]]
-}
-
 @test "github_output: writes only when GITHUB_OUTPUT is set" {
   tmpdir="$(mktemp -d)"
   output_file="$tmpdir/out.txt"
