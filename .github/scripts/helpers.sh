@@ -440,3 +440,75 @@ github_output() {
     echo "${key}=${value}" >> "$GITHUB_OUTPUT"
   fi
 }
+
+# === WORKFLOW STEP COMMANDS ===
+
+# Extract chart metadata and write to GitHub Actions output.
+# Args: $1 (string) - path to the Helm chart directory
+# Outputs: Sets 'name' and 'version' in GITHUB_OUTPUT
+extract_chart_metadata() {
+  local chart_path="$1"
+
+  local chart_name chart_version
+  chart_name=$(yq '.name' "$chart_path/Chart.yaml")
+  chart_version=$(yq '.version' "$chart_path/Chart.yaml")
+
+  github_output "name" "$chart_name"
+  github_output "version" "$chart_version"
+}
+
+# Generate image info JSON and write sanitized names to GitHub Actions output.
+# Args: $1 (string) - full image reference
+# Outputs: Sets 'safe_name' and 'base_name' in GITHUB_OUTPUT
+#          Creates {SAFE_NAME}-image-info.json file
+generate_image_info() {
+  local image="$1"
+
+  local safe_name base_name
+  safe_name=$(sanitize_image_name "$image")
+  base_name=$(get_image_base_name "$image")
+
+  github_output "safe_name" "$safe_name"
+  github_output "base_name" "$base_name"
+
+  cat > "${safe_name}-image-info.json" <<EOF
+{
+  "image": "$image",
+  "safe_name": "$safe_name",
+  "base_name": "$base_name"
+}
+EOF
+}
+
+# Check SARIF reports for vulnerabilities and output vulnerable images.
+# Args: $1 (string) - path to directory containing SARIF files
+# Outputs: Sets 'vulnerable_images' in GITHUB_OUTPUT (JSON array)
+check_vulnerabilities() {
+  local sarif_dir="$1"
+
+  log_info "Checking for vulnerabilities in SARIF reports..."
+
+  local vuln_count=0
+  local vulnerable_images=()
+
+  while IFS= read -r -d '' sarif; do
+    local count
+    count=$(jq '[.runs[].results[]?] | length' "$sarif" 2>/dev/null || echo 0)
+    if [ "$count" -gt 0 ]; then
+      vuln_count=$((vuln_count + count))
+      local image_info="${sarif%-trivy-results.sarif}-image-info.json"
+      if [ -f "$image_info" ]; then
+        local image
+        image=$(jq -r '.image' "$image_info")
+        vulnerable_images+=("$image")
+      fi
+      log_info "Found $count vulnerabilities in $(basename "$sarif")"
+    fi
+  done < <(find "$sarif_dir" -name "*.sarif" -type f -print0)
+
+  log_info "Total: $vuln_count vulnerabilities"
+
+  local images_json
+  images_json=$(printf '%s\n' "${vulnerable_images[@]}" | jq -R . | jq -s -c .)
+  github_output "vulnerable_images" "$images_json"
+}

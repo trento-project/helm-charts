@@ -1051,3 +1051,199 @@ EOF
 
   rm -rf "$tmpdir"
 }
+
+# === Tests for Workflow Step Commands ===
+
+@test "extract_chart_metadata: extracts name and version to GITHUB_OUTPUT" {
+  tmpdir="$(mktemp -d)"
+  chart_dir="$tmpdir/test-chart"
+  mkdir -p "$chart_dir"
+
+  cat > "$chart_dir/Chart.yaml" << 'EOF'
+apiVersion: v2
+name: my-chart
+version: 1.2.3
+description: A test chart
+EOF
+
+  export GITHUB_OUTPUT="$tmpdir/github_output"
+  run extract_chart_metadata "$chart_dir"
+  [ "$status" -eq 0 ]
+
+  grep -q "name=my-chart" "$GITHUB_OUTPUT"
+  grep -q "version=1.2.3" "$GITHUB_OUTPUT"
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
+
+@test "extract_chart_metadata: handles missing Chart.yaml gracefully" {
+  tmpdir="$(mktemp -d)"
+  chart_dir="$tmpdir/empty-chart"
+  mkdir -p "$chart_dir"
+
+  export GITHUB_OUTPUT="$tmpdir/github_output"
+  run extract_chart_metadata "$chart_dir"
+  [ "$status" -ne 0 ]
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
+
+@test "generate_image_info: creates JSON file and sets outputs" {
+  tmpdir="$(mktemp -d)"
+  cd "$tmpdir"
+
+  export GITHUB_OUTPUT="$tmpdir/github_output"
+  run generate_image_info "ghcr.io/org/my-image:v1.2.3"
+  [ "$status" -eq 0 ]
+
+  # Check GITHUB_OUTPUT was populated
+  grep -q "safe_name=" "$GITHUB_OUTPUT"
+  grep -q "base_name=" "$GITHUB_OUTPUT"
+
+  # Extract safe_name from output
+  safe_name=$(grep "safe_name=" "$GITHUB_OUTPUT" | cut -d= -f2)
+
+  # Check JSON file was created
+  [ -f "${safe_name}-image-info.json" ]
+
+  # Validate JSON structure
+  jq -e '.image == "ghcr.io/org/my-image:v1.2.3"' "${safe_name}-image-info.json"
+  jq -e '.safe_name' "${safe_name}-image-info.json"
+  jq -e '.base_name' "${safe_name}-image-info.json"
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
+
+@test "generate_image_info: is deterministic across multiple calls" {
+  tmpdir="$(mktemp -d)"
+  cd "$tmpdir"
+
+  export GITHUB_OUTPUT="$tmpdir/github_output1"
+  run generate_image_info "busybox:latest"
+  [ "$status" -eq 0 ]
+  safe_name1=$(grep "safe_name=" "$GITHUB_OUTPUT" | cut -d= -f2)
+
+  export GITHUB_OUTPUT="$tmpdir/github_output2"
+  run generate_image_info "busybox:latest"
+  [ "$status" -eq 0 ]
+  safe_name2=$(grep "safe_name=" "$GITHUB_OUTPUT" | cut -d= -f2)
+
+  [ "$safe_name1" = "$safe_name2" ]
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
+
+@test "check_vulnerabilities: finds vulnerabilities in SARIF files" {
+  tmpdir="$(mktemp -d)"
+  sarif_dir="$tmpdir/sarif-results"
+  mkdir -p "$sarif_dir"
+
+  # Create SARIF with vulnerabilities
+  cat > "$sarif_dir/abc123456789-trivy-results.sarif" << 'EOF'
+{
+  "runs": [
+    {
+      "results": [
+        {"ruleId": "CVE-2024-1234", "level": "error"},
+        {"ruleId": "CVE-2024-5678", "level": "error"}
+      ]
+    }
+  ]
+}
+EOF
+
+  # Create corresponding image-info.json
+  cat > "$sarif_dir/abc123456789-image-info.json" << 'EOF'
+{
+  "image": "vulnerable/image:v1.0",
+  "safe_name": "abc123456789",
+  "base_name": "vulnerable-image"
+}
+EOF
+
+  # Create SARIF without vulnerabilities
+  cat > "$sarif_dir/def987654321-trivy-results.sarif" << 'EOF'
+{
+  "runs": [
+    {
+      "results": []
+    }
+  ]
+}
+EOF
+
+  export GITHUB_OUTPUT="$tmpdir/github_output"
+  run check_vulnerabilities "$sarif_dir"
+  [ "$status" -eq 0 ]
+
+  # Check that vulnerable_images output was set
+  grep -q "vulnerable_images=" "$GITHUB_OUTPUT"
+
+  # Extract and validate JSON
+  vulnerable_images=$(grep "vulnerable_images=" "$GITHUB_OUTPUT" | cut -d= -f2)
+  echo "$vulnerable_images" | jq -e '. | length == 1'
+  echo "$vulnerable_images" | jq -e '.[0] == "vulnerable/image:v1.0"'
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
+
+@test "check_vulnerabilities: handles directory with no SARIF files" {
+  tmpdir="$(mktemp -d)"
+  sarif_dir="$tmpdir/empty-sarif"
+  mkdir -p "$sarif_dir"
+
+  export GITHUB_OUTPUT="$tmpdir/github_output"
+  run check_vulnerabilities "$sarif_dir"
+  [ "$status" -eq 0 ]
+
+  # Should output empty array
+  vulnerable_images=$(grep "vulnerable_images=" "$GITHUB_OUTPUT" | cut -d= -f2)
+  echo "$vulnerable_images" | jq -e '. | length == 0'
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
+
+@test "check_vulnerabilities: handles multiple vulnerable images" {
+  tmpdir="$(mktemp -d)"
+  sarif_dir="$tmpdir/sarif-results"
+  mkdir -p "$sarif_dir"
+
+  # Create multiple SARIFs with vulnerabilities
+  for i in 1 2 3; do
+    cat > "$sarif_dir/image${i}-trivy-results.sarif" << EOF
+{
+  "runs": [
+    {
+      "results": [
+        {"ruleId": "CVE-2024-${i}000", "level": "error"}
+      ]
+    }
+  ]
+}
+EOF
+
+    cat > "$sarif_dir/image${i}-image-info.json" << EOF
+{
+  "image": "vulnerable/image${i}:v1.0",
+  "safe_name": "image${i}",
+  "base_name": "vulnerable-image${i}"
+}
+EOF
+  done
+
+  export GITHUB_OUTPUT="$tmpdir/github_output"
+  run check_vulnerabilities "$sarif_dir"
+  [ "$status" -eq 0 ]
+
+  vulnerable_images=$(grep "vulnerable_images=" "$GITHUB_OUTPUT" | cut -d= -f2)
+  echo "$vulnerable_images" | jq -e '. | length == 3'
+
+  unset GITHUB_OUTPUT
+  rm -rf "$tmpdir"
+}
