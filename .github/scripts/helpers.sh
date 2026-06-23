@@ -335,8 +335,8 @@ is_valid_semver() {
   coerced=$(_coerce_version_string "$version")
   [[ -z "$coerced" ]] && return 1
 
-  # Validate using explicit semver-tool path to avoid npm semver conflicts.
-  /usr/bin/semver validate "$coerced" >/dev/null 2>&1
+  # Validate using semver-tool (must be in PATH)
+  semver validate "$coerced" >/dev/null 2>&1
 }
 
 # Coerce tag to X.Y.Z semantic version format.
@@ -372,7 +372,7 @@ compare_semver() {
     return 0
   fi
 
-  result=$(/usr/bin/semver compare "$cv1" "$cv2" 2>/dev/null)
+  result=$(semver compare "$cv1" "$cv2" 2>/dev/null)
 
   if [ "$result" = "-1" ]; then
     return 2  # v1 < v2

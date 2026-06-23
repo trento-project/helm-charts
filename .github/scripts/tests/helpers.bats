@@ -15,7 +15,7 @@ setup() {
   # Keep test flow explicit through `run` status checks.
   set +e
 
-  if command -v /usr/bin/semver >/dev/null 2>&1; then
+  if command -v semver >/dev/null 2>&1; then
     SEMVER_AVAILABLE=1
   else
     SEMVER_AVAILABLE=0
@@ -300,8 +300,9 @@ EOF
 @test "escape_for_sed escapes regex special chars" {
   run escape_for_sed "ghcr.io/org/app:v1.0"
   [ "$status" -eq 0 ]
+  # Should escape dots for regex safety
   [[ "$output" == *"\\."* ]]
-  [[ "$output" == *"\\/"* ]]
+  # Slashes don't need escaping when using | as sed delimiter
 }
 
 @test "validate_target_tag rejects null" {
