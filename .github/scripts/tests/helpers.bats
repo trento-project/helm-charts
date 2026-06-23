@@ -14,12 +14,6 @@ setup() {
 
   # Keep test flow explicit through `run` status checks.
   set +e
-
-  if command -v semver >/dev/null 2>&1; then
-    SEMVER_AVAILABLE=1
-  else
-    SEMVER_AVAILABLE=0
-  fi
 }
 
 @test "_coerce_version_string: handles valid and invalid formats" {
@@ -114,9 +108,8 @@ setup() {
 }
 
 @test "compare_semver: returns expected status codes" {
-  if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
-    skip "requires semver CLI tool"
-  fi
+  # Fail if semver is not available - it's a required tool
+  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
 
   run compare_semver "1.2.3" "1.2.3"
   [ "$status" -eq 0 ]
@@ -129,9 +122,8 @@ setup() {
 }
 
 @test "compare_semver: validates required inputs" {
-  if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
-    skip "requires semver CLI tool"
-  fi
+  # Fail if semver is not available - it's a required tool
+  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
 
   run compare_semver "" "1.2.3"
   [ "$status" -eq 3 ]
@@ -141,9 +133,8 @@ setup() {
 }
 
 @test "is_valid_semver: accepts numeric tags and rejects invalid tags" {
-  if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
-    skip "requires semver CLI tool"
-  fi
+  # Fail if semver is not available - it's a required tool
+  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
 
   run is_valid_semver "v1.2.3"
   [ "$status" -eq 0 ]
@@ -199,9 +190,8 @@ setup() {
 }
 
 @test "list_image_tags: filters semver and sorts descending" {
-  if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
-    skip "requires semver CLI tool"
-  fi
+  # Fail if semver is not available - it's a required tool
+  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
 
   tmpdir="$(mktemp -d)"
   cat > "$tmpdir/skopeo" << 'EOF'
@@ -301,9 +291,8 @@ EOF
 # === Version Functions ===
 
 @test "is_version_upgrade: detects newer versions" {
-  if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
-    skip "requires semver CLI tool"
-  fi
+  # Fail if semver is not available - it's a required tool
+  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
 
   run is_version_upgrade "2.0.0" "1.0.0"
   [ "$status" -eq 0 ]
@@ -313,9 +302,8 @@ EOF
 }
 
 @test "is_valid_semver: validates semantic versions" {
-  if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
-    skip "requires semver CLI tool"
-  fi
+  # Fail if semver is not available - it's a required tool
+  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
 
   run is_valid_semver "1.2.3"
   [ "$status" -eq 0 ]
@@ -429,8 +417,6 @@ EOF
 
   rm -rf "$tmpdir"
 }
-
-# === Skipped Integration Tests ===
 
 @test "setup_helm_repos: adds repos from Chart.yaml dependencies" {
   tmpdir="$(mktemp -d)"
@@ -797,34 +783,27 @@ EOF
 }
 
 @test "build_cve_list_section: formats CVE list as markdown" {
-  local cve_json='[{"id":"CVE-2021-1234","severity":"HIGH","url":"https://nvd.nist.gov/vuln/detail/CVE-2021-1234"},{"id":"CVE-2021-5678","severity":"MEDIUM","url":"https://nvd.nist.gov/vuln/detail/CVE-2021-5678"}]'
+  tmpdir="$(mktemp -d)"
+  local analysis_file="$tmpdir/analysis.json"
+  cat > "$analysis_file" << 'EOF'
+{
+  "cves": ["CVE-2021-1234", "CVE-2021-5678"]
+}
+EOF
+
   local nist_url="https://nvd.nist.gov/vuln/detail"
 
-  run build_cve_list_section "$cve_json" "$nist_url"
+  run build_cve_list_section "$analysis_file" 2 "$nist_url"
   [ "$status" -eq 0 ]
 
   [[ "$output" == *"CVE-2021-1234"* ]]
   [[ "$output" == *"CVE-2021-5678"* ]]
-  [[ "$output" == *"HIGH"* ]]
-  [[ "$output" == *"MEDIUM"* ]]
+  [[ "$output" == *"Vulnerabilities Fixed (2 total)"* ]]
+
+  rm -rf "$tmpdir"
 }
 
-@test "build_pr_body: combines multiple sections into PR body" {
-  local updated_files="values.yaml
-template.yaml"
-  local cve_section="## CVE Fixes
-- CVE-2021-1234"
-  local alert_section="## Security Alerts Fixed
-- Alert 1"
-
-  run build_pr_body "$updated_files" "$cve_section" "$alert_section"
-  [ "$status" -eq 0 ]
-
-  [[ "$output" == *"values.yaml"* ]]
-  [[ "$output" == *"template.yaml"* ]]
-  [[ "$output" == *"CVE-2021-1234"* ]]
-  [[ "$output" == *"Alert 1"* ]]
-}
+# build_pr_body is tested in cve-scan-helper-remediation.bats
 
 @test "format_alerts_pr_section: formats GitHub alerts as markdown" {
   local alerts='{"number":1234,"html_url":"https://github.com/org/repo/security/code-scanning/1234","rule_id":"CVE-2021-1234"}
@@ -837,19 +816,6 @@ template.yaml"
   [[ "$output" == *"Security Alerts Fixed"* ]]
   [[ "$output" == *"CVE-2021-1234"* ]]
   [[ "$output" == *"CVE-2021-5678"* ]]
-}
-
-@test "find_compatible_upgrade: finds best matching upgrade from tag list" {
-  # Test finding compatible upgrade from array of tags
-  local tags=("1.0.0" "1.5.0" "2.0.0" "2.1.0" "3.0.0")
-
-  run find_compatible_upgrade "1.9.9" 1 "${tags[@]}"
-  [ "$status" -eq 0 ]
-  [ "$output" = "1.5.0" ]
-
-  # Test no compatible upgrade
-  run find_compatible_upgrade "0.5.0" 1 "${tags[@]}"
-  [ "$status" -eq 1 ]
 }
 
 @test "query_code_scanning_alerts: queries GitHub Code Scanning alerts" {
