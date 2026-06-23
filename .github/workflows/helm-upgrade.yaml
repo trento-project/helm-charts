@@ -21,6 +21,7 @@ env:
   SOURCE_SUSE_RELEASE: suse-release
   SOURCE_OSS_RELEASE: oss-release
   SOURCE_OSS_MAIN: oss-main
+  SOURCE_INSTALL_ONLY: install-only
 
 jobs:
   upgrade-test:
@@ -59,6 +60,8 @@ jobs:
             source: oss-release
           - name: "OSS rolling → current"
             source: oss-main
+          - name: "Install current"
+            source: install-only
       fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -74,6 +77,7 @@ jobs:
 
       - name: Resolve chart version
         id: version
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -136,6 +140,7 @@ jobs:
           echo "${{ github.token }}" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
 
       - name: Install chart
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
         run: |
           if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ]; then
             CHART_REF="oci://${SUSE_REGISTRY}"
@@ -156,6 +161,7 @@ jobs:
             ${HELM_COMMON_FLAGS}
 
       - name: Wait for RabbitMQ to be ready
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
         run: |
           echo "Waiting for RabbitMQ to be ready..."
           kubectl wait --for=condition=ready pod \
@@ -164,7 +170,7 @@ jobs:
             --timeout=60s
 
       - name: Check pod status after install
-        if: always()
+        if: always() && matrix.source != env.SOURCE_INSTALL_ONLY
         run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
 
       - name: Build dependencies for current dev chart
@@ -181,14 +187,19 @@ jobs:
           helm dependency build charts/trento-server
 
       - name: Compare container versions
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
         run: bash .github/scripts/helm-upgrade-helper.sh compare-container-versions
 
       - name: Upgrade to current dev chart
         run: |
-          helm upgrade -i trento-server charts/trento-server --wait \
+          ACTION="${{ matrix.source == env.SOURCE_INSTALL_ONLY && 'install' || 'upgrade' }}"
+          echo "Running helm ${ACTION} for source: ${{ matrix.source }}"
+
+          helm ${ACTION} trento-server charts/trento-server --wait \
             --timeout 3m \
             --render-subchart-notes \
             --debug \
+            --create-namespace \
             ${HELM_COMMON_FLAGS} \
             --set trento-web.image.tag=rolling \
             --set trento-wanda.image.tag=rolling \
