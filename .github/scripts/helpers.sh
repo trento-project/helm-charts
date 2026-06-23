@@ -383,7 +383,7 @@ compare_semver() {
   fi
 }
 
-# List all valid semantic version tags for a container image.
+# List all valid semantic version tags for a container image, preserving suffixes.
 # Args: $1 (string) - image reference without tag (e.g., "registry/repo")
 # Returns: 0 on success, 1 on failure
 # Outputs: valid version tags (one per line), newest first
@@ -393,7 +393,13 @@ list_image_tags() {
   if ! skopeo list-tags "docker://${image_ref}" 2>/dev/null \
        | jq -r '.Tags[]' \
        | while read -r tag; do
-         if is_valid_semver "$tag"; then
+         # Parse version and check if numeric prefix is valid
+         local parsed parsed_version
+         parsed=$(parse_version "$tag")
+         parsed_version="${parsed%|*}"
+
+         # Keep tag if it has a valid numeric version prefix
+         if [[ -n "$parsed_version" ]] && [[ "$parsed_version" =~ ^[0-9] ]]; then
            echo "$tag"
          fi
        done \

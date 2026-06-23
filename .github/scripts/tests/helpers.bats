@@ -225,7 +225,7 @@ setup() {
   cat > "$tmpdir/skopeo" << 'EOF'
 #!/usr/bin/env bash
 cat << 'JSON'
-{"Tags":["latest","1.2.3","2.0.0","1.9.9","v1.0.0","bad"]}
+{"Tags":["latest","1.2.3","2.0.0","1.9.9","v1.0.0","bad","3.14.0-alpine","3.12.0-management-alpine"]}
 JSON
 EOF
   chmod +x "$tmpdir/skopeo"
@@ -234,7 +234,7 @@ EOF
   run list_image_tags "example.com/repo/image"
   [ "$status" -eq 0 ]
 
-  expected=$'2.0.0\n1.9.9\n1.2.3\nv1.0.0'
+  expected=$'v1.0.0\n3.14.0-alpine\n3.12.0-management-alpine\n2.0.0\n1.9.9\n1.2.3'
   [ "$output" = "$expected" ]
 
   rm -rf "$tmpdir"
