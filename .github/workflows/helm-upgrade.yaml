@@ -1,0 +1,206 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+name: Chart Upgrade Test
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  K3S_VERSION: v1.36.1+k3s1 # https://hub.docker.com/r/rancher/k3s/tags
+  CERT_MANAGER_VERSION: v1.20.2 # https://github.com/cert-manager/cert-manager/releases
+  HELM_VERSION: v4.2.0 # http://github.com/helm/helm/releases
+
+  SOURCE_SUSE_RELEASE: suse-release
+  SOURCE_OSS_RELEASE: oss-release
+  SOURCE_OSS_MAIN: oss-main
+
+jobs:
+  upgrade-test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SUSE_REGISTRY: registry.suse.com/trento/trento-server
+      HELM_CHARTS_REPO: trento-project/helm-charts
+      OSS_CHART_REGISTRY: ghcr.io/trento-project/helm-charts/trento-server
+      TRENTO_NAMESPACE: trento
+      TRENTO_WEB_ORIGIN: trento-test.local
+      TRENTO_WEB_PASSWORD: test-password-123
+      TRENTO_ADMIN_EMAIL: admin@trento-test.local
+      TRENTO_INGRESS_CLASS: traefik
+      HELM_COMMON_FLAGS: |
+        --namespace trento
+        --set trento-web.adminUser.password=admin-test-password
+        --set trento-web.image.pullPolicy=Always
+        --set trento-wanda.image.pullPolicy=Always
+        --set trento-wanda.checks.image.pullPolicy=Always
+        --set trento-mcp-server.enabled=true
+        --set trento-mcp-server.image.pullPolicy=Always
+        --set global.trentoWeb.origin=trento-test.local
+        --set prometheus.enabled=false
+        --set prometheus.server.auth.type=none
+        -f hack/cert-manager/override-values.yaml
+    strategy:
+      matrix:
+        include:
+          - name: "SUSE latest release → current"
+            source: suse-release
+          - name: "OSS latest release → current"
+            source: oss-release
+          - name: "OSS rolling → current"
+            source: oss-main
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create k3s cluster
+        uses: jupyterhub/action-k3s-helm@502a9ff4d816dad543e359971fe2c3128d0f4c6e # v4
+        with:
+          k3s-version: ${{ env.K3S_VERSION }}
+          helm-version: ${{ env.HELM_VERSION }}
+          metrics-enabled: false
+
+      - name: Resolve chart version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Resolving chart version for source: ${{ matrix.source }}"
+
+          if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ]; then
+            REGISTRY="${SUSE_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY}"
+            VERSION=$(helm show chart "oci://${REGISTRY}" 2>/dev/null | yq eval '.version' -)
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_RELEASE}" ]; then
+            REGISTRY="${OSS_CHART_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY}"
+            VERSION=$(helm show chart "oci://${REGISTRY}" 2>/dev/null | yq eval '.version' -)
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
+            REGISTRY="${OSS_CHART_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY} (including prereleases)"
+            VERSION=$(helm show chart "oci://${REGISTRY}" --devel 2>/dev/null | yq eval '.version' -)
+          fi
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: No version found for ${{ matrix.source }}"
+            exit 1
+          fi
+
+          echo "Selected version: ${VERSION}"
+          echo "value=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Install cert-manager
+        run: |
+          helm install cert-manager oci://quay.io/jetstack/charts/cert-manager \
+            --version ${{ env.CERT_MANAGER_VERSION }} \
+            --namespace cert-manager \
+            --create-namespace \
+            --set crds.enabled=true
+          kubectl wait --for=condition=available --timeout=300s \
+            --all deployments -n cert-manager
+
+      - name: Prepare cert-manager resources and values for ingress
+        run: |
+          envsubst < hack/cert-manager/certificate.tpl.yaml > hack/cert-manager/certificate.yaml
+          envsubst < hack/cert-manager/override-values.tpl.yaml > hack/cert-manager/override-values.yaml
+
+      - name: Replace production issuer with self-signed issuer for testing
+        run: |
+          PROD_ISSUER=$(yq eval '.metadata.name' hack/cert-manager/cluster-issuer.tpl.yaml)
+          TEST_ISSUER=$(yq eval '.metadata.name' hack/cert-manager/selfsigned-issuer.yaml)
+
+          sed -i "s/${PROD_ISSUER}/${TEST_ISSUER}/g" hack/cert-manager/certificate.yaml
+          sed -i "s/${PROD_ISSUER}/${TEST_ISSUER}/g" hack/cert-manager/override-values.yaml
+
+      - name: Apply cert-manager resources
+        run: |
+          kubectl create namespace ${{ env.TRENTO_NAMESPACE }} || true
+          kubectl apply -f hack/cert-manager/selfsigned-issuer.yaml
+          kubectl apply -f hack/cert-manager/certificate.yaml
+
+      - name: Login to GHCR
+        if: contains(matrix.source, 'oss')
+        run: |
+          echo "${{ github.token }}" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Install chart
+        run: |
+          if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ]; then
+            CHART_REF="oci://${SUSE_REGISTRY}"
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_RELEASE}" ]; then
+            CHART_REF="oci://${OSS_CHART_REGISTRY}"
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
+            CHART_REF="oci://${OSS_CHART_REGISTRY}"
+          else
+            echo "ERROR: Unknown source ${{ matrix.source }}"
+            exit 1
+          fi
+
+          helm upgrade -i trento-server "$CHART_REF" --wait \
+            --version "${{ steps.version.outputs.value }}" \
+            --create-namespace \
+            --timeout 3m \
+            --render-subchart-notes \
+            ${HELM_COMMON_FLAGS}
+
+      - name: Wait for RabbitMQ to be ready
+        run: |
+          echo "Waiting for RabbitMQ to be ready..."
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=rabbitmq \
+            -n ${{ env.TRENTO_NAMESPACE }} \
+            --timeout=60s
+
+      - name: Check pod status after install
+        if: always()
+        run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
+
+      - name: Build dependencies for current dev chart
+        run: |
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              echo "Adding helm repo: $dep_name ($dep_repo)"
+              helm repo add "$dep_name" "$dep_repo" 2>/dev/null || true
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
+
+          helm repo update
+          helm dependency build charts/trento-server
+
+      - name: Compare container versions
+        run: bash .github/scripts/helm-upgrade-helper.sh compare-container-versions
+
+      - name: Upgrade to current dev chart
+        run: |
+          helm upgrade -i trento-server charts/trento-server --wait \
+            --timeout 3m \
+            --render-subchart-notes \
+            --debug \
+            ${HELM_COMMON_FLAGS} \
+            --set trento-web.image.tag=rolling \
+            --set trento-wanda.image.tag=rolling \
+            --set trento-wanda.checks.image.tag=rolling \
+            --set trento-mcp-server.image.tag=rolling
+
+      - name: Verify upgrade
+        run: bash .github/scripts/helm-upgrade-helper.sh post-upgrade-diagnostics
+
+      - name: Verify API is working
+        run: bash .github/scripts/helm-upgrade-helper.sh verify-api
+
+      - name: Dump diagnostics on failure
+        if: failure()
+        run: bash .github/scripts/helm-upgrade-helper.sh failure-diagnostics
