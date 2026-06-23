@@ -22,7 +22,7 @@ setup() {
   fi
 }
 
-@test "_coerce_version_string handles valid and invalid formats" {
+@test "_coerce_version_string: handles valid and invalid formats" {
   run _coerce_version_string "1.2.3"
   [ "$status" -eq 0 ]
   [ "$output" = "1.2.3" ]
@@ -40,7 +40,7 @@ setup() {
   [ -z "$output" ]
 }
 
-@test "coerce_to_semver coerces and preserves invalid input" {
+@test "coerce_to_semver: coerces and preserves invalid input" {
   run coerce_to_semver "v1.2.3"
   [ "$status" -eq 0 ]
   [ "$output" = "1.2.3" ]
@@ -54,7 +54,7 @@ setup() {
   [ "$output" = "invalid" ]
 }
 
-@test "parse_version extracts version and suffix" {
+@test "parse_version: extracts version and suffix" {
   run parse_version "v1.2.3"
   [ "$status" -eq 0 ]
   [ "$output" = "1.2.3|" ]
@@ -68,7 +68,7 @@ setup() {
   [ "$output" = "|invalid" ]
 }
 
-@test "sanitize_image_name is deterministic" {
+@test "sanitize_image_name: is deterministic" {
   run sanitize_image_name "ghcr.io/org/image:v1.2.3"
   [ "$status" -eq 0 ]
   hash1="$output"
@@ -84,7 +84,7 @@ setup() {
   [ "$hash1" != "$output" ]
 }
 
-@test "get_image_base_name strips tag and sanitizes" {
+@test "get_image_base_name: strips tag and sanitizes" {
   run get_image_base_name "ghcr.io/org/image:v1.2.3"
   [ "$status" -eq 0 ]
   [ "$output" = "ghcr-io-org-image" ]
@@ -98,7 +98,7 @@ setup() {
   [ "$output" = "image" ]
 }
 
-@test "output_json writes valid JSON and rejects invalid JSON" {
+@test "output_json: writes valid JSON and rejects invalid JSON" {
   tmpdir="$(mktemp -d)"
   output_file="$tmpdir/test.json"
 
@@ -113,7 +113,7 @@ setup() {
   rm -rf "$tmpdir"
 }
 
-@test "compare_semver returns expected status codes" {
+@test "compare_semver: returns expected status codes" {
   if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
     skip "requires semver CLI tool"
   fi
@@ -128,7 +128,7 @@ setup() {
   [ "$status" -eq 2 ]
 }
 
-@test "compare_semver validates required inputs" {
+@test "compare_semver: validates required inputs" {
   if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
     skip "requires semver CLI tool"
   fi
@@ -140,7 +140,7 @@ setup() {
   [ "$status" -eq 3 ]
 }
 
-@test "is_valid_semver accepts numeric tags and rejects invalid tags" {
+@test "is_valid_semver: accepts numeric tags and rejects invalid tags" {
   if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
     skip "requires semver CLI tool"
   fi
@@ -158,7 +158,7 @@ setup() {
   [ "$status" -eq 1 ]
 }
 
-@test "logging helpers write expected message" {
+@test "main: write expected message" {
   run log_info "hello"
   [ "$status" -eq 0 ]
   [[ "$output" == *"hello"* ]]
@@ -176,7 +176,7 @@ setup() {
   [[ "$output" == *"warn"* ]]
 }
 
-@test "github_output writes only when GITHUB_OUTPUT is set" {
+@test "github_output: writes only when GITHUB_OUTPUT is set" {
   tmpdir="$(mktemp -d)"
   output_file="$tmpdir/out.txt"
 
@@ -196,7 +196,7 @@ setup() {
   rm -rf "$tmpdir"
 }
 
-@test "trap_cleanup registers cleanup trap and tracks files" {
+@test "trap_cleanup: registers cleanup trap and tracks files" {
   tmpdir="$(mktemp -d)"
   file_a="$tmpdir/a.tmp"
   file_b="$tmpdir/b.tmp"
@@ -216,7 +216,7 @@ setup() {
   rm -rf "$tmpdir"
 }
 
-@test "list_image_tags filters semver and sorts descending" {
+@test "list_image_tags: filters semver and sorts descending" {
   if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
     skip "requires semver CLI tool"
   fi
@@ -242,25 +242,25 @@ EOF
 
 # === Logging Functions ===
 
-@test "log_info outputs message to stderr" {
+@test "log_info: outputs message to stderr" {
   run log_info "test message"
   [ "$status" -eq 0 ]
   [[ "$output" == *"test message"* ]]
 }
 
-@test "log_success outputs message to stderr" {
+@test "log_success: outputs message to stderr" {
   run log_success "success message"
   [ "$status" -eq 0 ]
   [[ "$output" == *"success message"* ]]
 }
 
-@test "log_error outputs message to stderr" {
+@test "log_error: outputs message to stderr" {
   run log_error "error message"
   [ "$status" -eq 0 ]
   [[ "$output" == *"error message"* ]]
 }
 
-@test "log_warning outputs message to stderr" {
+@test "log_warning: outputs message to stderr" {
   run log_warning "warning message"
   [ "$status" -eq 0 ]
   [[ "$output" == *"warning message"* ]]
@@ -268,19 +268,19 @@ EOF
 
 # === Image Utilities ===
 
-@test "parse_image_ref splits image and tag" {
+@test "parse_image_ref: splits image and tag" {
   run parse_image_ref "ghcr.io/org/app:v1.0"
   [ "$status" -eq 0 ]
   [ "$output" = "ghcr.io/org/app|v1.0" ]
 }
 
-@test "parse_image_ref defaults to latest for no tag" {
+@test "parse_image_ref: defaults to latest for no tag" {
   run parse_image_ref "ghcr.io/org/app"
   [ "$status" -eq 0 ]
   [ "$output" = "ghcr.io/org/app|latest" ]
 }
 
-@test "is_semantic_version_tag identifies semantic versions" {
+@test "is_semantic_version_tag: identifies semantic versions" {
   run is_semantic_version_tag "1.2.3"
   [ "$status" -eq 0 ]
 
@@ -291,13 +291,13 @@ EOF
   [ "$status" -eq 1 ]
 }
 
-@test "extract_image_name extracts last path component" {
+@test "extract_image_name: extracts last path component" {
   run extract_image_name "ghcr.io/org/app"
   [ "$status" -eq 0 ]
   [ "$output" = "app" ]
 }
 
-@test "escape_for_sed escapes regex special chars" {
+@test "escape_for_sed: escapes regex special chars" {
   run escape_for_sed "ghcr.io/org/app:v1.0"
   [ "$status" -eq 0 ]
   # Should escape dots for regex safety
@@ -305,7 +305,7 @@ EOF
   # Slashes don't need escaping when using | as sed delimiter
 }
 
-@test "validate_target_tag rejects null" {
+@test "validate_target_tag: rejects null" {
   run validate_target_tag ""
   [ "$status" -eq 1 ]
 
@@ -318,7 +318,7 @@ EOF
 
 # === Version Functions ===
 
-@test "is_version_upgrade detects newer versions" {
+@test "is_version_upgrade: detects newer versions" {
   if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
     skip "requires semver CLI tool"
   fi
@@ -330,7 +330,7 @@ EOF
   [ "$status" -eq 1 ]
 }
 
-@test "is_valid_semver validates semantic versions" {
+@test "is_valid_semver: validates semantic versions" {
   if [ "$SEMVER_AVAILABLE" -ne 1 ]; then
     skip "requires semver CLI tool"
   fi
@@ -344,7 +344,7 @@ EOF
 
 # === Array/JSON Functions ===
 
-@test "array_to_json converts args to JSON" {
+@test "array_to_json: converts args to JSON" {
   run bash -c 'source helpers.sh && array_to_json "item1" "item2" | jq . '
   [ "$status" -eq 0 ]
   [[ "$output" == *"item1"* ]]
@@ -352,62 +352,62 @@ EOF
 
 # === Build Functions ===
 
-@test "generate_branch_name creates valid branch names" {
+@test "generate_branch_name: creates valid branch names" {
   run generate_branch_name "alertmanager" "v0.26.0"
   [ "$status" -eq 0 ]
   [ "$output" = "cve-fix/alertmanager-v0.26.0" ]
 }
 
-@test "build_commit_message creates commit messages" {
+@test "build_commit_message: creates commit messages" {
   run build_commit_message "nginx" "1.25.0" 5
   [ "$status" -eq 0 ]
   [[ "$output" == *"nginx"* ]]
   [[ "$output" == *"1.25.0"* ]]
 }
 
-@test "preserve_version_constraint preserves operators" {
+@test "preserve_version_constraint: preserves operators" {
   run preserve_version_constraint "^1.2.3" "2.0.0"
   [ "$status" -eq 0 ]
   [ "$output" = "^2.0.0" ]
 }
 
-@test "build_pr_url creates GitHub PR URLs" {
+@test "build_pr_url: creates GitHub PR URLs" {
   run build_pr_url "owner/repo" 123
   [ "$status" -eq 0 ]
   [ "$output" = "https://github.com/owner/repo/pull/123" ]
 }
 
-@test "extract_pr_number extracts number from URL" {
+@test "extract_pr_number: extracts number from URL" {
   run extract_pr_number "https://github.com/owner/repo/pull/456"
   [ "$status" -eq 0 ]
   [ "$output" = "456" ]
 }
 
-@test "build_pr_result_json creates valid JSON" {
+@test "build_pr_result_json: creates valid JSON" {
   run build_pr_result_json "123" "https://github.com/..." "branch" "created"
   [ "$status" -eq 0 ]
   [[ "$output" == *"pr_number"* ]]
 }
 
-@test "build_update_result_json handles file list" {
+@test "build_update_result_json: handles file list" {
   run bash -c 'source helpers.sh && build_update_result_json "file1.yaml" "file2.yaml" | jq .'
   [ "$status" -eq 0 ]
   [[ "$output" == *"updated_files"* ]]
 }
 
-@test "build_analysis_json creates analysis output" {
+@test "build_analysis_json: creates analysis output" {
   run bash -c 'source helpers.sh && build_analysis_json "image:tag" "image" "tag" true "[]" | jq .'
   [ "$status" -eq 0 ]
   [[ "$output" == *"image_ref"* ]]
 }
 
-@test "build_upgrade_json creates upgrade output" {
+@test "build_upgrade_json: creates upgrade output" {
   run bash -c 'source helpers.sh && build_upgrade_json "v2.0.0" 50 | jq .'
   [ "$status" -eq 0 ]
   [[ "$output" == *"target_tag"* ]]
 }
 
-@test "build_verification_json creates verification output" {
+@test "build_verification_json: creates verification output" {
   run bash -c 'source helpers.sh && build_verification_json "image:tag" true "digest123" | jq .'
   [ "$status" -eq 0 ]
   [[ "$output" == *"verified"* ]]
@@ -415,7 +415,7 @@ EOF
 
 # === File Operations ===
 
-@test "output_json writes and validates JSON" {
+@test "output_json: writes and validates JSON" {
   tmpdir="$(mktemp -d)"
   output_file="$tmpdir/test.json"
 
@@ -428,7 +428,7 @@ EOF
 
 # === Markdown Helpers ===
 
-@test "format_file_list formats as markdown" {
+@test "format_file_list: formats as markdown" {
   run bash -c 'source helpers.sh && echo -e "file1.yaml\nfile2.yaml" | format_file_list'
   [ "$status" -eq 0 ]
   [[ "$output" == *"file1.yaml"* ]]
@@ -436,7 +436,7 @@ EOF
 
 # === Internal Helpers ===
 
-@test "_cleanup_on_trap removes tracked files" {
+@test "_cleanup_on_trap: removes tracked files" {
   tmpdir="$(mktemp -d)"
   test_file="$tmpdir/test.tmp"
   touch "$test_file"
@@ -450,7 +450,7 @@ EOF
 
 # === Skipped Integration Tests ===
 
-@test "setup_helm_repos adds repos from Chart.yaml dependencies" {
+@test "setup_helm_repos: adds repos from Chart.yaml dependencies" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/test-chart"
   mkdir -p "$chart_dir"
@@ -483,7 +483,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "build_helm_deps calls helm dependency build" {
+@test "build_helm_deps: calls helm dependency build" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/test-chart"
   mkdir -p "$chart_dir"
@@ -510,7 +510,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "extract_images_from_chart extracts images from helm template output" {
+@test "extract_images_from_chart: extracts images from helm template output" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/test-chart"
   mkdir -p "$chart_dir"
@@ -574,7 +574,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "extract_images_json converts image list to JSON array" {
+@test "extract_images_json: converts image list to JSON array" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/test-chart"
   mkdir -p "$chart_dir"
@@ -608,7 +608,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "extract_all_images runs setup, build, and extraction pipeline" {
+@test "extract_all_images: runs setup, build, and extraction pipeline" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/test-chart"
   mkdir -p "$chart_dir"
@@ -659,7 +659,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "branch_exists_on_remote checks if branch exists on remote" {
+@test "branch_exists_on_remote: checks if branch exists on remote" {
   tmpdir="$(mktemp -d)"
 
   # Create mock git that returns branch info
@@ -691,7 +691,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "safe_git_checkout stashes changes and checks out branch" {
+@test "safe_git_checkout: stashes changes and checks out branch" {
   tmpdir="$(mktemp -d)"
 
   cat > "$tmpdir/git" << 'EOF'
@@ -732,7 +732,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "restore_from_stash restores stashed changes when needed" {
+@test "restore_from_stash: restores stashed changes when needed" {
   tmpdir="$(mktemp -d)"
 
   cat > "$tmpdir/git" << 'EOF'
@@ -756,7 +756,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "get_latest_helm_version retrieves latest version from chart repository" {
+@test "get_latest_helm_version: retrieves latest version from chart repository" {
   tmpdir="$(mktemp -d)"
 
   cat > "$tmpdir/helm" << 'EOF'
@@ -780,7 +780,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "detect_parent_chart finds parent chart containing component" {
+@test "detect_parent_chart: finds parent chart containing component" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/charts"
   mkdir -p "$chart_dir/app/values" "$chart_dir/parent"
@@ -814,7 +814,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "build_cve_list_section formats CVE list as markdown" {
+@test "build_cve_list_section: formats CVE list as markdown" {
   local cve_json='[{"id":"CVE-2021-1234","severity":"HIGH","url":"https://nvd.nist.gov/vuln/detail/CVE-2021-1234"},{"id":"CVE-2021-5678","severity":"MEDIUM","url":"https://nvd.nist.gov/vuln/detail/CVE-2021-5678"}]'
   local nist_url="https://nvd.nist.gov/vuln/detail"
 
@@ -827,7 +827,7 @@ EOF
   [[ "$output" == *"MEDIUM"* ]]
 }
 
-@test "build_pr_body combines multiple sections into PR body" {
+@test "build_pr_body: combines multiple sections into PR body" {
   local updated_files="values.yaml
 template.yaml"
   local cve_section="## CVE Fixes
@@ -844,7 +844,7 @@ template.yaml"
   [[ "$output" == *"Alert 1"* ]]
 }
 
-@test "format_alerts_pr_section formats GitHub alerts as markdown" {
+@test "format_alerts_pr_section: formats GitHub alerts as markdown" {
   local alerts='{"number":1234,"html_url":"https://github.com/org/repo/security/code-scanning/1234","rule_id":"CVE-2021-1234"}
 {"number":5678,"html_url":"https://github.com/org/repo/security/code-scanning/5678","rule_id":"CVE-2021-5678"}'
   local nist_url="https://nvd.nist.gov/vuln/detail"
@@ -857,7 +857,7 @@ template.yaml"
   [[ "$output" == *"CVE-2021-5678"* ]]
 }
 
-@test "find_compatible_upgrade finds best matching upgrade from tag list" {
+@test "find_compatible_upgrade: finds best matching upgrade from tag list" {
   # Test finding compatible upgrade from array of tags
   local tags=("1.0.0" "1.5.0" "2.0.0" "2.1.0" "3.0.0")
 
@@ -870,7 +870,7 @@ template.yaml"
   [ "$status" -eq 1 ]
 }
 
-@test "query_code_scanning_alerts queries GitHub Code Scanning alerts" {
+@test "query_code_scanning_alerts: queries GitHub Code Scanning alerts" {
   tmpdir="$(mktemp -d)"
 
   # Mock gh CLI
@@ -896,7 +896,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "should_process_file checks if file needs processing" {
+@test "should_process_file: checks if file needs processing" {
   tmpdir="$(mktemp -d)"
 
   # Create Chart.yaml
@@ -935,7 +935,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "update_chart_yaml updates dependency version in Chart.yaml" {
+@test "update_chart_yaml: updates dependency version in Chart.yaml" {
   tmpdir="$(mktemp -d)"
 
   cat > "$tmpdir/Chart.yaml" << 'EOF'
@@ -972,7 +972,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "update_values_or_template updates image references in files" {
+@test "update_values_or_template: updates image references in files" {
   tmpdir="$(mktemp -d)"
 
   cat > "$tmpdir/values.yaml" << 'EOF'
@@ -998,7 +998,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "verify_image_in_registry verifies image exists in registry" {
+@test "verify_image_in_registry: verifies image exists in registry" {
   tmpdir="$(mktemp -d)"
 
   # Mock skopeo
@@ -1037,7 +1037,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "extract_cves_from_sarif extracts CVE IDs from SARIF file" {
+@test "extract_cves_from_sarif: extracts CVE IDs from SARIF file" {
   tmpdir="$(mktemp -d)"
   local sarif_file="$tmpdir/test.sarif"
   cat > "$sarif_file" << 'EOF'
@@ -1066,7 +1066,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "extract_cves_from_sarif returns empty for no CVEs" {
+@test "extract_cves_from_sarif: returns empty for no CVEs" {
   tmpdir="$(mktemp -d)"
   local sarif_file="$tmpdir/empty.sarif"
   cat > "$sarif_file" << 'EOF'
@@ -1089,7 +1089,7 @@ EOF
   rm -rf "$tmpdir"
 }
 
-@test "extract_cves_from_sarif handles malformed SARIF gracefully" {
+@test "extract_cves_from_sarif: handles malformed SARIF gracefully" {
   tmpdir="$(mktemp -d)"
   local sarif_file="$tmpdir/malformed.sarif"
   cat > "$sarif_file" << 'EOF'
