@@ -58,7 +58,7 @@ trento-wanda:
     repository: ghcr.io/trento-project/trento-wanda
   checks:
     image:
-      repository: ghcr.io/trento-project/checks
+      repository: ghcr.io/trento-project/trento-checks
 
 trento-mcp-server:
   nameOverride: mcp-server
@@ -78,23 +78,34 @@ postgresql:
   primary:
     extraInitContainers:
       # Runs pg_upgrade in-place before PostgreSQL starts when the major version changes.
-      # PGAUTO_ONESHOT exits immediately with no-op when no upgrade is needed, so this is safe on every restart.
-      # Image tag must match global.postgresql.image.tag (e.g. "17-debian").
+      # Image tag uses global.postgresql.image.tag with "-debian" appended automatically.
       # https://github.com/bitnami/charts/issues/14926#issuecomment-3192189184
       - name: upgrade-postgres
-        image: "pgautoupgrade/pgautoupgrade:{{ .Values.global.postgresql.image.tag }}-debian"
+        image: "pgautoupgrade/pgautoupgrade:{{ .Values.global.postgresql.image.tag }}-alpine"
         securityContext:
           runAsUser: 0
         volumeMounts:
           - name: data
-            mountPath: /var/lib/postgresql/data
+            mountPath: "{{ .Values.persistence.mountPath }}"
+        command:
+          - /bin/bash
+          - -c
+          - |
+            # Only run pgautoupgrade if database already exists (upgrade scenario)
+            if [ -f "$PGDATA/PG_VERSION" ]; then
+              echo "Existing database detected, running pgautoupgrade..."
+              exec /usr/local/bin/docker-entrypoint.sh postgres
+            else
+              echo "Fresh install detected (no PG_VERSION), skipping pgautoupgrade"
+              exit 0
+            fi
         env:
           - name: PGAUTO_ONESHOT
             value: "yes"
           - name: POSTGRES_DB
-            value: postgres
+            value: "{{ .Values.postgresqlDatabase }}"
           - name: PGDATA
-            value: /var/lib/postgresql/data/trento
+            value: "{{ .Values.postgresqlDataDir }}"
 
 prometheus:
   enabled: true
@@ -182,6 +193,12 @@ rabbitmq:
     enabled: true
   service:
     type: LoadBalancer
+
+  certWaiter:
+    image:
+      registry: registry.suse.com
+      repository: suse/kubectl
+      tag: "1.35"
 
   extraConfiguration: |
     {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
