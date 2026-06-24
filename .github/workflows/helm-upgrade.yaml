@@ -83,20 +83,19 @@ jobs:
             echo "Using existing patched image: ${OBS_CONTAINER_NEW}"
           else
             echo "Installing obs-service-replace_using_env..."
-            docker run --user 0 "${OBS_CONTAINER}" \
+            docker run --user 0 --cidfile /tmp/obs_container.cid "${OBS_CONTAINER}" \
               zypper -n install --no-recommends obs-service-replace_using_env > /dev/null 2>&1
 
-            CONTAINER_ID=$(docker ps -lq)
+            CONTAINER_ID=$(cat /tmp/obs_container.cid)
             docker commit "${CONTAINER_ID}" "${OBS_CONTAINER_NEW}" > /dev/null
-            echo "Created patched image: ${OBS_CONTAINER_NEW}"
+            docker rm "${CONTAINER_ID}" > /dev/null
+            rm -f /tmp/obs_container.cid
           fi
 
       - name: Process OBS package artifacts
         if: matrix.source == env.SOURCE_OBS_ARTIFACTS
         env:
           OBS_CONTAINER: continuous-delivery:dev
-          OBS_PROJECT: devel:sap:trento:factory
-          OBS_PACKAGE: trento-server-helm
           GIT_SOURCE_URL: https://src.opensuse.org/SAP-trento/trento-server-helm
         run: |
           mkdir -p obs-artifacts
@@ -122,11 +121,11 @@ jobs:
           # Dynamically add helm repos from Chart.yaml dependencies
           while IFS='|' read -r dep_name dep_repo; do
             if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
-              repo_alias="repo -$(echo "$dep_repo" | md5sum | cut -c1-8)"
+              repo_alias="repo-$(echo "$dep_repo" | md5sum | cut -c1-8)"
               echo "Adding helm repo: $repo_alias ($dep_repo)"
-              helm repo add "$repo_alias" "$dep_repo" 2>/dev/null || true
+              helm repo add "$repo_alias" "$dep_repo" --force-update
             fi
-          done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
 
           helm repo update
           helm dependency build charts/trento-server
@@ -245,7 +244,7 @@ jobs:
               echo "Adding helm repo: $dep_name ($dep_repo)"
               helm repo add "$dep_name" "$dep_repo" 2>/dev/null || true
             fi
-          done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
 
           helm repo update
           helm dependency build charts/trento-server

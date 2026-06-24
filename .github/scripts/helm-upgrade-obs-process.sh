@@ -39,20 +39,22 @@ BUILDTIME_SERVICE=$(sed -n '/<service.*mode="buildtime"/,/<\/service>/p' _servic
 # Check if replace_using_env service exists
 if echo "$BUILDTIME_SERVICE" | grep -q 'name="replace_using_env"'; then
   # Extract file parameter
-  FILE_PARAM=$(echo "$BUILDTIME_SERVICE" | grep 'param name="file"' | sed 's/.*>\(.*\)<.*/\1/')
-
-  # Build the command dynamically from multiple parameters
-  CMD="/usr/lib/obs/service/replace_using_env --file ${FILE_PARAM}"
+  FILE_PARAM=$(echo "$BUILDTIME_SERVICE" | grep 'param name="file"' | sed 's/.*>\(.*\)<.*/\1/' | head -n1)
+  if [ -z "$FILE_PARAM" ]; then
+    echo "ERROR: replace_using_env file parameter not found"
+    exit 1
+  fi
+  # Build the command as an argv array to avoid eval/injection
+  cmd=(/usr/lib/obs/service/replace_using_env --file "${FILE_PARAM}")
 
   # Process eval and var parameters (multiple)
   while IFS= read -r param_line; do
     PARAM_NAME=$(echo "$param_line" | sed 's/.*name="\([^"]*\)".*/\1/')
     PARAM_VALUE=$(echo "$param_line" | sed 's/.*>\(.*\)<.*/\1/')
-    CMD="${CMD} --${PARAM_NAME} \"${PARAM_VALUE}\""
+    cmd+=("--${PARAM_NAME}" "${PARAM_VALUE}")
   done < <(echo "$BUILDTIME_SERVICE" | grep 'param name=' | grep -E '(eval|var)')
 
-  # Run the command for every pair of param name and value
-  eval ${CMD} > /dev/null 2>&1 || true
+  "${cmd[@]}" > /dev/null 2>&1
 fi
 
 # Copy to workspace output directory
