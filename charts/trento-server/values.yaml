@@ -189,10 +189,15 @@ prometheus:
 
 rabbitmq:
   enabled: true
+  auth:
+    username: trento
+    password: trento
   persistence:
     enabled: true
   service:
     type: LoadBalancer
+  volumePermissions:
+    enabled: true
 
   certWaiter:
     image:
