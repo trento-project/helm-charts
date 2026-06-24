@@ -72,7 +72,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare OBS container with replace_using_env service
-        if: matrix.source == 'obs-artifacts'
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
         env:
           OBS_CONTAINER: ghcr.io/trento-project/continuous-delivery@sha256:24b2ea3d7a2c41fb005a024a90275b3a6ea37a213a690964f5aec459d61fb807 # v1.3.0
           OBS_CONTAINER_NEW: continuous-delivery:dev
@@ -90,6 +90,7 @@ jobs:
             docker commit "${CONTAINER_ID}" "${OBS_CONTAINER_NEW}" > /dev/null
             docker rm "${CONTAINER_ID}" > /dev/null
             rm -f /tmp/obs_container.cid
+            echo "Created patched image: ${OBS_CONTAINER_NEW}"
           fi
 
       - name: Process OBS package artifacts
@@ -104,8 +105,6 @@ jobs:
             --user 0 \
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
-            -e OBS_PROJECT="${OBS_PROJECT}" \
-            -e OBS_PACKAGE="${OBS_PACKAGE}" \
             -e GIT_SOURCE_URL="${GIT_SOURCE_URL}" \
             "${OBS_CONTAINER}" \
             bash /workspace/.github/scripts/helm-upgrade-obs-process.sh
@@ -242,7 +241,7 @@ jobs:
           while IFS='|' read -r dep_name dep_repo; do
             if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
               echo "Adding helm repo: $dep_name ($dep_repo)"
-              helm repo add "$dep_name" "$dep_repo" 2>/dev/null || true
+              helm repo add "$dep_name" "$dep_repo" --force-update
             fi
           done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
 

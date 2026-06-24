@@ -54,7 +54,7 @@ if echo "$BUILDTIME_SERVICE" | grep -q 'name="replace_using_env"'; then
     cmd+=("--${PARAM_NAME}" "${PARAM_VALUE}")
   done < <(echo "$BUILDTIME_SERVICE" | grep 'param name=' | grep -E '(eval|var)')
 
-  "${cmd[@]}" > /dev/null 2>&1
+  "${cmd[@]}" > /dev/null
 fi
 
 # Copy to workspace output directory
