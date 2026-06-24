@@ -206,6 +206,10 @@ jobs:
             --set trento-wanda.checks.image.tag=rolling \
             --set trento-mcp-server.image.tag=rolling
 
+      - name: Check hook jobs status and logs
+        if: always()
+        run: bash .github/scripts/helm-upgrade-helper.sh check-hook-jobs
+
       - name: Verify upgrade
         run: bash .github/scripts/helm-upgrade-helper.sh post-upgrade-diagnostics
 

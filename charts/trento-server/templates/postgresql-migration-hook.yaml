@@ -1,0 +1,104 @@
+{{- /*
+SPDX-FileCopyrightText: SUSE LLC
+SPDX-License-Identifier: Apache-2.0
+
+PostgreSQL Chart Upgrade Migration Hook
+
+StatefulSet selector labels changed from "role: primary" to "app.kubernetes.io/component: primary"
+This change is IMMUTABLE and would cause upgrade failure
+
+Solution:
+- Detects the old selector label
+- Deletes the old StatefulSet with --cascade=orphan (preserves pods)
+- New StatefulSet adopts the existing pods with the new selector
+*/ -}}
+{{- if .Values.postgresql.enabled }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-postgresql-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-postgresql-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-postgresql-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-postgresql-migration
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-postgresql-migration
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-postgresql-migration
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}-postgresql-migration
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: {{ .Values.postgresql.migrationHook.image.registry }}/{{ .Values.postgresql.migrationHook.image.repository }}:{{ .Values.postgresql.migrationHook.image.tag }}
+        command:
+        - /bin/sh
+        - -ec
+        - |
+          echo "Checking if PostgreSQL StatefulSet needs migration..."
+
+          # Check if StatefulSet exists
+          if ! kubectl get statefulset {{ .Release.Name }}-postgresql -n {{ .Release.Namespace }} >/dev/null 2>&1; then
+            echo "StatefulSet does not exist, nothing to migrate"
+            exit 0
+          fi
+
+          echo "StatefulSet exists, checking selector labels..."
+
+          # Check if the old selector label exists (role: primary)
+          OLD_SELECTOR=$(kubectl get statefulset {{ .Release.Name }}-postgresql -n {{ .Release.Namespace }} -o jsonpath='{.spec.selector.matchLabels.role}' 2>/dev/null || echo "")
+
+          if [ "$OLD_SELECTOR" = "primary" ]; then
+            echo "Found old selector label 'role: primary', migration needed"
+            echo "Deleting StatefulSet and pods (PVCs will be preserved)..."
+            kubectl delete statefulset {{ .Release.Name }}-postgresql -n {{ .Release.Namespace }}
+            echo "StatefulSet deleted successfully. New StatefulSet will be created with updated selectors."
+          else
+            echo "StatefulSet already uses new selector, no migration needed"
+          fi
+
+          echo "Migration check complete"
+{{- end }}

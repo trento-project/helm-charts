@@ -38,9 +38,9 @@ limitations under the License.
 ---
 
 charts/trento-server/charts/postgresql
-<https://github.com/bitnami/charts/blob/31a3beff085d30c227bfce42b015446fc723dc3b/LICENSE>
+<https://github.com/bitnami/charts/blob/78410dd9a56a206cc63884f1500c03358faa8528/LICENSE.md>
 
-Copyright (c) 2015-2021 Bitnami
+Copyright (c) 2025 Broadcom. The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -68,15 +68,32 @@ trento-mcp-server:
 
 postgresql:
   enabled: true
-  persistence:
-    mountPath: /var/lib/postgresql/data
+  architecture: standalone
   postgresqlDataDir: /var/lib/postgresql/data/trento
-  securityContext:
-    fsGroup: 0
-  containerSecurityContext:
-    runAsUser: 0
+  auth:
+    usePasswordFiles: false
+    secretKeys:
+      adminPasswordKey: postgresql-password
+      userPasswordKey: postgresql-password
+      replicationPasswordKey: replication-password
+  migrationHook:
+    image:
+      registry: registry.suse.com
+      repository: suse/kubectl
+      tag: "1.35"
   primary:
-    extraInitContainers:
+    persistence:
+      mountPath: /var/lib/postgresql/data
+    podSecurityContext:
+      fsGroup: 0
+    containerSecurityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop: []
+    initContainers:
       # Runs pg_upgrade in-place before PostgreSQL starts when the major version changes.
       # Image tag uses global.postgresql.image.tag with "-debian" appended automatically.
       # https://github.com/bitnami/charts/issues/14926#issuecomment-3192189184
