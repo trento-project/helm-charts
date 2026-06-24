@@ -151,9 +151,9 @@ prometheus:
 
   migrationHook:
     image:
-      registry: registry.k8s.io
-      repository: kubectl
-      tag: v1.33.3
+      registry: registry.suse.com
+      repository: suse/kubectl
+      tag: "1.35"
 
 rabbitmq:
   enabled: true
@@ -161,6 +161,12 @@ rabbitmq:
     enabled: true
   service:
     type: LoadBalancer
+
+  certWaiter:
+    image:
+      registry: registry.suse.com
+      repository: suse/kubectl
+      tag: "1.35"
 
   extraConfiguration: |
     {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
