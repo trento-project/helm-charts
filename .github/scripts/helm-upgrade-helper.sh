@@ -114,7 +114,7 @@ compare_versions() {
       current_chart="$chart_name"
     fi
 
-    old_line=$(grep "|[^|]*${img_name}:" "$current_images_file" | head -1 || true)
+    old_line=$(grep "|[^|]*|[^|]*|[^|]*/${img_name}:" "$current_images_file" | head -1 || true)
 
     if [ -n "$old_line" ]; then
       old_full=$(echo "$old_line" | cut -d'|' -f4)
@@ -307,7 +307,7 @@ post_upgrade_diagnostics() {
   show_pods_status
   show_events
   show_web_init_logs
-  show_pod_logs 30 "All "
+  show_pod_logs 50 "Recent "
   echo ""
   banner "                      DIAGNOSTICS COMPLETE                              "
 }
