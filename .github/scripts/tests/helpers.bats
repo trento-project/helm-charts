@@ -34,7 +34,7 @@ setup() {
   [ -z "$output" ]
 }
 
-@test "coerce_to_semver: coerces and preserves invalid input" {
+@test "coerce_to_semver: coerces version-like tags" {
   run coerce_to_semver "v1.2.3"
   [ "$status" -eq 0 ]
   [ "$output" = "1.2.3" ]
@@ -42,7 +42,9 @@ setup() {
   run coerce_to_semver "1.2"
   [ "$status" -eq 0 ]
   [ "$output" = "1.2.0" ]
+}
 
+@test "coerce_to_semver: passes through invalid input without validating it" {
   run coerce_to_semver "invalid"
   [ "$status" -eq 0 ]
   [ "$output" = "invalid" ]
@@ -636,11 +638,15 @@ EOF
 if [ "$1" = "ls-remote" ] && [ "$2" = "--heads" ] && [ "$3" = "origin" ]; then
   local branch="$4"
   case "$branch" in
-    existing-branch)
+    refs/heads/existing-branch)
       echo "abc123def456  refs/heads/existing-branch"
       exit 0
       ;;
-    nonexistent-branch)
+    refs/heads/existing-branch-prefix)
+      echo "abc123def456  refs/heads/existing-branch-prefix"
+      exit 0
+      ;;
+    refs/heads/nonexistent-branch)
       exit 0
       ;;
   esac
@@ -652,6 +658,9 @@ EOF
   PATH="$tmpdir:$PATH"
   run branch_exists_on_remote "existing-branch"
   [ "$status" -eq 0 ]
+
+  run branch_exists_on_remote "existing"
+  [ "$status" -eq 1 ]
 
   run branch_exists_on_remote "nonexistent-branch"
   [ "$status" -eq 1 ]
@@ -751,24 +760,31 @@ EOF
 @test "detect_parent_chart: finds parent chart containing component" {
   tmpdir="$(mktemp -d)"
   chart_dir="$tmpdir/charts"
-  mkdir -p "$chart_dir/app/values" "$chart_dir/parent"
+  mkdir -p "$chart_dir/parent"
 
-  # Create test files
-  cat > "$chart_dir/parent/values/web.yaml" << 'EOF'
-image:
-  repository: ghcr.io/app/web
-  tag: v1.0.0
+  cat > "$chart_dir/parent/values.yaml" << 'EOF'
+parent:
+  web:
+    image:
+      repository: ghcr.io/app/web
+      tag: v1.0.0
 EOF
 
   cat > "$tmpdir/yq" << 'EOF'
 #!/usr/bin/env bash
-# Mock yq eval for detecting component in values
+# Mock yq eval for detect_parent_chart queries
 if [[ "$1" == "eval" ]]; then
-  local file="${@: -1}"
-  if grep -q "ghcr.io/app/web" "$file" 2>/dev/null; then
-    echo "found"
-  else
-    echo "null"
+  query="$2"
+  file="$3"
+
+  if [[ "$query" == 'has("web")' ]]; then
+    echo "false"
+    exit 0
+  fi
+
+  if [[ "$query" == 'to_entries | .[] | select(.value.web) | .key' ]] && grep -q 'web:' "$file" 2>/dev/null; then
+    echo "parent"
+    exit 0
   fi
 fi
 exit 0
@@ -776,8 +792,9 @@ EOF
   chmod +x "$tmpdir/yq"
 
   PATH="$tmpdir:$PATH"
-  run detect_parent_chart "$chart_dir" "web"
+  run detect_parent_chart "web" "$chart_dir"
   [ "$status" -eq 0 ]
+  [ "$output" = "parent" ]
 
   rm -rf "$tmpdir"
 }
