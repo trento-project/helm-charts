@@ -77,7 +77,7 @@ echo ""
 section "5. Testing MCP server..."
 
 echo "   Testing MCP endpoint availability..."
-INIT_RESPONSE=$(curl -sk -X POST "${MCP_BASE_URL}/mcp" \
+INIT_RESPONSE=$(curl -sk -X POST "${MCP_BASE_URL}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2024-11-05\", \"clientInfo\": {\"name\": \"test-client\", \"version\": \"1.0.0\"}, \"capabilities\": {}}}")
@@ -90,8 +90,9 @@ if echo "$INIT_RESPONSE" | grep -q "serverInfo"; then
   SERVER_VERSION=$(echo "$INIT_RESPONSE" | grep -o "\"version\":\"[^\"]*\"" | tail -1 | cut -d\" -f4)
   echo "   ✅ MCP server is responding: $SERVER_NAME $SERVER_VERSION"
 else
-  echo "   ⚠️ MCP server response unexpected"
+  echo "   ❌ MCP server response unexpected"
   echo "   Response: $INIT_RESPONSE"
+  exit 1
 fi
 
 echo ""
