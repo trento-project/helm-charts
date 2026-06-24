@@ -190,7 +190,7 @@ jobs:
         if: matrix.source != env.SOURCE_INSTALL_ONLY
         run: bash .github/scripts/helm-upgrade-helper.sh compare-container-versions
 
-      - name: Upgrade to current dev chart
+      - name: Install or upgrade to current dev chart
         run: |
           ACTION="${{ matrix.source == env.SOURCE_INSTALL_ONLY && 'install' || 'upgrade' }}"
           echo "Running helm ${ACTION} for source: ${{ matrix.source }}"
