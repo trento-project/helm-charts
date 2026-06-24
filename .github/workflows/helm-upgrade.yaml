@@ -22,6 +22,7 @@ env:
   SOURCE_OSS_RELEASE: oss-release
   SOURCE_OSS_MAIN: oss-main
   SOURCE_OBS_ARTIFACTS: obs-artifacts
+  SOURCE_INSTALL_ONLY: install-only
 
 jobs:
   upgrade-test:
@@ -62,6 +63,8 @@ jobs:
             source: oss-main
           - name: "OBS artifacts → current"
             source: obs-artifacts
+          - name: "Install current"
+            source: install-only
       fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -89,7 +92,7 @@ jobs:
           fi
 
       - name: Process OBS package artifacts
-        if: matrix.source == 'obs-artifacts'
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
         env:
           OBS_CONTAINER: continuous-delivery:dev
           OBS_PROJECT: devel:sap:trento:factory
@@ -111,7 +114,7 @@ jobs:
           echo "OBS artifacts processed successfully"
 
       - name: Prepare OBS local chart for installation
-        if: matrix.source == 'obs-artifacts'
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
         run: |
           # Copy processed OBS values
           cp obs-artifacts/values-obs.yaml charts/trento-server/values-obs.yaml
@@ -130,7 +133,7 @@ jobs:
 
       - name: Resolve chart version
         id: version
-        if: matrix.source != 'obs-artifacts'
+        if: matrix.source != env.SOURCE_OBS_ARTIFACTS && matrix.source != env.SOURCE_INSTALL_ONLY
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -173,7 +176,7 @@ jobs:
             --create-namespace \
             --set crds.enabled=true
           kubectl wait --for=condition=available --timeout=300s \
-            deployment/cert-manager -n cert-manager
+            --all deployments -n cert-manager
 
       - name: Prepare cert-manager resources and values for ingress
         run: |
@@ -200,6 +203,7 @@ jobs:
           echo "${{ github.token }}" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
 
       - name: Install chart
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
         run: |
           # Configure chart reference and extra flags
           case "${{ matrix.source }}" in
@@ -221,7 +225,8 @@ jobs:
               ;;
           esac
 
-          helm upgrade -i trento-server "$CHART_REF" --wait \
+            helm upgrade -i trento-server "$CHART_REF" --wait \
+            --version "${{ steps.version.outputs.value }}" \
             --create-namespace \
             --timeout 3m \
             --render-subchart-notes \
@@ -229,17 +234,16 @@ jobs:
             ${EXTRA_FLAGS}
 
       - name: Check pod status after install
-        if: always()
+        if: always() && matrix.source != env.SOURCE_INSTALL_ONLY
         run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
 
-      - name: Build dependencies for dev chart upgrade
+      - name: Build dependencies for current dev chart
         run: |
           # Dynamically add helm repos from Chart.yaml dependencies
           while IFS='|' read -r dep_name dep_repo; do
             if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
-              repo_alias="repo-$(echo "$dep_repo" | md5sum | cut -c1-8)"
-              echo "Adding helm repo: $repo_alias ($dep_repo)"
-              helm repo add "$repo_alias" "$dep_repo" 2>/dev/null || true
+              echo "Adding helm repo: $dep_name ($dep_repo)"
+              helm repo add "$dep_name" "$dep_repo" 2>/dev/null || true
             fi
           done < <(yq eval '.dependencies[] | .name + "|" + .repository' charts/trento-server/Chart.yaml)
 
@@ -247,14 +251,19 @@ jobs:
           helm dependency build charts/trento-server
 
       - name: Compare container versions
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
         run: bash .github/scripts/helm-upgrade-helper.sh compare-container-versions
 
-      - name: Upgrade to current dev chart
+      - name: Install or upgrade to current dev chart
         run: |
-          helm upgrade -i trento-server charts/trento-server --wait \
+          ACTION="${{ matrix.source == env.SOURCE_INSTALL_ONLY && 'install' || 'upgrade' }}"
+          echo "Running helm ${ACTION} for source: ${{ matrix.source }}"
+
+          helm ${ACTION} trento-server charts/trento-server --wait \
             --timeout 3m \
             --render-subchart-notes \
             --debug \
+            --create-namespace \
             ${HELM_COMMON_FLAGS} \
             --set trento-web.image.tag=rolling \
             --set trento-wanda.image.tag=rolling \
@@ -272,7 +281,7 @@ jobs:
         run: bash .github/scripts/helm-upgrade-helper.sh failure-diagnostics
 
       - name: Upload OBS artifacts for inspection
-        if: always() && matrix.source == 'obs-artifacts'
+        if: always() && matrix.source == env.SOURCE_OBS_ARTIFACTS
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: obs-processed-values
