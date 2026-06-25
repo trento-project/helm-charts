@@ -134,23 +134,6 @@ setup() {
   [ "$status" -eq 3 ]
 }
 
-@test "is_valid_semver: accepts numeric tags and rejects invalid tags" {
-  # Fail if semver is not available - it's a required tool
-  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
-
-  run is_valid_semver "v1.2.3"
-  [ "$status" -eq 0 ]
-
-  run is_valid_semver "1.2"
-  [ "$status" -eq 0 ]
-
-  run is_valid_semver "invalid"
-  [ "$status" -eq 1 ]
-
-  run is_valid_semver "1.2.3-alpha"
-  [ "$status" -eq 1 ]
-}
-
 @test "github_output: writes only when GITHUB_OUTPUT is set" {
   tmpdir="$(mktemp -d)"
   output_file="$tmpdir/out.txt"
@@ -300,17 +283,6 @@ EOF
   [ "$status" -eq 0 ]
 
   run is_version_upgrade "1.0.0" "2.0.0"
-  [ "$status" -eq 1 ]
-}
-
-@test "is_valid_semver: validates semantic versions" {
-  # Fail if semver is not available - it's a required tool
-  command -v semver >/dev/null 2>&1 || { echo "semver is required but not installed"; exit 1; }
-
-  run is_valid_semver "1.2.3"
-  [ "$status" -eq 0 ]
-
-  run is_valid_semver "invalid"
   [ "$status" -eq 1 ]
 }
 

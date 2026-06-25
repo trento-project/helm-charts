@@ -324,21 +324,6 @@ _coerce_version_string() {
   fi
 }
 
-# Validate if a tag is a valid semantic version using semver-tool.
-# Args: $1 (string) - version tag to validate (with or without leading "v")
-# Returns: 0 if valid semantic version, 1 otherwise
-is_valid_semver() {
-  local tag="$1"
-  local version="${tag#v}"
-
-  local coerced
-  coerced=$(_coerce_version_string "$version")
-  [[ -z "$coerced" ]] && return 1
-
-  # Validate using semver-tool (must be in PATH)
-  semver validate "$coerced" >/dev/null 2>&1
-}
-
 # Coerce tag to X.Y.Z semantic version format.
 # Args: $1 (string) - version tag to coerce (with or without leading "v")
 # Outputs: X.Y.Z version string, or the original tag if it cannot be coerced
