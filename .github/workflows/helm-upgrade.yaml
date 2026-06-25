@@ -109,6 +109,9 @@ jobs:
             "${OBS_CONTAINER}" \
             bash /workspace/.github/scripts/helm-upgrade-obs-process.sh
 
+          # Fix permissions on extracted chart (Docker ran as root)
+          sudo chown -R $(id -u):$(id -g) obs-artifacts/
+
           echo "OBS artifacts processed successfully"
 
       - name: Prepare OBS upstream chart for installation
