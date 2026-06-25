@@ -24,6 +24,23 @@ if [ ! -f _service ]; then
   exit 1
 fi
 
+if [ ! -f contents.tar.gz ]; then
+  echo "ERROR: contents.tar.gz not found"
+  exit 1
+fi
+
+# Extract the upstream chart
+echo "Extracting upstream chart from contents.tar.gz..."
+CHART_DIR="${WORK_DIR}/upstream-chart"
+mkdir -p "${CHART_DIR}"
+tar -xzf contents.tar.gz -C "${CHART_DIR}"
+
+# Verify chart structure
+if [ ! -f "${CHART_DIR}/Chart.yaml" ]; then
+  echo "ERROR: Chart.yaml not found in extracted contents"
+  exit 1
+fi
+
 # Create RPM macros (needed by buildtime services)
 cat > /root/.rpmmacros <<"RPMEOF"
 %registry_url registry.suse.com
@@ -44,6 +61,8 @@ if echo "$BUILDTIME_SERVICE" | grep -q 'name="replace_using_env"'; then
     echo "ERROR: replace_using_env file parameter not found"
     exit 1
   fi
+
+  # Process the values.yaml file in the OBS package directory
   # Build the command as an argv array to avoid eval/injection
   cmd=(/usr/lib/obs/service/replace_using_env --file "${FILE_PARAM}")
 
@@ -55,7 +74,13 @@ if echo "$BUILDTIME_SERVICE" | grep -q 'name="replace_using_env"'; then
   done < <(echo "$BUILDTIME_SERVICE" | grep 'param name=' | grep -E '(eval|var)')
 
   "${cmd[@]}" > /dev/null
+
+  # Copy the processed values.yaml to the extracted chart
+  echo "Copying processed values.yaml to upstream chart..."
+  cp values.yaml "${CHART_DIR}/values.yaml"
 fi
 
-# Copy to workspace output directory
-cp values.yaml /workspace/obs-artifacts/values-obs.yaml
+# Copy the upstream chart and processed values to workspace
+echo "Copying upstream chart to workspace..."
+cp -r "${CHART_DIR}" /workspace/obs-artifacts/chart
+cp /workspace/obs-artifacts/chart/values.yaml /workspace/obs-artifacts/values-obs.yaml

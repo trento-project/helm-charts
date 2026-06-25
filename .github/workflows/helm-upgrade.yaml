@@ -111,23 +111,23 @@ jobs:
 
           echo "OBS artifacts processed successfully"
 
-      - name: Prepare OBS local chart for installation
+      - name: Prepare OBS upstream chart for installation
         if: matrix.source == env.SOURCE_OBS_ARTIFACTS
         run: |
-          # Copy processed OBS values
-          cp obs-artifacts/values-obs.yaml charts/trento-server/values-obs.yaml
+          # Use the upstream chart extracted from contents.tar.gz
+          echo "Using upstream chart from OBS package..."
 
-          # Dynamically add helm repos from Chart.yaml dependencies
+          # Dynamically add helm repos from upstream Chart.yaml dependencies
           while IFS='|' read -r dep_name dep_repo; do
             if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
               repo_alias="repo-$(echo "$dep_repo" | md5sum | cut -c1-8)"
               echo "Adding helm repo: $repo_alias ($dep_repo)"
               helm repo add "$repo_alias" "$dep_repo" --force-update
             fi
-          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' obs-artifacts/chart/Chart.yaml)
 
           helm repo update
-          helm dependency build charts/trento-server
+          helm dependency build obs-artifacts/chart
 
       - name: Resolve chart version
         id: version
@@ -206,8 +206,8 @@ jobs:
           # Configure chart reference and extra flags
           case "${{ matrix.source }}" in
             "${SOURCE_OBS_ARTIFACTS}")
-              CHART_REF="charts/trento-server"
-              EXTRA_FLAGS="-f charts/trento-server/values-obs.yaml"
+              CHART_REF="obs-artifacts/chart"
+              EXTRA_FLAGS=""
               ;;
             "${SOURCE_SUSE_RELEASE}")
               CHART_REF="oci://${SUSE_REGISTRY}"
@@ -224,7 +224,6 @@ jobs:
           esac
 
             helm upgrade -i trento-server "$CHART_REF" --wait \
-            --version "${{ steps.version.outputs.value }}" \
             --create-namespace \
             --timeout 3m \
             --render-subchart-notes \
@@ -282,6 +281,7 @@ jobs:
         if: always() && matrix.source == env.SOURCE_OBS_ARTIFACTS
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: obs-processed-values
+          name: obs-processed-chart
           path: |
-            charts/trento-server/values-obs.yaml
+            obs-artifacts/chart/
+            obs-artifacts/values-obs.yaml
