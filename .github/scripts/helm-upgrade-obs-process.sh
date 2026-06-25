@@ -29,16 +29,29 @@ if [ ! -f contents.tar.gz ]; then
   exit 1
 fi
 
-# Extract the upstream chart
-echo "Extracting upstream chart from contents.tar.gz..."
+# Extract the upstream chart contents (templates, charts subdirectories, etc.)
+echo "Extracting upstream chart contents from contents.tar.gz..."
 CHART_DIR="${WORK_DIR}/upstream-chart"
 mkdir -p "${CHART_DIR}"
 tar -xzf contents.tar.gz -C "${CHART_DIR}"
 
+echo "Contents of extracted tarball:"
+ls -laR "${CHART_DIR}/"
+
+# Copy Chart.yaml from OBS package to the chart directory
+echo "Copying Chart.yaml to upstream chart..."
+cp Chart.yaml "${CHART_DIR}/"
+
 # Verify chart structure
 if [ ! -f "${CHART_DIR}/Chart.yaml" ]; then
-  echo "ERROR: Chart.yaml not found in extracted contents"
+  echo "ERROR: Chart.yaml not found in chart directory after copy"
   exit 1
+fi
+
+echo "Final chart directory structure:"
+ls -la "${CHART_DIR}/"
+if [ -d "${CHART_DIR}/templates" ]; then
+  echo "Templates directory exists with $(ls -1 ${CHART_DIR}/templates | wc -l) files"
 fi
 
 # Create RPM macros (needed by buildtime services)
