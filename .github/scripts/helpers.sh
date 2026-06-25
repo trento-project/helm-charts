@@ -353,6 +353,16 @@ compare_semver() {
   cv1=$(coerce_to_semver "$v1")
   cv2=$(coerce_to_semver "$v2")
 
+  # Validate that both coerced versions are valid semver
+  if ! semver validate "$cv1" >/dev/null 2>&1; then
+    log_error "compare_semver: invalid version format - '$v1' (coerced to '$cv1')"
+    return 3
+  fi
+  if ! semver validate "$cv2" >/dev/null 2>&1; then
+    log_error "compare_semver: invalid version format - '$v2' (coerced to '$cv2')"
+    return 3
+  fi
+
   if [ "$cv1" = "$cv2" ]; then
     return 0
   fi

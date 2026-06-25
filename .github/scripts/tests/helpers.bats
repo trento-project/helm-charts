@@ -132,6 +132,12 @@ setup() {
 
   run compare_semver "1.2.3" ""
   [ "$status" -eq 3 ]
+
+  run compare_semver "invalid" "1.2.3"
+  [ "$status" -eq 3 ]
+
+  run compare_semver "1.2.3" "not-a-version"
+  [ "$status" -eq 3 ]
 }
 
 @test "github_output: writes only when GITHUB_OUTPUT is set" {
