@@ -80,22 +80,22 @@ test_login() {
   local password="$3"
   local response access_token
 
-  section "3. Testing login endpoint..."
+  section "3. Testing login endpoint..." >&2
   response=$(curl -sk -X POST "${web_url}/api/session" \
     -H "Content-Type: application/json" \
     -d "{\"username\": \"${username}\", \"password\": \"${password}\"}" 2>/dev/null || echo "")
 
-  echo "Login response: $response"
+  echo "Login response: $response" >&2
 
   access_token=$(echo "$response" | grep -o "\"access_token\":\"[^\"]*\"" | cut -d"\"" -f4)
 
   if [ -z "$access_token" ]; then
-    echo "❌ Failed to get access token"
+    echo "❌ Failed to get access token" >&2
     return 1
   fi
 
-  echo "✅ Login successful, token obtained"
-  echo ""
+  echo "✅ Login successful, token obtained" >&2
+  echo "" >&2
 
   echo "$access_token"
   return 0
@@ -214,4 +214,5 @@ run_smoke_tests() {
 # Only run when executed directly (not when sourced for tests)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   run_smoke_tests
+  exit $?
 fi
