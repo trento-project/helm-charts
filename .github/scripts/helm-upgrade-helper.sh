@@ -291,7 +291,8 @@ fetch_obs_package() {
 # Returns: 0 if all required files exist, 1 otherwise
 verify_obs_package_files() {
   local obs_dir="$1"
-  local required_files=("values.yaml" "_service" "contents.tar.gz")
+  # Note: values.yaml is processed by buildtime services and may not exist initially
+  local required_files=("_service" "contents.tar.gz")
 
   for file in "${required_files[@]}"; do
     if [ ! -f "${obs_dir}/${file}" ]; then
