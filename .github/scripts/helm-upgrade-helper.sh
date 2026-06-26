@@ -11,16 +11,27 @@ cd "$REPO_ROOT"
 CHART_DIR="${CHART_DIR:-charts/trento-server}"
 TRENTO_NAMESPACE="${TRENTO_NAMESPACE:-trento}"
 
+# === Display Utilities ===
+
+# Print a section header.
+# Args: $1 (string) - Section title
 section() {
   printf '\n%s\n' "$1"
 }
 
+# Print a formatted banner with border.
+# Args: $1 (string) - Banner text
 banner() {
   printf '%s\n' "╔════════════════════════════════════════════════════════════════════════╗"
   printf '%s\n' "║$1║"
   printf '%s\n' "╚════════════════════════════════════════════════════════════════════════╝"
 }
 
+# === Kubernetes Diagnostics ===
+
+# Display status of all pods and highlight non-running pods.
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Pod status information
 show_pods_status() {
   section "=== All pods ==="
   kubectl get pods -n "$TRENTO_NAMESPACE" -o wide
@@ -29,6 +40,11 @@ show_pods_status() {
   kubectl get pods -n "$TRENTO_NAMESPACE" --field-selector=status.phase!=Running -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,REASON:.status.reason 2>/dev/null || echo "✅ All pods running"
 }
 
+# Display Kubernetes events for the namespace.
+# Args: $1 (string, optional) - If set, show all events; otherwise recent events
+#       $2 (string, optional) - Number of recent events to show (default: 30)
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Kubernetes events
 show_events() {
   local sort_by="${1:-}"
   local limit="${2:-30}"
@@ -42,6 +58,13 @@ show_events() {
   fi
 }
 
+# Display logs from all pods in the namespace.
+# Args: $1 (string, optional) - Number of log lines per pod (default: 30, 0 for all)
+#       $2 (string, optional) - Context prefix for section header (e.g., "Recent ")
+#       $3 (string, optional) - Whether to show previous container logs (default: false)
+#       $4 (string, optional) - Custom separator line
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Pod logs for each container
 show_pod_logs() {
   local log_lines="${1:-30}"
   local log_context="${2:-}"
@@ -65,6 +88,9 @@ show_pod_logs() {
   done
 }
 
+# Display logs only from failed or pending pods.
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Logs from non-running pods (last 100 lines each)
 show_failed_pod_logs() {
   section "=== Logs for failed/pending pods ==="
   local failed_pods
@@ -82,6 +108,10 @@ show_failed_pod_logs() {
   fi
 }
 
+# === Diagnostic Suites ===
+
+# Run post-installation diagnostic checks.
+# Outputs: Pod status, events, and failed pod logs
 post_install_diagnostics() {
   banner "                      POST-INSTALL DIAGNOSTICS                          "
   show_pods_status
@@ -91,6 +121,12 @@ post_install_diagnostics() {
   banner "                      DIAGNOSTICS COMPLETE                              "
 }
 
+# === Version Comparison ===
+
+# Compare container image versions between two files and display differences.
+# Args: $1 (string) - Path to current images file (format: chart|name|type|image:tag)
+#       $2 (string) - Path to new images file (format: chart|image:tag)
+# Outputs: Formatted comparison showing version changes, new images, and unchanged images
 compare_versions() {
   local current_images_file="$1"
   local new_images_file="$2"
@@ -145,6 +181,9 @@ compare_versions() {
   echo "────────────────────────────────────────────────────────────────────────"
 }
 
+# Extract and compare container versions between deployed pods and Helm chart.
+# Uses: TRENTO_NAMESPACE, CHART_DIR, HELM_COMMON_FLAGS environment variables
+# Outputs: Comparison of current vs new container image versions
 compare_container_versions() {
   local tmp_current_images
   local tmp_new_images
@@ -207,6 +246,11 @@ compare_container_versions() {
 }
 
 
+# === API Testing ===
+
+# Verify API functionality through ingress endpoint.
+# Uses: TRENTO_NAMESPACE, TRENTO_WEB_ORIGIN, REPO_ROOT environment variables
+# Outputs: API test results and certificate information
 verify_api() {
   banner "                         API FUNCTIONALITY TEST                         "
   echo ""
@@ -233,6 +277,9 @@ verify_api() {
     bash "$REPO_ROOT/.github/scripts/helm-upgrade-smoke-test.sh"
 }
 
+# Display logs from web pod init container (database migrations).
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Init container logs for web pod
 show_web_init_logs() {
   section "=== Web init container logs (DB migration) ==="
   local web_pod
@@ -246,6 +293,8 @@ show_web_init_logs() {
   fi
 }
 
+# Run post-upgrade diagnostic checks.
+# Outputs: Pod status, events, web init logs, and recent pod logs
 post_upgrade_diagnostics() {
   banner "                         POST-UPGRADE DIAGNOSTICS                       "
   show_pods_status
@@ -256,6 +305,8 @@ post_upgrade_diagnostics() {
   banner "                      DIAGNOSTICS COMPLETE                              "
 }
 
+# Run comprehensive failure diagnostics with full logs.
+# Outputs: Pod status, all events, and full pod logs including previous containers
 failure_diagnostics() {
   banner "                    FAILURE DIAGNOSTICS - FULL LOGS                     "
   echo ""
