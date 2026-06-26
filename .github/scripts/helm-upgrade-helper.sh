@@ -582,7 +582,7 @@ main() {
   esac
 }
 
-# Only run main if not being sourced
-if [ -z "${_SOURCED_HELM_UPGRADE_HELPER:-}" ]; then
+# Only run main when executed directly (not when sourced for tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   main "$@"
 fi
