@@ -275,10 +275,10 @@ fetch_obs_package() {
   local git_url="$1"
   local work_dir="$2"
 
-  echo "Fetching OBS package from ${git_url}..."
+  echo "Fetching OBS package from ${git_url}..." >&2
 
   if ! git clone --depth 1 "${git_url}" "${work_dir}/obs-package" 2>/dev/null; then
-    echo "ERROR: Failed to clone OBS package from ${git_url}"
+    echo "ERROR: Failed to clone OBS package from ${git_url}" >&2
     return 1
   fi
 
