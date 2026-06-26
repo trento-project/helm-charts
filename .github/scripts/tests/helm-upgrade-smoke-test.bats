@@ -7,11 +7,10 @@
 
 setup() {
   SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
+
   # Source the script to test individual functions
-  # Set flag to prevent main() from executing
-  export _SOURCED_SMOKE_TEST=1
   # shellcheck disable=SC1091
-  source "${SCRIPT_DIR}/helm-upgrade-smoke-test.sh" || true
+  source "${SCRIPT_DIR}/helm-upgrade-smoke-test.sh"
 
   # Keep test flow explicit through `run` status checks.
   set +e

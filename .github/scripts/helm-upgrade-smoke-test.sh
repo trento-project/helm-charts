@@ -211,7 +211,7 @@ run_smoke_tests() {
   return 0
 }
 
-# Only run main if not being sourced
-if [ -z "${_SOURCED_SMOKE_TEST:-}" ]; then
+# Only run when executed directly (not when sourced for tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   run_smoke_tests
 fi

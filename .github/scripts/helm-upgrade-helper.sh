@@ -6,7 +6,11 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$REPO_ROOT"
+
+# Only change directory when running directly (not when sourced for tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  cd "$REPO_ROOT"
+fi
 
 CHART_DIR="${CHART_DIR:-charts/trento-server}"
 TRENTO_NAMESPACE="${TRENTO_NAMESPACE:-trento}"
@@ -346,4 +350,7 @@ main() {
   esac
 }
 
-main "$@"
+# Only run main when executed directly (not when sourced for tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
