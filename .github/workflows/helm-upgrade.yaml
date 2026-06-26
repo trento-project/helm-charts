@@ -107,7 +107,7 @@ jobs:
             -w /workspace \
             -e GIT_SOURCE_URL="${GIT_SOURCE_URL}" \
             "${OBS_CONTAINER}" \
-            bash /workspace/.github/scripts/helm-upgrade-obs-process.sh
+            bash /workspace/.github/scripts/helm-upgrade-helper.sh process-obs-package "${GIT_SOURCE_URL}"
 
           # Fix permissions on extracted chart (Docker ran as root)
           sudo chown -R $(id -u):$(id -g) obs-artifacts/
