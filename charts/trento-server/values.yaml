@@ -43,14 +43,12 @@ global:
           enabled: true
           issuerName: rabbitmq-ca-issuer
           issuerKind: Issuer
-
 ### Sub Charts Specific Values ###
 trento-web:
   nameOverride: web
   enabled: true
   image:
     repository: ghcr.io/trento-project/trento-web
-
 trento-wanda:
   nameOverride: wanda
   enabled: true
@@ -59,13 +57,11 @@ trento-wanda:
   checks:
     image:
       repository: ghcr.io/trento-project/trento-checks
-
 trento-mcp-server:
   nameOverride: mcp-server
   enabled: false
   image:
     repository: ghcr.io/trento-project/mcp-server-trento
-
 postgresql:
   enabled: true
   persistence:
@@ -106,13 +102,12 @@ postgresql:
             value: "{{ .Values.postgresqlDatabase }}"
           - name: PGDATA
             value: "{{ .Values.postgresqlDataDir }}"
-
 prometheus:
   enabled: true
   server:
     enabled: true
     image:
-      tag: v2.53.1
+      tag: v3.13.0
     configMapOverrideName: prometheus-configmap
     prefixURL: "/prometheus"
     baseURL: "/prometheus"
@@ -155,7 +150,6 @@ prometheus:
           port: 8081
           protocol: TCP
           targetPort: 8081
-
     ingress:
       enabled: true
       ingressClassName: ""
@@ -167,7 +161,6 @@ prometheus:
       tls: []
       # Route ingress traffic through the auth sidecar
       servicePort: 8081
-
   alertmanager:
     enabled: false
   prometheus-pushgateway:
@@ -179,26 +172,22 @@ prometheus:
     enabled: false
   prometheus-node-exporter:
     enabled: false
-
   migrationHook:
     image:
       registry: registry.suse.com
       repository: suse/kubectl
       tag: "1.35"
-
 rabbitmq:
   enabled: true
   persistence:
     enabled: true
   service:
     type: LoadBalancer
-
   certWaiter:
     image:
       registry: registry.suse.com
       repository: suse/kubectl
       tag: "1.35"
-
   extraConfiguration: |
     {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
     listeners.ssl.default = 5671
