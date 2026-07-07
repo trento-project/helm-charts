@@ -6,21 +6,36 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$REPO_ROOT"
+
+# Only change directory when running directly (not when sourced for tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  cd "$REPO_ROOT"
+fi
 
 CHART_DIR="${CHART_DIR:-charts/trento-server}"
 TRENTO_NAMESPACE="${TRENTO_NAMESPACE:-trento}"
 
+# === Display Utilities ===
+
+# Print a section header.
+# Args: $1 (string) - Section title
 section() {
   printf '\n%s\n' "$1"
 }
 
+# Print a formatted banner with border.
+# Args: $1 (string) - Banner text
 banner() {
   printf '%s\n' "╔════════════════════════════════════════════════════════════════════════╗"
   printf '%s\n' "║$1║"
   printf '%s\n' "╚════════════════════════════════════════════════════════════════════════╝"
 }
 
+# === Kubernetes Diagnostics ===
+
+# Display status of all pods and highlight non-running pods.
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Pod status information
 show_pods_status() {
   section "=== All pods ==="
   kubectl get pods -n "$TRENTO_NAMESPACE" -o wide
@@ -29,6 +44,11 @@ show_pods_status() {
   kubectl get pods -n "$TRENTO_NAMESPACE" --field-selector=status.phase!=Running -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,REASON:.status.reason 2>/dev/null || echo "✅ All pods running"
 }
 
+# Display Kubernetes events for the namespace.
+# Args: $1 (string, optional) - If set, show all events; otherwise recent events
+#       $2 (string, optional) - Number of recent events to show (default: 30)
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Kubernetes events
 show_events() {
   local sort_by="${1:-}"
   local limit="${2:-30}"
@@ -42,6 +62,13 @@ show_events() {
   fi
 }
 
+# Display logs from all pods in the namespace.
+# Args: $1 (string, optional) - Number of log lines per pod (default: 30, 0 for all)
+#       $2 (string, optional) - Context prefix for section header (e.g., "Recent ")
+#       $3 (string, optional) - Whether to show previous container logs (default: false)
+#       $4 (string, optional) - Custom separator line
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Pod logs for each container
 show_pod_logs() {
   local log_lines="${1:-30}"
   local log_context="${2:-}"
@@ -65,6 +92,9 @@ show_pod_logs() {
   done
 }
 
+# Display logs only from failed or pending pods.
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Logs from non-running pods (last 100 lines each)
 show_failed_pod_logs() {
   section "=== Logs for failed/pending pods ==="
   local failed_pods
@@ -82,6 +112,10 @@ show_failed_pod_logs() {
   fi
 }
 
+# === Diagnostic Suites ===
+
+# Run post-installation diagnostic checks.
+# Outputs: Pod status, events, and failed pod logs
 post_install_diagnostics() {
   banner "                      POST-INSTALL DIAGNOSTICS                          "
   show_pods_status
@@ -91,6 +125,12 @@ post_install_diagnostics() {
   banner "                      DIAGNOSTICS COMPLETE                              "
 }
 
+# === Version Comparison ===
+
+# Compare container image versions between two files and display differences.
+# Args: $1 (string) - Path to current images file (format: chart|name|type|image:tag)
+#       $2 (string) - Path to new images file (format: chart|image:tag)
+# Outputs: Formatted comparison showing version changes, new images, and unchanged images
 compare_versions() {
   local current_images_file="$1"
   local new_images_file="$2"
@@ -145,6 +185,9 @@ compare_versions() {
   echo "────────────────────────────────────────────────────────────────────────"
 }
 
+# Extract and compare container versions between deployed pods and Helm chart.
+# Uses: TRENTO_NAMESPACE, CHART_DIR, HELM_COMMON_FLAGS environment variables
+# Outputs: Comparison of current vs new container image versions
 compare_container_versions() {
   local tmp_current_images
   local tmp_new_images
@@ -207,6 +250,11 @@ compare_container_versions() {
 }
 
 
+# === API Testing ===
+
+# Verify API functionality through ingress endpoint.
+# Uses: TRENTO_NAMESPACE, TRENTO_WEB_ORIGIN, REPO_ROOT environment variables
+# Outputs: API test results and certificate information
 verify_api() {
   banner "                         API FUNCTIONALITY TEST                         "
   echo ""
@@ -233,6 +281,9 @@ verify_api() {
     bash "$REPO_ROOT/.github/scripts/helm-upgrade-smoke-test.sh"
 }
 
+# Display logs from web pod init container (database migrations).
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Init container logs for web pod
 show_web_init_logs() {
   section "=== Web init container logs (DB migration) ==="
   local web_pod
@@ -246,6 +297,8 @@ show_web_init_logs() {
   fi
 }
 
+# Run post-upgrade diagnostic checks.
+# Outputs: Pod status, events, web init logs, and recent pod logs
 post_upgrade_diagnostics() {
   banner "                         POST-UPGRADE DIAGNOSTICS                       "
   show_pods_status
@@ -256,12 +309,297 @@ post_upgrade_diagnostics() {
   banner "                      DIAGNOSTICS COMPLETE                              "
 }
 
+# Run comprehensive failure diagnostics with full logs.
+# Outputs: Pod status, all events, and full pod logs including previous containers
 failure_diagnostics() {
   banner "                    FAILURE DIAGNOSTICS - FULL LOGS                     "
   echo ""
   show_pods_status
   show_events "all"
   show_pod_logs 0 "Full " true "════════════════════════════════════════════════════════════════════════"
+}
+
+# === OBS Package Processing Functions ===
+
+# Fetch OBS package from git mirror repository.
+# Args: $1 (string) - Git source URL to clone from
+#       $2 (string) - Working directory path
+# Returns: 0 on success, 1 on failure
+# Outputs: Path to cloned obs-package directory
+fetch_obs_package() {
+  local git_url="$1"
+  local work_dir="$2"
+
+  echo "Fetching OBS package from ${git_url}..." >&2
+
+  if ! git clone --depth 1 "${git_url}" "${work_dir}/obs-package" 2>/dev/null; then
+    echo "ERROR: Failed to clone OBS package from ${git_url}" >&2
+    return 1
+  fi
+
+  echo "${work_dir}/obs-package"
+  return 0
+}
+
+# Verify required OBS package files exist.
+# Args: $1 (string) - Path to OBS package directory
+# Returns: 0 if all required files exist, 1 otherwise
+verify_obs_package_files() {
+  local obs_dir="$1"
+  # Note: values.yaml is processed by buildtime services and may not exist initially
+  local required_files=("_service" "contents.tar.gz")
+
+  for file in "${required_files[@]}"; do
+    if [ ! -f "${obs_dir}/${file}" ]; then
+      echo "ERROR: ${file} not found in OBS package"
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+# Extract chart contents from OBS package tarball.
+# Args: $1 (string) - Path to OBS package directory
+#       $2 (string) - Destination chart directory path
+# Returns: 0 on success, 1 on failure
+extract_chart_contents() {
+  local obs_dir="$1"
+  local chart_dir="$2"
+
+  echo "Extracting upstream chart contents from contents.tar.gz..."
+
+  mkdir -p "${chart_dir}"
+
+  if ! tar -xzf "${obs_dir}/contents.tar.gz" -C "${chart_dir}" 2>/dev/null; then
+    echo "ERROR: Failed to extract contents.tar.gz"
+    return 1
+  fi
+
+  echo "Contents of extracted tarball:"
+  ls -laR "${chart_dir}/"
+
+  return 0
+}
+
+# Copy Chart.yaml from OBS package to chart directory.
+# Args: $1 (string) - Path to OBS package directory
+#       $2 (string) - Destination chart directory
+# Returns: 0 on success, 1 on failure
+copy_chart_yaml() {
+  local obs_dir="$1"
+  local chart_dir="$2"
+
+  echo "Copying Chart.yaml to upstream chart..."
+
+  if ! cp "${obs_dir}/Chart.yaml" "${chart_dir}/"; then
+    echo "ERROR: Failed to copy Chart.yaml"
+    return 1
+  fi
+
+  if [ ! -f "${chart_dir}/Chart.yaml" ]; then
+    echo "ERROR: Chart.yaml not found in chart directory after copy"
+    return 1
+  fi
+
+  return 0
+}
+
+# Display chart directory structure.
+# Args: $1 (string) - Path to chart directory
+display_chart_structure() {
+  local chart_dir="$1"
+
+  echo "Final chart directory structure:"
+  ls -la "${chart_dir}/"
+
+  if [ -d "${chart_dir}/templates" ]; then
+    local template_count
+    template_count=$(ls -1 "${chart_dir}/templates" | wc -l)
+    echo "Templates directory exists with ${template_count} files"
+  fi
+}
+
+# Create RPM macros file for OBS buildtime services.
+# Args: $1 (string, optional) - Registry URL (default: registry.suse.com)
+#       $2 (string, optional) - Image repository prefix (default: trento)
+#       $3 (string, optional) - Output file path (default: /root/.rpmmacros)
+# Returns: 0 on success, 1 on failure
+create_rpm_macros() {
+  local registry_url="${1:-registry.suse.com}"
+  local repo_prefix="${2:-trento}"
+  local output_file="${3:-/root/.rpmmacros}"
+
+  cat > "$output_file" <<EOF
+%registry_url ${registry_url}
+%img_repository_prefix ${repo_prefix}
+EOF
+
+  return 0
+}
+
+# Extract buildtime service section from _service file.
+# Args: $1 (string) - Path to _service file
+# Outputs: Buildtime service XML section
+extract_buildtime_service() {
+  local service_file="$1"
+
+  sed -n '/<service.*mode="buildtime"/,/<\/service>/p' "${service_file}"
+}
+
+# Extract file parameter from replace_using_env service.
+# Args: $1 (string) - Buildtime service XML content
+# Outputs: File parameter value
+# Returns: 0 on success, 1 if not found
+extract_file_parameter() {
+  local service_xml="$1"
+
+  local file_param
+  file_param=$(echo "$service_xml" | grep 'param name="file"' | sed 's/.*>\(.*\)<.*/\1/' | head -n1)
+
+  if [ -z "$file_param" ]; then
+    echo "ERROR: replace_using_env file parameter not found" >&2
+    return 1
+  fi
+
+  echo "$file_param"
+  return 0
+}
+
+# Build command array for replace_using_env service.
+# Args: $1 (string) - File parameter value
+#       $2 (string) - Buildtime service XML content
+# Outputs: Executes replace_using_env command
+# Returns: 0 on success, 1 on failure
+run_replace_using_env() {
+  local file_param="$1"
+  local service_xml="$2"
+
+  # Build the command as an argv array to avoid eval/injection
+  local cmd=(/usr/lib/obs/service/replace_using_env --file "${file_param}")
+
+  # Process eval and var parameters (multiple)
+  while IFS= read -r param_line; do
+    local param_name param_value
+    param_name=$(echo "$param_line" | sed 's/.*name="\([^"]*\)".*/\1/')
+    param_value=$(echo "$param_line" | sed 's/.*>\(.*\)<.*/\1/')
+    cmd+=("--${param_name}" "${param_value}")
+  done < <(echo "$service_xml" | grep 'param name=' | grep -E '(eval|var)')
+
+  if ! "${cmd[@]}" > /dev/null 2>&1; then
+    echo "ERROR: replace_using_env failed"
+    return 1
+  fi
+
+  return 0
+}
+
+# Process OBS buildtime services from _service file.
+# Args: $1 (string) - Path to OBS package directory
+#       $2 (string) - Path to chart directory
+# Returns: 0 on success, 1 on failure
+process_buildtime_services() {
+  local obs_dir="$1"
+  local chart_dir="$2"
+
+  echo "Running buildtime services from _service..."
+
+  local buildtime_service
+  buildtime_service=$(extract_buildtime_service "${obs_dir}/_service")
+
+  # Check if replace_using_env service exists
+  if echo "$buildtime_service" | grep -q 'name="replace_using_env"'; then
+    local file_param
+    if ! file_param=$(extract_file_parameter "$buildtime_service"); then
+      return 1
+    fi
+
+    # Run from OBS directory to process files in place
+    if ! (cd "${obs_dir}" && run_replace_using_env "${file_param}" "$buildtime_service"); then
+      return 1
+    fi
+
+    # Copy the processed values.yaml to the extracted chart
+    echo "Copying processed values.yaml to upstream chart..."
+    if ! cp "${obs_dir}/values.yaml" "${chart_dir}/values.yaml"; then
+      echo "ERROR: Failed to copy processed values.yaml"
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+# Copy OBS artifacts to workspace.
+# Args: $1 (string) - Source chart directory
+#       $2 (string) - Destination workspace directory
+# Returns: 0 on success, 1 on failure
+copy_obs_artifacts() {
+  local chart_dir="$1"
+  local workspace_dir="$2"
+
+  echo "Copying upstream chart to workspace..."
+
+  if ! cp -r "${chart_dir}" "${workspace_dir}/chart"; then
+    echo "ERROR: Failed to copy chart to workspace"
+    return 1
+  fi
+
+  if ! cp "${workspace_dir}/chart/values.yaml" "${workspace_dir}/values-obs.yaml"; then
+    echo "ERROR: Failed to copy values-obs.yaml"
+    return 1
+  fi
+
+  return 0
+}
+
+# Process OBS package artifacts.
+# Args: $1 (string) - Git source URL
+#       $2 (string) - Workspace directory (default: /workspace/obs-artifacts)
+# Returns: 0 on success, 1 on failure
+process_obs_package() {
+  local git_source_url="$1"
+  local workspace_dir="${2:-/workspace/obs-artifacts}"
+  local work_dir
+  work_dir=$(mktemp -d)
+
+  local obs_dir chart_dir
+
+  # Fetch and verify OBS package
+  if ! obs_dir=$(fetch_obs_package "${git_source_url}" "${work_dir}"); then
+    return 1
+  fi
+
+  if ! verify_obs_package_files "${obs_dir}"; then
+    return 1
+  fi
+
+  # Extract and prepare chart
+  chart_dir="${work_dir}/upstream-chart"
+  if ! extract_chart_contents "${obs_dir}" "${chart_dir}"; then
+    return 1
+  fi
+
+  if ! copy_chart_yaml "${obs_dir}" "${chart_dir}"; then
+    return 1
+  fi
+
+  display_chart_structure "${chart_dir}"
+
+  # Process buildtime services
+  create_rpm_macros "registry.suse.com" "trento"
+
+  if ! process_buildtime_services "${obs_dir}" "${chart_dir}"; then
+    return 1
+  fi
+
+  # Copy to workspace
+  if ! copy_obs_artifacts "${chart_dir}" "${workspace_dir}"; then
+    return 1
+  fi
+
+  echo "OBS package processing completed successfully"
+  return 0
 }
 
 main() {
@@ -281,6 +619,10 @@ main() {
     failure-diagnostics)
       failure_diagnostics
       ;;
+    process-obs-package)
+      shift
+      process_obs_package "$@"
+      ;;
     *)
       printf '%s\n' "Usage: upgrade-test.sh <command>" >&2
       printf '%s\n' "" >&2
@@ -290,9 +632,13 @@ main() {
       printf '%s\n' "  post-upgrade-diagnostics" >&2
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
+      printf '%s\n' "  process-obs-package <git-url> [workspace-dir]" >&2
       exit 1
       ;;
   esac
 }
 
-main "$@"
+# Only run main when executed directly (not when sourced for tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
