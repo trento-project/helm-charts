@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.1](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.0...3.1.1) - 2026-07-02
+
+### What's Changed
+
+* Trigger release 3.1.1 (#233) @vicenteqa
+
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.0...3.1.1
+
 ## [3.1.0](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.0.1...3.1.0) - 2026-05-20
 
 ### What's Changed
@@ -111,7 +119,6 @@
 * Bump helm/chart-releaser-action from 1.6.0 to 1.7.0 by @dependabot in https://github.com/trento-project/helm-charts/pull/123
 </details>
 **Full Changelog**: https://github.com/trento-project/helm-charts/compare/2.4.1...2.5.0
-
 ## [2.4.0](https://github.com/trento-project/helm-charts/tree/2.4.0) (2024-11-12)
 
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.2...2.4.0)
