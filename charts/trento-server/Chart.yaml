@@ -24,9 +24,11 @@ dependencies:
     version: ">0.0.0"
     condition: postgresql.enabled
   - name: prometheus
-    version: ~25.21.0
+    version: 29.10.1
     repository: https://prometheus-community.github.io/helm-charts/
     condition: prometheus.enabled
   - name: rabbitmq
     version: ">0.0.0-0"
     condition: rabbitmq.enabled
+  - name: common
+    version: ">0.0.0-0"
