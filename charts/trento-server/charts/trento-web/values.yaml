@@ -79,7 +79,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/trento-project/trento-web
   pullPolicy: IfNotPresent
-  tag: 3.1.2
+  tag: 7012366806370b50d3a915116d31ed373a1e8e70
 postgresql:
   image:
     registry: registry.suse.com
