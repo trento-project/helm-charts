@@ -31,6 +31,12 @@ banner() {
   printf '%s\n' "╚════════════════════════════════════════════════════════════════════════╝"
 }
 
+# Print a separator line.
+separator() {
+  printf '─%.0s' {1..72}
+  printf '\n'
+}
+
 # === Kubernetes Diagnostics ===
 
 # Display status of all pods and highlight non-running pods.
@@ -73,15 +79,13 @@ show_pod_logs() {
   local log_lines="${1:-30}"
   local log_context="${2:-}"
   local show_previous="${3:-false}"
-  local separator="${4:-────────────────────────────────────────────────────────────────────────}"
-
   section "=== ${log_context}Pod logs (last $log_lines lines each) ==="
   local pod
   for pod in $(kubectl get pods -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[*].metadata.name}'); do
     echo ""
-    echo "$separator"
+    separator
     echo "Pod: $pod"
-    echo "$separator"
+    separator
     kubectl logs -n "$TRENTO_NAMESPACE" "$pod" --all-containers=true --tail="$log_lines" --ignore-errors=true || echo "No logs available"
 
     if [ "$show_previous" = "true" ]; then
@@ -102,9 +106,9 @@ show_failed_pod_logs() {
   if [ -n "$failed_pods" ]; then
     for pod in $failed_pods; do
       echo ""
-      echo "────────────────────────────────────────────────────────────────────────"
+      separator
       echo "Pod: $pod (last 100 lines)"
-      echo "────────────────────────────────────────────────────────────────────────"
+      separator
       kubectl logs -n "$TRENTO_NAMESPACE" "$pod" --all-containers=true --tail=100 --ignore-errors=true || echo "No logs available"
     done
   else
@@ -150,7 +154,7 @@ compare_versions() {
     if [ "$chart_name" != "$current_chart" ]; then
       if [ -n "$current_chart" ]; then echo ""; fi
       echo "📦 Chart: ${chart_name}"
-      echo "────────────────────────────────────────────────────────────────────────"
+      separator
       current_chart="$chart_name"
     fi
 
@@ -182,7 +186,7 @@ compare_versions() {
   done < "$new_images_file"
 
   echo ""
-  echo "────────────────────────────────────────────────────────────────────────"
+  separator
 }
 
 # Extract and compare container versions between deployed pods and Helm chart.
