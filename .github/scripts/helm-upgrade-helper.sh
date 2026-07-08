@@ -606,6 +606,45 @@ process_obs_package() {
   return 0
 }
 
+# Compare OBS stable and main branches values.yaml
+# Args: $1 (string) - Path to stable branch values.yaml
+#       $2 (string) - Path to main branch values.yaml
+# Returns: 0 if identical, 1 if different
+# Outputs: Formatted diff showing differences
+compare_obs_branches() {
+  local stable_values="$1"
+  local main_values="$2"
+
+  if [ ! -f "$stable_values" ]; then
+    echo "ERROR: Stable values file not found: $stable_values" >&2
+    return 1
+  fi
+
+  if [ ! -f "$main_values" ]; then
+    echo "ERROR: Main values file not found: $main_values" >&2
+    return 1
+  fi
+
+  banner "           Comparing OBS stable vs main branch values.yaml             "
+
+  local tmp_diff
+  tmp_diff=$(mktemp)
+
+  if diff -u "$stable_values" "$main_values" > "$tmp_diff"; then
+    echo "✅ No differences between OBS stable and main branches"
+    rm -f "$tmp_diff"
+    return 0
+  else
+    section "=== Differences found between OBS stable and main ==="
+    cat "$tmp_diff"
+    echo ""
+    separator
+    echo "NOTE: These differences may indicate that stable needs to be updated"
+    rm -f "$tmp_diff"
+    return 1
+  fi
+}
+
 main() {
   case "${1:-}" in
     post-install-diagnostics)
@@ -627,6 +666,10 @@ main() {
       shift
       process_obs_package "$@"
       ;;
+    compare-obs-branches)
+      shift
+      compare_obs_branches "$@"
+      ;;
     *)
       printf '%s\n' "Usage: upgrade-test.sh <command>" >&2
       printf '%s\n' "" >&2
@@ -637,6 +680,7 @@ main() {
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
       printf '%s\n' "  process-obs-package <git-url> [workspace-dir]" >&2
+      printf '%s\n' "  compare-obs-branches <stable-values> <main-values>" >&2
       exit 1
       ;;
   esac

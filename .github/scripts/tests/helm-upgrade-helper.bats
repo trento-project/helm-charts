@@ -1265,3 +1265,71 @@ EOF
   # Should trim whitespace
   [[ "$output" == *"values.yaml"* ]]
 }
+
+# === OBS Branch Comparison Tests ===
+
+@test "compare_obs_branches: returns 0 when files are identical" {
+  stable_values="$TEST_TMP/stable-values.yaml"
+  main_values="$TEST_TMP/main-values.yaml"
+
+  cat > "$stable_values" << 'EOF'
+trento-web:
+  image:
+    repository: registry.suse.com/trento/trento-web
+trento-wanda:
+  checks:
+    image:
+      repository: registry.suse.com/trento/trento-checks
+EOF
+
+  cp "$stable_values" "$main_values"
+
+  run compare_obs_branches "$stable_values" "$main_values"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No differences"* ]]
+}
+
+@test "compare_obs_branches: returns 1 when files differ" {
+  stable_values="$TEST_TMP/stable-values.yaml"
+  main_values="$TEST_TMP/main-values.yaml"
+
+  cat > "$stable_values" << 'EOF'
+trento-wanda:
+  checks:
+    image:
+      repository: registry.suse.com/trento/checks
+EOF
+
+  cat > "$main_values" << 'EOF'
+trento-wanda:
+  checks:
+    image:
+      repository: registry.suse.com/trento/trento-checks
+EOF
+
+  run compare_obs_branches "$stable_values" "$main_values"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Differences found"* ]]
+  [[ "$output" == *"trento/checks"* ]]
+  [[ "$output" == *"trento/trento-checks"* ]]
+}
+
+@test "compare_obs_branches: returns error when stable file missing" {
+  main_values="$TEST_TMP/main-values.yaml"
+  echo "test" > "$main_values"
+
+  run compare_obs_branches "/nonexistent/file" "$main_values"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR"* ]]
+  [[ "$output" == *"Stable values file not found"* ]]
+}
+
+@test "compare_obs_branches: returns error when main file missing" {
+  stable_values="$TEST_TMP/stable-values.yaml"
+  echo "test" > "$stable_values"
+
+  run compare_obs_branches "$stable_values" "/nonexistent/file"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ERROR"* ]]
+  [[ "$output" == *"Main values file not found"* ]]
+}
