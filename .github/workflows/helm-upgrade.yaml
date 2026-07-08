@@ -117,13 +117,16 @@ jobs:
       - name: Compare OBS stable vs main branches
         if: matrix.source == env.SOURCE_OBS_ARTIFACTS
         run: |
+          obs_stable_dir="$(mktemp -d)"
+          trap 'rm -rf "$obs_stable_dir"' EXIT
+
           echo "Cloning OBS stable branch for comparison..."
           git clone --branch stable --depth 1 \
-            https://src.opensuse.org/SAP-trento/trento-server-helm.git /tmp/obs-stable
+            https://src.opensuse.org/SAP-trento/trento-server-helm.git "$obs_stable_dir"
 
           # Run comparison and capture exit code
           if ! bash .github/scripts/helm-upgrade-helper.sh compare-obs-branches \
-            /tmp/obs-stable/values.yaml \
+            "$obs_stable_dir/values.yaml" \
             obs-artifacts/chart/values.yaml; then
             echo "::notice title=OBS Branch Drift Detected::Differences found between OBS stable and main branches. The stable branch may need to be updated with changes from main. See the comparison output above for details."
           fi

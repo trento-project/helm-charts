@@ -72,7 +72,6 @@ show_events() {
 # Args: $1 (string, optional) - Number of log lines per pod (default: 30, 0 for all)
 #       $2 (string, optional) - Context prefix for section header (e.g., "Recent ")
 #       $3 (string, optional) - Whether to show previous container logs (default: false)
-#       $4 (string, optional) - Custom separator line
 # Uses: TRENTO_NAMESPACE environment variable
 # Outputs: Pod logs for each container
 show_pod_logs() {
@@ -628,21 +627,31 @@ compare_obs_branches() {
   banner "           Comparing OBS stable vs main branch values.yaml             "
 
   local tmp_diff
-  tmp_diff=$(mktemp)
+  tmp_diff="$(mktemp)"
+  trap 'rm -f "$tmp_diff"' RETURN
 
-  if diff -u "$stable_values" "$main_values" > "$tmp_diff"; then
+  local diff_rc=0
+  diff -u "$stable_values" "$main_values" > "$tmp_diff" || diff_rc=$?
+
+  if [ "$diff_rc" -eq 0 ]; then
     echo "✅ No differences between OBS stable and main branches"
-    rm -f "$tmp_diff"
     return 0
-  else
-    section "=== Differences found between OBS stable and main ==="
-    cat "$tmp_diff"
-    echo ""
-    separator
-    echo "NOTE: These differences may indicate that stable needs to be updated"
-    rm -f "$tmp_diff"
+  fi
+
+  if [ "$diff_rc" -ne 1 ]; then
+    echo "ERROR: diff failed (exit $diff_rc) while comparing $stable_values and $main_values" >&2
+    if [ -s "$tmp_diff" ]; then
+      cat "$tmp_diff"
+    fi
     return 1
   fi
+
+  section "=== Differences found between OBS stable and main ==="
+  cat "$tmp_diff"
+  echo ""
+  separator
+  echo "NOTE: These differences may indicate that stable needs to be updated"
+  return 1
 }
 
 main() {
