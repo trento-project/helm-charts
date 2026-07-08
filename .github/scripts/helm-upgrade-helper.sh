@@ -628,13 +628,13 @@ compare_obs_branches() {
 
   local tmp_diff
   tmp_diff="$(mktemp)"
-  trap 'rm -f "$tmp_diff"' RETURN
 
   local diff_rc=0
   diff -u "$stable_values" "$main_values" > "$tmp_diff" || diff_rc=$?
 
   if [ "$diff_rc" -eq 0 ]; then
     echo "✅ No differences between OBS stable and main branches"
+    rm -f "$tmp_diff"
     return 0
   fi
 
@@ -643,11 +643,13 @@ compare_obs_branches() {
     if [ -s "$tmp_diff" ]; then
       cat "$tmp_diff"
     fi
+    rm -f "$tmp_diff"
     return 2
   fi
 
   section "=== Differences found between OBS stable and main ==="
   cat "$tmp_diff"
+  rm -f "$tmp_diff"
   echo ""
   separator
   echo "NOTE: These differences may indicate that stable needs to be updated"
