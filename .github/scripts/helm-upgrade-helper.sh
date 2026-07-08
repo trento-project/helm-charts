@@ -31,6 +31,12 @@ banner() {
   printf '%s\n' "╚════════════════════════════════════════════════════════════════════════╝"
 }
 
+# Print a separator line.
+separator() {
+  printf '─%.0s' {1..72}
+  printf '\n'
+}
+
 # === Kubernetes Diagnostics ===
 
 # Display status of all pods and highlight non-running pods.
@@ -66,22 +72,19 @@ show_events() {
 # Args: $1 (string, optional) - Number of log lines per pod (default: 30, 0 for all)
 #       $2 (string, optional) - Context prefix for section header (e.g., "Recent ")
 #       $3 (string, optional) - Whether to show previous container logs (default: false)
-#       $4 (string, optional) - Custom separator line
 # Uses: TRENTO_NAMESPACE environment variable
 # Outputs: Pod logs for each container
 show_pod_logs() {
   local log_lines="${1:-30}"
   local log_context="${2:-}"
   local show_previous="${3:-false}"
-  local separator="${4:-────────────────────────────────────────────────────────────────────────}"
-
   section "=== ${log_context}Pod logs (last $log_lines lines each) ==="
   local pod
   for pod in $(kubectl get pods -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[*].metadata.name}'); do
     echo ""
-    echo "$separator"
+    separator
     echo "Pod: $pod"
-    echo "$separator"
+    separator
     kubectl logs -n "$TRENTO_NAMESPACE" "$pod" --all-containers=true --tail="$log_lines" --ignore-errors=true || echo "No logs available"
 
     if [ "$show_previous" = "true" ]; then
@@ -102,9 +105,9 @@ show_failed_pod_logs() {
   if [ -n "$failed_pods" ]; then
     for pod in $failed_pods; do
       echo ""
-      echo "────────────────────────────────────────────────────────────────────────"
+      separator
       echo "Pod: $pod (last 100 lines)"
-      echo "────────────────────────────────────────────────────────────────────────"
+      separator
       kubectl logs -n "$TRENTO_NAMESPACE" "$pod" --all-containers=true --tail=100 --ignore-errors=true || echo "No logs available"
     done
   else
@@ -150,7 +153,7 @@ compare_versions() {
     if [ "$chart_name" != "$current_chart" ]; then
       if [ -n "$current_chart" ]; then echo ""; fi
       echo "📦 Chart: ${chart_name}"
-      echo "────────────────────────────────────────────────────────────────────────"
+      separator
       current_chart="$chart_name"
     fi
 
@@ -182,7 +185,7 @@ compare_versions() {
   done < "$new_images_file"
 
   echo ""
-  echo "────────────────────────────────────────────────────────────────────────"
+  separator
 }
 
 # Extract and compare container versions between deployed pods and Helm chart.
@@ -602,6 +605,57 @@ process_obs_package() {
   return 0
 }
 
+# Compare OBS stable and main branches values.yaml
+# Args: $1 (string) - Path to stable branch values.yaml
+#       $2 (string) - Path to main branch values.yaml
+# Returns: 0 if identical, 1 if different, 2 on error
+# Outputs: Formatted diff showing differences
+compare_obs_branches() {
+  local stable_values="$1"
+  local main_values="$2"
+
+  if [ ! -f "$stable_values" ]; then
+    echo "ERROR: Stable values file not found: $stable_values" >&2
+    return 2
+  fi
+
+  if [ ! -f "$main_values" ]; then
+    echo "ERROR: Main values file not found: $main_values" >&2
+    return 2
+  fi
+
+  banner "           Comparing OBS stable vs main branch values.yaml             "
+
+  local tmp_diff
+  tmp_diff="$(mktemp)"
+
+  local diff_rc=0
+  diff -u "$stable_values" "$main_values" > "$tmp_diff" || diff_rc=$?
+
+  if [ "$diff_rc" -eq 0 ]; then
+    echo "✅ No differences between OBS stable and main branches"
+    rm -f "$tmp_diff"
+    return 0
+  fi
+
+  if [ "$diff_rc" -ne 1 ]; then
+    echo "ERROR: diff failed (exit $diff_rc) while comparing $stable_values and $main_values" >&2
+    if [ -s "$tmp_diff" ]; then
+      cat "$tmp_diff"
+    fi
+    rm -f "$tmp_diff"
+    return 2
+  fi
+
+  section "=== Differences found between OBS stable and main ==="
+  cat "$tmp_diff"
+  rm -f "$tmp_diff"
+  echo ""
+  separator
+  echo "NOTE: These differences may indicate that stable needs to be updated"
+  return 1
+}
+
 main() {
   case "${1:-}" in
     post-install-diagnostics)
@@ -623,6 +677,10 @@ main() {
       shift
       process_obs_package "$@"
       ;;
+    compare-obs-branches)
+      shift
+      compare_obs_branches "$@"
+      ;;
     *)
       printf '%s\n' "Usage: upgrade-test.sh <command>" >&2
       printf '%s\n' "" >&2
@@ -633,6 +691,7 @@ main() {
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
       printf '%s\n' "  process-obs-package <git-url> [workspace-dir]" >&2
+      printf '%s\n' "  compare-obs-branches <stable-values> <main-values>" >&2
       exit 1
       ;;
   esac
