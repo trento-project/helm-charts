@@ -608,7 +608,7 @@ process_obs_package() {
 # Compare OBS stable and main branches values.yaml
 # Args: $1 (string) - Path to stable branch values.yaml
 #       $2 (string) - Path to main branch values.yaml
-# Returns: 0 if identical, 1 if different
+# Returns: 0 if identical, 1 if different, 2 on error
 # Outputs: Formatted diff showing differences
 compare_obs_branches() {
   local stable_values="$1"
@@ -616,12 +616,12 @@ compare_obs_branches() {
 
   if [ ! -f "$stable_values" ]; then
     echo "ERROR: Stable values file not found: $stable_values" >&2
-    return 1
+    return 2
   fi
 
   if [ ! -f "$main_values" ]; then
     echo "ERROR: Main values file not found: $main_values" >&2
-    return 1
+    return 2
   fi
 
   banner "           Comparing OBS stable vs main branch values.yaml             "
@@ -643,7 +643,7 @@ compare_obs_branches() {
     if [ -s "$tmp_diff" ]; then
       cat "$tmp_diff"
     fi
-    return 1
+    return 2
   fi
 
   section "=== Differences found between OBS stable and main ==="

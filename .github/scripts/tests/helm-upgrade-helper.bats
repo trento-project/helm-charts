@@ -1319,7 +1319,7 @@ EOF
   echo "test" > "$main_values"
 
   run compare_obs_branches "/nonexistent/file" "$main_values"
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 2 ]
   [[ "$output" == *"ERROR"* ]]
   [[ "$output" == *"Stable values file not found"* ]]
 }
@@ -1329,7 +1329,7 @@ EOF
   echo "test" > "$stable_values"
 
   run compare_obs_branches "$stable_values" "/nonexistent/file"
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 2 ]
   [[ "$output" == *"ERROR"* ]]
   [[ "$output" == *"Main values file not found"* ]]
 }
