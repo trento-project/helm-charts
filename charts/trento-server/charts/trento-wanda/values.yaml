@@ -29,7 +29,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/trento-project/trento-wanda
   pullPolicy: IfNotPresent
-  tag: 2.1.0
+  tag: 10288e9a1b558aec97be7967c3728b79e6190bfe
 postgresql:
   image:
     registry: registry.suse.com
@@ -40,7 +40,6 @@ checks:
     repository: ghcr.io/trento-project/checks
     pullPolicy: IfNotPresent
     tag: 1.3.1
-
 secretKeyBase: ""
 imagePullSecrets: []
 nameOverride: ""
