@@ -92,7 +92,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: wait
-        image: registry.k8s.io/kubectl:v1.33.3
+        image: {{ .Values.rabbitmq.certWaiter.image.registry }}/{{ .Values.rabbitmq.certWaiter.image.repository }}:{{ .Values.rabbitmq.certWaiter.image.tag }}
         command:
         - kubectl
         - wait
