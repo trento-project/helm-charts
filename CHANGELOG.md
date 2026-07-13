@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.1.2](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.1...3.1.2) - 2026-07-13
+
+### What's Changed
+
+* Proper name of the check container image (#255) @balanza
+* Update busybox and kubectl images to BCI (#254) @balanza
+* Add liveness and readiness probes in Web and Wanda (#253) @balanza
+* After release fixes (#256) @balanza
+
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.1...3.1.2
+
 ## [3.1.1](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.0...3.1.1) - 2026-07-02
 
 ### What's Changed
@@ -120,7 +131,6 @@
 </details>
 **Full Changelog**: https://github.com/trento-project/helm-charts/compare/2.4.1...2.5.0
 ## [2.4.0](https://github.com/trento-project/helm-charts/tree/2.4.0) (2024-11-12)
-
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.2...2.4.0)
 
 ### Added
