@@ -22,6 +22,7 @@ header:
     - ".github/dependabot.yml"
     - ".github_changelog_generator"
     - "LICENSE"
+    - "VERSION"
     - "NOTICE"
     - "charts/trento-server/charts/postgresql"
     - "charts/trento-server/charts/rabbitmq"
