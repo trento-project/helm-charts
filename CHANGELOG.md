@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.1.3](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.2...3.1.3) - 2026-07-19
+
+### What's Changed
+
+* [CVE Fix] Update prometheus to v3.13.1 (#262) @balanza
+* [CVE Fix] Update trento-web to 3.1.5 (#261) @balanza
+* [CVE Fix] Update kubectl to 1.35.4 (#260) @balanza
+
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.2...3.1.3
+
 ## [3.1.2](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.1...3.1.2) - 2026-07-13
 
 ### What's Changed
@@ -132,7 +142,6 @@
 **Full Changelog**: https://github.com/trento-project/helm-charts/compare/2.4.1...2.5.0
 ## [2.4.0](https://github.com/trento-project/helm-charts/tree/2.4.0) (2024-11-12)
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.2...2.4.0)
-
 ### Added
 
 - Fix typo in variable usage [#113](https://github.com/trento-project/helm-charts/pull/113) (@arbulu89)
