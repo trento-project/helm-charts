@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.1.4](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.3...3.1.4) - 2026-07-21
+
+### What's Changed
+
+* Trigger release 3.1.4 (#266) @balanza
+* Revert "[CVE Fix] Update prometheus to v3.13.1" (#265) @balanza
+
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.3...3.1.4
+
 ## [3.1.3](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.2...3.1.3) - 2026-07-19
 
 ### What's Changed
@@ -143,7 +152,6 @@
 ## [2.4.0](https://github.com/trento-project/helm-charts/tree/2.4.0) (2024-11-12)
 [Full Changelog](https://github.com/trento-project/helm-charts/compare/2.3.2...2.4.0)
 ### Added
-
 - Fix typo in variable usage [#113](https://github.com/trento-project/helm-charts/pull/113) (@arbulu89)
 - Make secret key base configurable [#112](https://github.com/trento-project/helm-charts/pull/112) (@arbulu89)
 - Add SAML integration [#106](https://github.com/trento-project/helm-charts/pull/106) (@arbulu89)
