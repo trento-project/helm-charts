@@ -109,3 +109,16 @@ Use postgresql image from the global values if set, otherwise use the local one
 {{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.postgresql.image | default dict) -}}
 {{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
 {{- end -}}
+
+{{/*
+Log level for this component.
+The local logLevel takes precedence over the global one
+*/}}
+{{- define "trento-wanda.logLevel" -}}
+{{- $validLevels := list "debug" "info" "warning" "error" -}}
+{{- $logLevel := .Values.logLevel | default .Values.global.logLevel -}}
+{{- if not (has $logLevel $validLevels) -}}
+{{- fail (printf "Invalid log level %q. Valid values are: %s. Set it with --set global.logLevel=<level> or --set %s.logLevel=<level>" $logLevel (join ", " $validLevels) .Chart.Name) -}}
+{{- end -}}
+{{- $logLevel -}}
+{{- end -}}
