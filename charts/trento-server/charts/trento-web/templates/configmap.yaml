@@ -7,6 +7,7 @@ kind: ConfigMap
 metadata:
   name: {{ include "trento-web.fullname" . }}-configmap
 data:
+  LOG_LEVEL: {{ .Values.logLevel | default .Values.global.logLevel | quote }}
   DATABASE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento"
   EVENTSTORE_URL: "ecto://{{ .Values.global.postgresql.postgresqlUsername }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Release.Name }}-{{ .Values.global.postgresql.name }}/trento_event_store"
   {{- with .Values.alerting }}
