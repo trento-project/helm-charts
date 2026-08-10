@@ -132,7 +132,7 @@ Use a different container registry:
 helm install trento . --set trento-web.image.repository="ghcr.io/myrepo/trento-web" --set trento-wanda.image.repository="ghcr.io/myrepo/trento-wanda"
 ....
 
-Use a different log level (one of `+debug+`, `+info+`, `+warning+`, `+error+):
+Use a different log level:
 [source,shell]
 ....
 helm install trento . --set global.logLevel="debug"

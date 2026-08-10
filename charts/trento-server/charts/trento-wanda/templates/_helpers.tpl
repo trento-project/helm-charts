@@ -115,10 +115,5 @@ Log level for this component.
 The local logLevel takes precedence over the global one
 */}}
 {{- define "trento-wanda.logLevel" -}}
-{{- $validLevels := list "debug" "info" "warning" "error" -}}
-{{- $logLevel := .Values.logLevel | default .Values.global.logLevel -}}
-{{- if not (has $logLevel $validLevels) -}}
-{{- fail (printf "Invalid log level %q. Valid values are: %s. Set it with --set global.logLevel=<level> or --set %s.logLevel=<level>" $logLevel (join ", " $validLevels) .Chart.Name) -}}
-{{- end -}}
-{{- $logLevel -}}
+{{- .Values.logLevel | default .Values.global.logLevel -}}
 {{- end -}}
