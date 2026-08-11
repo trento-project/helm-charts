@@ -198,7 +198,7 @@ jobs:
             --namespace cert-manager \
             --create-namespace \
             --set crds.enabled=true
-          kubectl wait --for=condition=available --timeout=360s \
+          kubectl wait --for=condition=available --timeout=300s \
             --all deployments -n cert-manager
 
       - name: Prepare cert-manager resources and values for ingress
@@ -250,7 +250,7 @@ jobs:
 
             helm upgrade -i trento-server "$CHART_REF" --wait \
             --create-namespace \
-            --timeout 6m \
+            --timeout 5m \
             --render-subchart-notes \
             ${HELM_COMMON_FLAGS} \
             ${EXTRA_FLAGS}
@@ -282,7 +282,7 @@ jobs:
           echo "Running helm ${ACTION} for source: ${{ matrix.source }}"
 
           helm ${ACTION} trento-server charts/trento-server --wait \
-            --timeout 6m \
+            --timeout 5m \
             --render-subchart-notes \
             --debug \
             --create-namespace \
