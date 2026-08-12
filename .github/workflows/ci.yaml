@@ -12,6 +12,7 @@ on:
 env:
   HELM_VERSION: v4.2.0 # https://github.com/helm/helm/releases
   BATS_VERSION: "1.13.0" # https://github.com/bats-core/bats-core/releases
+  HELM_UNITTEST_VERSION: "1.1.2" # https://github.com/helm-unittest/helm-unittest/releases
   SEMVER_VERSION: 1a547a75f946717223fb7ca821ba6f3f337e9aca # https://api.github.com/repos/fsaintjacques/semver-tool/commits?per_page=1
 
 concurrency:
@@ -71,20 +72,20 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: 3.13
-      - name: Setup BATS
-        uses: bats-core/bats-action@77d6fb60505b4d0d1d73e48bd035b55074bbfb43 #v4.0.0
-        with:
-          bats-version: ${{ env.BATS_VERSION }}
       - name: Check license headers
         uses: apache/skywalking-eyes/header@61275cc80d0798a405cb070f7d3a8aaf7cf2c2c1 # v0.8.0
       - name: Set up chart-testing
         uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
       - name: Lint
         run: ct lint --config=ct.yaml --lint-conf=helmlintconf.yaml --helm-lint-extra-args="--set prometheus.server.auth.type=none"
+      - name: Setup helm-unittest
+        run: |
+          helm plugin install --verify=false \
+            "https://github.com/helm-unittest/helm-unittest/releases/download/v${HELM_UNITTEST_VERSION}/unittest-${HELM_UNITTEST_VERSION}.tgz"
       - name: Test chart templates
         run: |
           helm dependency build charts/trento-server
-          bats .github/scripts/tests/charts/*.bats
+          helm unittest charts/trento-server
 
   gh-release-rolling:
     name: Chart rolling release on GitHub

@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+# Test suite for the LOG_LEVEL entry rendered in the trento-web and
+# trento-wanda ConfigMaps, driven by global.logLevel and the per component
+# logLevel override.
+#
+# The subchart templates are rendered through the trento-server parent chart,
+# so its dependencies must be built beforehand.
+
+suite: log level
+templates:
+  - charts/trento-web/templates/configmap.yaml
+  - charts/trento-wanda/templates/configmap.yaml
+set:
+  prometheus.server.auth.type: none
+tests:
+  - it: defaults to info on both components
+    asserts:
+      - equal:
+          path: data.LOG_LEVEL
+          value: info
+
+  - it: propagates global.logLevel to both components
+    set:
+      global.logLevel: debug
+    asserts:
+      - equal:
+          path: data.LOG_LEVEL
+          value: debug
+
+  - it: only overrides its own component with the component logLevel
+    set:
+      trento-web.logLevel: warning
+    asserts:
+      - equal:
+          path: data.LOG_LEVEL
+          value: warning
+        template: charts/trento-web/templates/configmap.yaml
+      - equal:
+          path: data.LOG_LEVEL
+          value: info
+        template: charts/trento-wanda/templates/configmap.yaml
+
+  - it: gives precedence to the component logLevel over global.logLevel
+    set:
+      global.logLevel: debug
+      trento-web.logLevel: error
+      trento-wanda.logLevel: error
+    asserts:
+      - equal:
+          path: data.LOG_LEVEL
+          value: error
