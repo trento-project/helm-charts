@@ -31,7 +31,7 @@ render_configmap() {
 # Prints the raw LOG_LEVEL line of the given component ConfigMap, so that both
 # the value and its quoting are asserted.
 render_log_level() {
-  render_configmap "$@" | grep -m1 -E '^[[:space:]]+LOG_LEVEL:' | sed -E 's/^[[:space:]]+//'
+  render_configmap "$@" | sed -nE '/^[[:space:]]+LOG_LEVEL:/{s/^[[:space:]]+//;p;q;}'
 }
 
 @test "log level: defaults to info on both components" {
