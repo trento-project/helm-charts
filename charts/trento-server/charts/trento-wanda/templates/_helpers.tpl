@@ -109,11 +109,3 @@ Use postgresql image from the global values if set, otherwise use the local one
 {{- $imageRoot := merge (.Values.global.postgresql.image | default dict) (.Values.postgresql.image | default dict) -}}
 {{- include "common.images.image" (dict "imageRoot" $imageRoot "global" .Values.global) -}}
 {{- end -}}
-
-{{/*
-Log level for this component.
-The local logLevel takes precedence over the global one
-*/}}
-{{- define "trento-wanda.logLevel" -}}
-{{- .Values.logLevel | default .Values.global.logLevel -}}
-{{- end -}}
