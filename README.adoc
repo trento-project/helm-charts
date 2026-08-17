@@ -32,6 +32,35 @@ mTLS authentication with RabbitMQ can be enabled through the
 care of generating the needed certificates (using `+cert-manager+`) and
 configuring server and client applications accordingly.
 
+== Testing
+
+Chart templates are tested with
+link:https://github.com/helm-unittest/helm-unittest[helm-unittest]. Test suites
+live next to the chart they cover, in `+charts/<chart>/tests/*_test.yaml+`.
+
+Install the plugin:
+
+[source,bash]
+----
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+----
+
+The suites render the subcharts through the `+trento-server+` parent chart, so
+its dependencies must be built beforehand:
+
+[source,bash]
+----
+helm dependency build charts/trento-server
+helm unittest charts/trento-server
+----
+
+Use `+-f+` to run a single suite:
+
+[source,bash]
+----
+helm unittest -f 'tests/log_level_test.yaml' charts/trento-server
+----
+
 == Support
 
 Please only report bugs via

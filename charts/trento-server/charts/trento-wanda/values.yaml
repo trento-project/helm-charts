@@ -6,6 +6,7 @@
 # Declare variables to be passed into your templates.
 
 global:
+  logLevel: info
   trentoWanda:
     name: ""
     servicePort: ""
@@ -22,6 +23,8 @@ global:
     servicePort: 5432
     postgresqlUsername: ""
     postgresqlPassword: ""
+# Overrides global.logLevel for this component only.
+logLevel: ""
 cors:
   enabled: false
   origin: ""

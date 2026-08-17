@@ -26,6 +26,8 @@ global:
       password: ""
       tls:
         enabled: false
+# Overrides global.logLevel for this component only.
+logLevel: ""
 alerting:
   enabled: null
   smtpServer: null
