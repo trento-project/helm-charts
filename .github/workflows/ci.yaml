@@ -31,7 +31,7 @@ jobs:
     outputs:
       is-release: ${{ steps.filter.outputs.release }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: filter
         with:
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: needs.paths-check.outputs.is-release == 'false'
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup BATS
         uses: bats-core/bats-action@77d6fb60505b4d0d1d73e48bd035b55074bbfb43 #v4.0.0
         with:
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: needs.paths-check.outputs.is-release == 'false'
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
@@ -84,6 +84,14 @@ jobs:
             "https://github.com/helm-unittest/helm-unittest/releases/download/v${HELM_UNITTEST_VERSION}/unittest-${HELM_UNITTEST_VERSION}.tgz"
       - name: Test chart templates
         run: |
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              echo "Adding helm repo: $dep_name ($dep_repo)"
+              helm repo add "$dep_name" "$dep_repo" --force-update
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
+
           helm dependency build charts/trento-server
           helm unittest charts/trento-server
 
