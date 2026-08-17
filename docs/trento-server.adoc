@@ -132,6 +132,18 @@ Use a different container registry:
 helm install trento . --set trento-web.image.repository="ghcr.io/myrepo/trento-web" --set trento-wanda.image.repository="ghcr.io/myrepo/trento-wanda"
 ....
 
+Use a different log level:
+[source,shell]
+....
+helm install trento . --set global.logLevel="debug"
+....
+
+Use a different log level for a single component:
+[source,shell]
+....
+helm install trento . --set trento-web.logLevel="debug" --set trento-wanda.logLevel="info"
+....
+
 Please refer to the the subcharts `+values.yaml+` for an advanced usage.
 
 ==== MCP Server Chart
