@@ -84,6 +84,14 @@ jobs:
             "https://github.com/helm-unittest/helm-unittest/releases/download/v${HELM_UNITTEST_VERSION}/unittest-${HELM_UNITTEST_VERSION}.tgz"
       - name: Test chart templates
         run: |
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              echo "Adding helm repo: $dep_name ($dep_repo)"
+              helm repo add "$dep_name" "$dep_repo" --force-update
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
+
           helm dependency build charts/trento-server
           helm unittest charts/trento-server
 
