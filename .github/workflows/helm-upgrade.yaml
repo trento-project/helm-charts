@@ -250,7 +250,7 @@ jobs:
 
             helm upgrade -i trento-server "$CHART_REF" --wait \
             --create-namespace \
-            --timeout 3m \
+            --timeout 5m \
             --render-subchart-notes \
             ${HELM_COMMON_FLAGS} \
             ${EXTRA_FLAGS}
@@ -282,7 +282,7 @@ jobs:
           echo "Running helm ${ACTION} for source: ${{ matrix.source }}"
 
           helm ${ACTION} trento-server charts/trento-server --wait \
-            --timeout 3m \
+            --timeout 5m \
             --render-subchart-notes \
             --debug \
             --create-namespace \
