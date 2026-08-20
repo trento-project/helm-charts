@@ -255,6 +255,26 @@ compare_container_versions() {
 
 # === API Testing ===
 
+# Resolve the ingress hostname and, if a load balancer IP is already
+# assigned, point it at that IP via /etc/hosts.
+# Uses: TRENTO_NAMESPACE, TRENTO_WEB_ORIGIN environment variables
+# Outputs: The resolved ingress hostname on stdout
+resolve_ingress_host() {
+  local ingress_host="${TRENTO_WEB_ORIGIN:-trento-test.local}"
+  local ingress_ip
+  ingress_ip=$(kubectl get ingress -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+
+  if [ -n "$ingress_ip" ]; then
+    echo "Ingress IP: $ingress_ip" >&2
+    echo "Adding $ingress_ip $ingress_host to /etc/hosts" >&2
+    echo "$ingress_ip $ingress_host" | sudo tee -a /etc/hosts > /dev/null
+  else
+    echo "Using ingress hostname: $ingress_host" >&2
+  fi
+
+  echo "$ingress_host"
+}
+
 # Verify API functionality through ingress endpoint.
 # Uses: TRENTO_NAMESPACE, TRENTO_WEB_ORIGIN, REPO_ROOT environment variables
 # Outputs: API test results and certificate information
@@ -263,17 +283,8 @@ verify_api() {
   echo ""
   section "=== Testing Trento API endpoints via ingress ==="
 
-  local ingress_host="${TRENTO_WEB_ORIGIN:-trento-test.local}"
-  local ingress_ip
-  ingress_ip=$(kubectl get ingress -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-
-  if [ -n "$ingress_ip" ]; then
-    echo "Ingress IP: $ingress_ip"
-    echo "Adding $ingress_ip $ingress_host to /etc/hosts"
-    echo "$ingress_ip $ingress_host" | sudo tee -a /etc/hosts > /dev/null
-  else
-    echo "Using ingress hostname: $ingress_host"
-  fi
+  local ingress_host
+  ingress_host=$(resolve_ingress_host)
 
   section "=== cert-manager checks ==="
 
@@ -667,6 +678,9 @@ main() {
     post-upgrade-diagnostics)
       post_upgrade_diagnostics
       ;;
+    resolve-ingress-host)
+      resolve_ingress_host
+      ;;
     verify-api)
       verify_api
       ;;
@@ -688,6 +702,7 @@ main() {
       printf '%s\n' "  post-install-diagnostics" >&2
       printf '%s\n' "  compare-container-versions" >&2
       printf '%s\n' "  post-upgrade-diagnostics" >&2
+      printf '%s\n' "  resolve-ingress-host" >&2
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
       printf '%s\n' "  process-obs-package <git-url> [workspace-dir]" >&2

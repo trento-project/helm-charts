@@ -466,6 +466,96 @@ EOF
 
 # === API Testing Tests ===
 
+@test "resolve_ingress_host: adds ingress IP to /etc/hosts when a load balancer IP is assigned" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"ingress"* ]]; then
+  echo "10.0.0.5"
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  sudo_log="$tmpdir/sudo.log"
+  cat > "$tmpdir/sudo" << EOF
+#!/usr/bin/env bash
+cat >> "$sudo_log"
+exit 0
+EOF
+  chmod +x "$tmpdir/sudo"
+
+  export TRENTO_NAMESPACE="test-ns"
+  export TRENTO_WEB_ORIGIN="trento.example.local"
+  PATH="$tmpdir:$PATH"
+
+  run resolve_ingress_host
+  [ "$status" -eq 0 ]
+  # The resolved hostname is the last line of stdout
+  host=$(echo "$output" | tail -1)
+  [ "$host" = "trento.example.local" ]
+  grep -q "10.0.0.5 trento.example.local" "$sudo_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "resolve_ingress_host: uses hostname directly and skips /etc/hosts when no IP is assigned" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"ingress"* ]]; then
+  echo ""
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  cat > "$tmpdir/sudo" << 'EOF'
+#!/usr/bin/env bash
+echo "sudo should not be called" >&2
+exit 1
+EOF
+  chmod +x "$tmpdir/sudo"
+
+  export TRENTO_NAMESPACE="test-ns"
+  export TRENTO_WEB_ORIGIN="trento.example.local"
+  PATH="$tmpdir:$PATH"
+
+  run resolve_ingress_host
+  [ "$status" -eq 0 ]
+  host=$(echo "$output" | tail -1)
+  [ "$host" = "trento.example.local" ]
+  [[ "$output" == *"Using ingress hostname"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "resolve_ingress_host: defaults to trento-test.local when TRENTO_WEB_ORIGIN is unset" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+echo ""
+exit 0
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  export TRENTO_NAMESPACE="test-ns"
+  unset TRENTO_WEB_ORIGIN
+  PATH="$tmpdir:$PATH"
+
+  run resolve_ingress_host
+  [ "$status" -eq 0 ]
+  host=$(echo "$output" | tail -1)
+  [ "$host" = "trento-test.local" ]
+
+  rm -rf "$tmpdir"
+}
+
 @test "verify_api: configures ingress and runs smoke tests" {
   tmpdir="$(mktemp -d)"
 
