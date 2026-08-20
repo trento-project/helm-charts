@@ -249,7 +249,7 @@ seed_demo_data() {
   section "=== Running photofinish 'demo' scenario ==="
   (
     cd "$fixtures_dir"
-    "$photofinish_bin" run demo -k -u "${web_url}/api/v1/collect" "$api_key"
+    "$photofinish_bin" run demo -u "${web_url}/api/v1/collect" "$api_key"
   )
 
   banner "                      DEMO DATA SEEDED                                  "

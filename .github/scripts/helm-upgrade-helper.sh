@@ -253,6 +253,38 @@ compare_container_versions() {
 }
 
 
+# === TLS Trust ===
+
+# Extract the self-signed test certificate cert-manager issued and add it to
+# the runner's system CA trust store, so plain HTTPS clients (e.g. tools that
+# have no flag to skip TLS verification) can talk to the ingress without
+# special-casing certificate validation.
+# Args: $1 (string, optional) - Certificate resource name (default: trento-certificate)
+#       $2 (string, optional) - Secret name (default: trento-tls)
+# Uses: TRENTO_NAMESPACE environment variable
+# Returns: 0 on success, 1 on failure
+trust_test_certificate() {
+  local certificate_name="${1:-trento-certificate}"
+  local secret_name="${2:-trento-tls}"
+
+  section "=== Trusting the test TLS certificate on this runner ==="
+
+  if ! kubectl wait --for=condition=Ready "certificate/${certificate_name}" \
+    -n "$TRENTO_NAMESPACE" --timeout=60s; then
+    echo "ERROR: Certificate ${certificate_name} never became Ready" >&2
+    return 1
+  fi
+
+  if ! kubectl get secret "$secret_name" -n "$TRENTO_NAMESPACE" \
+    -o jsonpath='{.data.tls\.crt}' | base64 -d \
+    | sudo tee /usr/local/share/ca-certificates/trento-test-ca.crt > /dev/null; then
+    echo "ERROR: Failed to extract ${secret_name} from namespace ${TRENTO_NAMESPACE}" >&2
+    return 1
+  fi
+
+  sudo update-ca-certificates
+}
+
 # === API Testing ===
 
 # Resolve the ingress hostname and, if a load balancer IP is already
@@ -681,6 +713,9 @@ main() {
     resolve-ingress-host)
       resolve_ingress_host
       ;;
+    trust-test-certificate)
+      trust_test_certificate
+      ;;
     verify-api)
       verify_api
       ;;
@@ -703,6 +738,7 @@ main() {
       printf '%s\n' "  compare-container-versions" >&2
       printf '%s\n' "  post-upgrade-diagnostics" >&2
       printf '%s\n' "  resolve-ingress-host" >&2
+      printf '%s\n' "  trust-test-certificate" >&2
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
       printf '%s\n' "  process-obs-package <git-url> [workspace-dir]" >&2

@@ -222,6 +222,9 @@ jobs:
           kubectl apply -f hack/cert-manager/selfsigned-issuer.yaml
           kubectl apply -f hack/cert-manager/certificate.yaml
 
+      - name: Trust the test TLS certificate on this runner
+        run: bash .github/scripts/helm-upgrade-helper.sh trust-test-certificate
+
       - name: Login to GHCR
         if: contains(matrix.source, 'oss')
         run: |
