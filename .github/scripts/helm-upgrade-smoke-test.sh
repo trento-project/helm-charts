@@ -244,6 +244,84 @@ test_mcp_server() {
   fi
 }
 
+# === Activity Event Triggers ===
+
+# Fire a batch of authenticated API calls against already-seeded resources to
+# exercise as many distinct "connection activity" types as possible (see
+# lib/trento/activity_logging/activity_catalog.ex in trento-web) — tagging,
+# cluster/host operation requests, settings, profile, users — mirroring real
+# interactive usage instead of just the discovery-only activity photofinish's
+# fixture replay generates on its own. Best-effort: each call's outcome is
+# logged, but a single unexpected status doesn't fail the whole seed, since
+# the goal here is maximizing the variety of "type" values recorded, not
+# asserting specific behavior.
+# Args: $1 (string) - Base URL for Web service
+#       $2 (string) - Access token
+# Returns: 0 always
+trigger_activity_events() {
+  local web_url="$1"
+  local access_token="$2"
+  local auth_header="Authorization: Bearer ${access_token}"
+  local json_header="Content-Type: application/json"
+  local cluster_id host_id
+
+  section "=== Triggering additional activity events ==="
+
+  # Best-effort from here on: any individual call failing (unreachable target,
+  # unexpected status, empty jq input) must not abort the whole function.
+  set +e
+
+  cluster_id=$(curl -sk "${web_url}/api/v1/clusters" -H "$auth_header" \
+    | jq -r '.[0].id // empty' 2>/dev/null)
+  if [ -n "$cluster_id" ]; then
+    host_id=$(curl -sk "${web_url}/api/v1/hosts" -H "$auth_header" \
+      | jq -r --arg cid "$cluster_id" '[.[] | select(.cluster_id == $cid)][0].id // empty' 2>/dev/null)
+  fi
+
+  if [ -n "$cluster_id" ] && [ -n "$host_id" ]; then
+    echo "Using cluster ${cluster_id} / host ${host_id}"
+
+    for op in cluster_host_stop cluster_host_start pacemaker_disable pacemaker_enable; do
+      curl -sk -o /dev/null -w "  %{http_code} POST clusters/hosts/operations/${op}\n" \
+        -X POST "${web_url}/api/v1/clusters/${cluster_id}/hosts/${host_id}/operations/${op}" \
+        -H "$auth_header"
+    done
+
+    curl -sk -o /dev/null -w "  %{http_code} POST hosts/tags\n" \
+      -X POST "${web_url}/api/v1/hosts/${host_id}/tags" \
+      -H "$auth_header" -H "$json_header" -d '{"value":"ci-seed"}'
+
+    curl -sk -o /dev/null -w "  %{http_code} DELETE hosts/tags\n" \
+      -X DELETE "${web_url}/api/v1/hosts/${host_id}/tags/ci-seed" \
+      -H "$auth_header"
+
+    curl -sk -o /dev/null -w "  %{http_code} POST clusters/tags\n" \
+      -X POST "${web_url}/api/v1/clusters/${cluster_id}/tags" \
+      -H "$auth_header" -H "$json_header" -d '{"value":"ci-seed"}'
+
+    curl -sk -o /dev/null -w "  %{http_code} POST hosts/checks\n" \
+      -X POST "${web_url}/api/v1/hosts/${host_id}/checks" \
+      -H "$auth_header" -H "$json_header" -d '{"checks":[]}'
+  else
+    echo "No seeded cluster/host found, skipping host/cluster-scoped activity triggers"
+  fi
+
+  curl -sk -o /dev/null -w "  %{http_code} PATCH profile\n" \
+    -X PATCH "${web_url}/api/v1/profile" \
+    -H "$auth_header" -H "$json_header" -d '{"fullname":"CI Seed Admin"}'
+
+  curl -sk -o /dev/null -w "  %{http_code} PATCH settings/api_key\n" \
+    -X PATCH "${web_url}/api/v1/settings/api_key" \
+    -H "$auth_header" -H "$json_header" -d '{"expire_at":null}'
+
+  curl -sk -o /dev/null -w "  %{http_code} POST profile/tokens\n" \
+    -X POST "${web_url}/api/v1/profile/tokens" \
+    -H "$auth_header" -H "$json_header" -d '{"name":"ci-seed-token","expires_at":null}'
+
+  set -e
+  return 0
+}
+
 # === Data Seeding ===
 
 # Seed the running Trento instance with realistic demo data via photofinish, so
@@ -278,6 +356,8 @@ seed_demo_data() {
     cd "$fixtures_dir"
     "$photofinish_bin" run demo -u "${web_url}/api/v1/collect" "$api_key"
   )
+
+  trigger_activity_events "$web_url" "$access_token"
 
   banner "                      DEMO DATA SEEDED                                  "
   return 0

@@ -536,6 +536,92 @@ EOF
   rm -rf "$tmpdir"
 }
 
+# === Activity Event Trigger Tests ===
+
+@test "trigger_activity_events: fires host/cluster operation and tagging calls when a cluster and host are found" {
+  tmpdir="$(mktemp -d)"
+  call_log="$tmpdir/calls.log"
+  touch "$call_log"
+
+  cat > "$tmpdir/curl" << EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$call_log"
+if [[ "\$*" == *"/api/v1/clusters"* ]] && [[ "\$*" != *"tags"* ]] && [[ "\$*" != *"hosts"* ]]; then
+  echo '[{"id":"cluster-1"}]'
+elif [[ "\$*" == *"/api/v1/hosts"* ]] && [[ "\$*" != *"tags"* ]] && [[ "\$*" != *"checks"* ]]; then
+  echo '[{"id":"host-1","cluster_id":"cluster-1"}]'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run trigger_activity_events "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+
+  grep -q "clusters/cluster-1/hosts/host-1/operations/cluster_host_stop" "$call_log"
+  grep -q "clusters/cluster-1/hosts/host-1/operations/cluster_host_start" "$call_log"
+  grep -q "clusters/cluster-1/hosts/host-1/operations/pacemaker_disable" "$call_log"
+  grep -q "clusters/cluster-1/hosts/host-1/operations/pacemaker_enable" "$call_log"
+  grep -q "hosts/host-1/tags" "$call_log"
+  grep -q "clusters/cluster-1/tags" "$call_log"
+  grep -q "hosts/host-1/checks" "$call_log"
+  grep -q "api/v1/profile" "$call_log"
+  grep -q "settings/api_key" "$call_log"
+  grep -q "profile/tokens" "$call_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "trigger_activity_events: skips host/cluster-scoped calls when no cluster is found" {
+  tmpdir="$(mktemp -d)"
+  call_log="$tmpdir/calls.log"
+  touch "$call_log"
+
+  cat > "$tmpdir/curl" << EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$call_log"
+if [[ "\$*" == *"/api/v1/clusters"* ]]; then
+  echo '[]'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run trigger_activity_events "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No seeded cluster/host found"* ]]
+
+  ! grep -q "operations/cluster_host_stop" "$call_log"
+  grep -q "api/v1/profile" "$call_log"
+  grep -q "settings/api_key" "$call_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "trigger_activity_events: always returns 0 even when every call fails" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  cat > "$tmpdir/jq" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/jq"
+
+  PATH="$tmpdir:$PATH"
+  run trigger_activity_events "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+
+  rm -rf "$tmpdir"
+}
+
 # === Data Seeding Tests ===
 
 @test "seed_demo_data: successfully logs in, fetches API key, and runs photofinish" {
