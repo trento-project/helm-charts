@@ -509,7 +509,7 @@ EOF
   run seed_demo_data
   [ "$status" -eq 0 ]
   [[ "$output" == *"DEMO DATA SEEDED"* ]]
-  grep -q "run demo -k -u https://test.local/api/v1/collect seed-api-key" "$photofinish_log"
+  grep -q "run demo -u https://test.local/api/v1/collect seed-api-key" "$photofinish_log"
 
   rm -rf "$tmpdir"
 }

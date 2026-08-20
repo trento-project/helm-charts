@@ -343,13 +343,32 @@ show_web_init_logs() {
   fi
 }
 
+# Display logs from the postgresql pod's upgrade-postgres init container, so
+# it's directly visible whether pgautoupgrade actually ran a major-version
+# upgrade or found no existing database to upgrade.
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Init container logs for the postgresql pod
+show_postgres_upgrade_logs() {
+  section "=== Postgresql init container logs (pgautoupgrade) ==="
+  local postgres_pod
+  postgres_pod=$(kubectl get pod -n "$TRENTO_NAMESPACE" \
+    -l "app.kubernetes.io/name=postgresql,app.kubernetes.io/instance=trento-server" \
+    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [ -n "$postgres_pod" ]; then
+    kubectl logs "$postgres_pod" -n "$TRENTO_NAMESPACE" -c upgrade-postgres || echo "Failed to get postgresql upgrade-postgres init logs"
+  else
+    echo "Failed to find postgresql pod"
+  fi
+}
+
 # Run post-upgrade diagnostic checks.
-# Outputs: Pod status, events, web init logs, and recent pod logs
+# Outputs: Pod status, events, web init logs, postgres upgrade logs, and recent pod logs
 post_upgrade_diagnostics() {
   banner "                         POST-UPGRADE DIAGNOSTICS                       "
   show_pods_status
   show_events
   show_web_init_logs
+  show_postgres_upgrade_logs
   show_pod_logs 50 "Recent "
   echo ""
   banner "                      DIAGNOSTICS COMPLETE                              "
