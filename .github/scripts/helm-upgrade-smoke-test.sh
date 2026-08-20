@@ -181,6 +181,33 @@ test_activity_log_endpoint() {
   fi
 }
 
+# Display platform info (version, component versions, subscriptions) from the
+# about endpoint, so it's obvious which version actually ended up running.
+# Args: $1 (string) - Base URL for Web service
+#       $2 (string) - Access token
+# Returns: 0 on success, 1 on failure
+# Outputs: About response status
+test_about_endpoint() {
+  local web_url="$1"
+  local access_token="$2"
+  local response http_code
+
+  section "4c. Fetching platform info..."
+  response=$(curl -sk -w '\n%{http_code}' -X GET "${web_url}/api/v1/about" \
+    -H "Authorization: Bearer ${access_token}" 2>/dev/null || echo "")
+  http_code=$(echo "$response" | tail -n1)
+
+  echo "About: $(echo "$response" | sed '$d')"
+
+  if [ "$http_code" = "200" ]; then
+    echo "✅ About endpoint working"
+    return 0
+  else
+    echo "❌ About endpoint failed (status: ${http_code})"
+    return 1
+  fi
+}
+
 # === MCP Server Tests ===
 
 # Test MCP server initialization endpoint.
@@ -292,6 +319,10 @@ run_smoke_tests() {
   fi
 
   if ! test_activity_log_endpoint "$web_url" "$access_token"; then
+    return 1
+  fi
+
+  if ! test_about_endpoint "$web_url" "$access_token"; then
     return 1
   fi
 

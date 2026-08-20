@@ -394,6 +394,66 @@ EOF
   rm -rf "$tmpdir"
 }
 
+@test "test_about_endpoint: succeeds on HTTP 200 and displays the response" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5+git.232.1787132611.f931906fe","sles_subscriptions":49,"rabbitmq_version":"3.12.6"}\n200\n'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_about_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"About endpoint working"* ]]
+  [[ "$output" == *"3.1.5+git.232.1787132611.f931906fe"* ]]
+  [[ "$output" == *"rabbitmq_version"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_about_endpoint: fails on non-200 status" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"error":"Internal Server Error"}\n500\n'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_about_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"About endpoint failed"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_about_endpoint: handles curl failure gracefully" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_about_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+
+  rm -rf "$tmpdir"
+}
+
 # === API Key Tests ===
 
 @test "fetch_api_key: successfully extracts the generated API key" {
@@ -740,6 +800,8 @@ elif [[ "$*" == *"/api/v1/profile"* ]]; then
   echo '{"username":"admin","email":"admin@test.com"}'
 elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
   printf '{"data":[]}\n200\n'
+elif [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "$*" == *"initialize"* ]]; then
   echo '{"result":{"serverInfo":{"name":"trento-mcp-server","version":"1.0.0"}}}'
 else
@@ -823,6 +885,8 @@ elif [[ "$*" == *"/api/v1/profile"* ]]; then
   echo '{"username":"customadmin"}'
 elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
   printf '{"data":[]}\n200\n'
+elif [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "$*" == *"initialize"* ]]; then
   echo '{"result":{"serverInfo":{"name":"mcp","version":"1.0"}}}'
 fi
@@ -866,6 +930,9 @@ elif [[ "\$*" == *"/api/v1/profile"* ]]; then
 elif [[ "\$*" == *"/api/v1/activity_log"* ]]; then
   echo "activity_log" >> "$call_log"
   printf '{"data":[]}\n200\n'
+elif [[ "\$*" == *"/api/v1/about"* ]]; then
+  echo "about" >> "$call_log"
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "\$*" == *"initialize"* ]]; then
   echo "mcp" >> "$call_log"
   echo '{"result":{"serverInfo":{"name":"mcp","version":"1"}}}'
@@ -885,6 +952,7 @@ EOF
   grep -q "login" "$call_log"
   grep -q "profile" "$call_log"
   grep -q "activity_log" "$call_log"
+  grep -q "about" "$call_log"
   grep -q "mcp" "$call_log"
 
   rm -rf "$tmpdir"
@@ -1055,6 +1123,8 @@ elif [[ "$*" == *"/api/v1/profile"* ]]; then
   echo '{"username":"admin"}'
 elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
   printf '{"data":[]}\n200\n'
+elif [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "$*" == *"initialize"* ]]; then
   echo '{"result":{"serverInfo":{"name":"mcp","version":"1"}}}'
 fi
