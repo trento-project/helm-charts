@@ -264,7 +264,7 @@ jobs:
       - name: Checkout trento-web demo fixtures
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: trento-project/trento-web
+          repository: trento-project/web
           ref: ${{ env.TRENTO_WEB_FIXTURES_REF }}
           sparse-checkout: |
             .photofinish.toml
