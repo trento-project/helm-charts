@@ -176,7 +176,7 @@ prometheus:
     image:
       registry: registry.suse.com
       repository: suse/kubectl
-      tag: "1.35.4"
+      tag: "1.37.0-1.61.2"
 rabbitmq:
   enabled: true
   persistence:
@@ -187,7 +187,7 @@ rabbitmq:
     image:
       registry: registry.suse.com
       repository: suse/kubectl
-      tag: "1.35.4"
+      tag: "1.37.0-1.61.2"
   extraConfiguration: |
     {{- if .Values.global.rabbitmq.tls.mtls.enabled }}
     listeners.ssl.default = 5671
