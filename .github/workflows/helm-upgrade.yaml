@@ -1,0 +1,312 @@
+# SPDX-FileCopyrightText: SUSE LLC
+# SPDX-License-Identifier: Apache-2.0
+
+name: Chart Upgrade Test
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  K3S_VERSION: v1.36.1+k3s1 # https://hub.docker.com/r/rancher/k3s/tags
+  CERT_MANAGER_VERSION: v1.20.2 # https://github.com/cert-manager/cert-manager/releases
+  HELM_VERSION: v4.2.0 # http://github.com/helm/helm/releases
+
+  SOURCE_SUSE_RELEASE: suse-release
+  SOURCE_OSS_RELEASE: oss-release
+  SOURCE_OSS_MAIN: oss-main
+  SOURCE_OBS_ARTIFACTS: obs-artifacts
+  SOURCE_INSTALL_ONLY: install-only
+
+jobs:
+  upgrade-test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SUSE_REGISTRY: registry.suse.com/trento/trento-server
+      HELM_CHARTS_REPO: trento-project/helm-charts
+      OSS_CHART_REGISTRY: ghcr.io/trento-project/helm-charts/trento-server
+      TRENTO_NAMESPACE: trento
+      TRENTO_WEB_ORIGIN: trento-test.local
+      TRENTO_WEB_PASSWORD: test-password-123
+      TRENTO_ADMIN_EMAIL: admin@trento-test.local
+      TRENTO_INGRESS_CLASS: traefik
+      HELM_COMMON_FLAGS: |
+        --namespace trento
+        --set trento-web.adminUser.password=admin-test-password
+        --set trento-web.image.pullPolicy=Always
+        --set trento-wanda.image.pullPolicy=Always
+        --set trento-wanda.checks.image.pullPolicy=Always
+        --set trento-mcp-server.enabled=true
+        --set trento-mcp-server.image.pullPolicy=Always
+        --set global.trentoWeb.origin=trento-test.local
+        --set prometheus.enabled=false
+        --set prometheus.server.auth.type=none
+        -f hack/cert-manager/override-values.yaml
+    strategy:
+      matrix:
+        include:
+          - name: "SUSE latest release → current"
+            source: suse-release
+          - name: "OSS latest release → current"
+            source: oss-release
+          - name: "OSS rolling → current"
+            source: oss-main
+          - name: "OBS artifacts → current"
+            source: obs-artifacts
+          - name: "Install current"
+            source: install-only
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Prepare OBS container with replace_using_env service
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
+        env:
+          OBS_CONTAINER: ghcr.io/trento-project/continuous-delivery@sha256:24b2ea3d7a2c41fb005a024a90275b3a6ea37a213a690964f5aec459d61fb807 # v1.3.0
+          OBS_CONTAINER_NEW: continuous-delivery:dev
+        run: |
+          # Install missing obs-service-replace_using_env and commit as new layer
+          # TODO: Add this package to the official continuous-delivery image
+          if docker image inspect "${OBS_CONTAINER_NEW}" > /dev/null 2>&1; then
+            echo "Using existing patched image: ${OBS_CONTAINER_NEW}"
+          else
+            echo "Installing obs-service-replace_using_env..."
+            docker run --user 0 --cidfile /tmp/obs_container.cid "${OBS_CONTAINER}" \
+              zypper -n install --no-recommends obs-service-replace_using_env > /dev/null 2>&1
+
+            CONTAINER_ID=$(cat /tmp/obs_container.cid)
+            docker commit "${CONTAINER_ID}" "${OBS_CONTAINER_NEW}" > /dev/null
+            docker rm "${CONTAINER_ID}" > /dev/null
+            rm -f /tmp/obs_container.cid
+            echo "Created patched image: ${OBS_CONTAINER_NEW}"
+          fi
+
+      - name: Process OBS package artifacts
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
+        env:
+          OBS_CONTAINER: continuous-delivery:dev
+          GIT_SOURCE_URL: https://src.opensuse.org/SAP-trento/trento-server-helm
+        run: |
+          mkdir -p obs-artifacts
+
+          docker run --rm \
+            --user 0 \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e GIT_SOURCE_URL="${GIT_SOURCE_URL}" \
+            "${OBS_CONTAINER}" \
+            bash /workspace/.github/scripts/helm-upgrade-helper.sh process-obs-package "${GIT_SOURCE_URL}"
+
+          # Fix permissions on extracted chart (Docker ran as root)
+          sudo chown -R $(id -u):$(id -g) obs-artifacts/
+
+          echo "OBS artifacts processed successfully"
+
+      - name: Compare OBS stable vs main branches
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
+        run: |
+          obs_stable_dir="$(mktemp -d)"
+          trap 'rm -rf "$obs_stable_dir"' EXIT
+
+          echo "Cloning OBS stable branch for comparison..."
+          git clone --branch stable --depth 1 \
+            https://src.opensuse.org/SAP-trento/trento-server-helm.git "$obs_stable_dir"
+
+          # Run comparison and capture exit code
+          rc=0
+          bash .github/scripts/helm-upgrade-helper.sh compare-obs-branches \
+            "$obs_stable_dir/values.yaml" \
+            obs-artifacts/chart/values.yaml || rc=$?
+
+          if [ "$rc" -eq 1 ]; then
+            echo "::notice title=OBS Branch Drift Detected::Differences found between OBS stable and main branches. The stable branch may need to be updated with changes from main. See the comparison output above for details."
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+
+      - name: Prepare OBS upstream chart for installation
+        if: matrix.source == env.SOURCE_OBS_ARTIFACTS
+        run: |
+          # Use the upstream chart extracted from contents.tar.gz
+          echo "Using upstream chart from OBS package..."
+
+          # Dynamically add helm repos from upstream Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              repo_alias="repo-$(echo "$dep_repo" | md5sum | cut -c1-8)"
+              echo "Adding helm repo: $repo_alias ($dep_repo)"
+              helm repo add "$repo_alias" "$dep_repo" --force-update
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' obs-artifacts/chart/Chart.yaml)
+
+          helm repo update
+          helm dependency build obs-artifacts/chart
+
+      - name: Resolve chart version
+        id: version
+        if: matrix.source != env.SOURCE_OBS_ARTIFACTS && matrix.source != env.SOURCE_INSTALL_ONLY
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Resolving chart version for source: ${{ matrix.source }}"
+
+          if [ "${{ matrix.source }}" = "${SOURCE_SUSE_RELEASE}" ]; then
+            REGISTRY="${SUSE_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY}"
+            VERSION=$(helm show chart "oci://${REGISTRY}" 2>/dev/null | yq eval '.version' -)
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_RELEASE}" ]; then
+            REGISTRY="${OSS_CHART_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY}"
+            VERSION=$(helm show chart "oci://${REGISTRY}" 2>/dev/null | yq eval '.version' -)
+          elif [ "${{ matrix.source }}" = "${SOURCE_OSS_MAIN}" ]; then
+            REGISTRY="${OSS_CHART_REGISTRY}"
+            echo "  Querying registry: ${REGISTRY} (including prereleases)"
+            VERSION=$(helm show chart "oci://${REGISTRY}" --devel 2>/dev/null | yq eval '.version' -)
+          fi
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: No version found for ${{ matrix.source }}"
+            exit 1
+          fi
+
+          echo "Selected version: ${VERSION}"
+          echo "value=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create k3s cluster
+        uses: jupyterhub/action-k3s-helm@502a9ff4d816dad543e359971fe2c3128d0f4c6e # v4
+        with:
+          k3s-version: ${{ env.K3S_VERSION }}
+          helm-version: ${{ env.HELM_VERSION }}
+          metrics-enabled: false
+
+      - name: Install cert-manager
+        run: |
+          helm install cert-manager oci://quay.io/jetstack/charts/cert-manager \
+            --version ${{ env.CERT_MANAGER_VERSION }} \
+            --namespace cert-manager \
+            --create-namespace \
+            --set crds.enabled=true
+          kubectl wait --for=condition=available --timeout=300s \
+            --all deployments -n cert-manager
+
+      - name: Prepare cert-manager resources and values for ingress
+        run: |
+          envsubst < hack/cert-manager/certificate.tpl.yaml > hack/cert-manager/certificate.yaml
+          envsubst < hack/cert-manager/override-values.tpl.yaml > hack/cert-manager/override-values.yaml
+
+      - name: Replace production issuer with self-signed issuer for testing
+        run: |
+          PROD_ISSUER=$(yq eval '.metadata.name' hack/cert-manager/cluster-issuer.tpl.yaml)
+          TEST_ISSUER=$(yq eval '.metadata.name' hack/cert-manager/selfsigned-issuer.yaml)
+
+          sed -i "s/${PROD_ISSUER}/${TEST_ISSUER}/g" hack/cert-manager/certificate.yaml
+          sed -i "s/${PROD_ISSUER}/${TEST_ISSUER}/g" hack/cert-manager/override-values.yaml
+
+      - name: Apply cert-manager resources
+        run: |
+          kubectl create namespace ${{ env.TRENTO_NAMESPACE }} || true
+          kubectl apply -f hack/cert-manager/selfsigned-issuer.yaml
+          kubectl apply -f hack/cert-manager/certificate.yaml
+
+      - name: Login to GHCR
+        if: contains(matrix.source, 'oss')
+        run: |
+          echo "${{ github.token }}" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Install chart
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
+        run: |
+          # Configure chart reference and extra flags
+          case "${{ matrix.source }}" in
+            "${SOURCE_OBS_ARTIFACTS}")
+              CHART_REF="obs-artifacts/chart"
+              EXTRA_FLAGS=""
+              ;;
+            "${SOURCE_SUSE_RELEASE}")
+              CHART_REF="oci://${SUSE_REGISTRY}"
+              EXTRA_FLAGS="--version ${{ steps.version.outputs.value }}"
+              ;;
+            "${SOURCE_OSS_RELEASE}"|"${SOURCE_OSS_MAIN}")
+              CHART_REF="oci://${OSS_CHART_REGISTRY}"
+              EXTRA_FLAGS="--version ${{ steps.version.outputs.value }}"
+              ;;
+            *)
+              echo "ERROR: Unknown source ${{ matrix.source }}"
+              exit 1
+              ;;
+          esac
+
+            helm upgrade -i trento-server "$CHART_REF" --wait \
+            --create-namespace \
+            --timeout 5m \
+            --render-subchart-notes \
+            ${HELM_COMMON_FLAGS} \
+            ${EXTRA_FLAGS}
+
+      - name: Check pod status after install
+        if: always() && matrix.source != env.SOURCE_INSTALL_ONLY
+        run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
+
+      - name: Build dependencies for current dev chart
+        run: |
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              echo "Adding helm repo: $dep_name ($dep_repo)"
+              helm repo add "$dep_name" "$dep_repo" --force-update
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
+
+          helm repo update
+          helm dependency build charts/trento-server
+
+      - name: Compare container versions
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
+        run: bash .github/scripts/helm-upgrade-helper.sh compare-container-versions
+
+      - name: Install or upgrade to current dev chart
+        run: |
+          ACTION="${{ matrix.source == env.SOURCE_INSTALL_ONLY && 'install' || 'upgrade' }}"
+          echo "Running helm ${ACTION} for source: ${{ matrix.source }}"
+
+          helm ${ACTION} trento-server charts/trento-server --wait \
+            --timeout 5m \
+            --render-subchart-notes \
+            --debug \
+            --create-namespace \
+            ${HELM_COMMON_FLAGS} \
+            --set trento-web.image.tag=rolling \
+            --set trento-wanda.image.tag=rolling \
+            --set trento-wanda.checks.image.tag=rolling \
+            --set trento-mcp-server.image.tag=rolling
+
+      - name: Verify upgrade
+        run: bash .github/scripts/helm-upgrade-helper.sh post-upgrade-diagnostics
+
+      - name: Verify API is working
+        run: bash .github/scripts/helm-upgrade-helper.sh verify-api
+
+      - name: Dump diagnostics on failure
+        if: failure()
+        run: bash .github/scripts/helm-upgrade-helper.sh failure-diagnostics
+
+      - name: Upload OBS artifacts for inspection
+        if: always() && matrix.source == env.SOURCE_OBS_ARTIFACTS
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: obs-processed-chart
+          path: |
+            obs-artifacts/chart/
+            obs-artifacts/values-obs.yaml

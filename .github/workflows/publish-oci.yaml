@@ -29,16 +29,19 @@ on:
           write permissions to the repository.
         required: true
 
+env:
+  HELM_VERSION: v4.2.0
+
 jobs:
   build-and-push:
     name: Build chart and push to OCI registry
     runs-on: ubuntu-24.04
     steps:
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v3.20.2
+          version: ${{ env.HELM_VERSION }}
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Need the full history because of `helm-oci-charts-releaser`
           fetch-depth: 0
@@ -76,7 +79,7 @@ jobs:
 
       - name: Create pre-releaese and upload artifact
         if: inputs.prerelease
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           token: "${{ secrets.gh_token }}"
           name: "Cutting Edge"
@@ -97,7 +100,7 @@ jobs:
 
       - name: Upload artifact to already created release
         if: ${{ ! inputs.prerelease }}
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           token: ${{ secrets.gh_token }}
           tag_name: ${{ steps.package.outputs.chart_version }}

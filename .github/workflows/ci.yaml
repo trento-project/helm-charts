@@ -9,6 +9,12 @@ on:
       - "main"
   pull_request:
 
+env:
+  HELM_VERSION: v4.2.0 # https://github.com/helm/helm/releases
+  BATS_VERSION: "1.13.0" # https://github.com/bats-core/bats-core/releases
+  HELM_UNITTEST_VERSION: "1.1.2" # https://github.com/helm-unittest/helm-unittest/releases
+  SEMVER_VERSION: 1a547a75f946717223fb7ca821ba6f3f337e9aca # https://api.github.com/repos/fsaintjacques/semver-tool/commits?per_page=1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -25,26 +31,45 @@ jobs:
     outputs:
       is-release: ${{ steps.filter.outputs.release }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
             release:
               - 'VERSION'
 
+  test-ci-scripts:
+    name: Test CI scripts
+    needs: paths-check
+    runs-on: ubuntu-24.04
+    if: needs.paths-check.outputs.is-release == 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup BATS
+        uses: bats-core/bats-action@77d6fb60505b4d0d1d73e48bd035b55074bbfb43 #v4.0.0
+        with:
+          bats-version: ${{ env.BATS_VERSION }}
+      - name: Install semver-tool
+        run: |
+          sudo wget -O /usr/local/bin/semver https://raw.githubusercontent.com/fsaintjacques/semver-tool/${{ env.SEMVER_VERSION }}/src/semver
+          sudo chmod +x /usr/local/bin/semver
+      - name: Run Bats tests
+        run: |
+          bats .github/scripts/tests/*.bats
+
   test-helm-charts:
     needs: paths-check
     runs-on: ubuntu-24.04
     if: needs.paths-check.outputs.is-release == 'false'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v3.4.0
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+          version: ${{ env.HELM_VERSION }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.13
       - name: Check license headers
@@ -53,11 +78,28 @@ jobs:
         uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
       - name: Lint
         run: ct lint --config=ct.yaml --lint-conf=helmlintconf.yaml --helm-lint-extra-args="--set prometheus.server.auth.type=none"
+      - name: Setup helm-unittest
+        run: |
+          helm plugin install --verify=false \
+            "https://github.com/helm-unittest/helm-unittest/releases/download/v${HELM_UNITTEST_VERSION}/unittest-${HELM_UNITTEST_VERSION}.tgz"
+      - name: Test chart templates
+        run: |
+          # Dynamically add helm repos from Chart.yaml dependencies
+          while IFS='|' read -r dep_name dep_repo; do
+            if [ -n "$dep_repo" ] && [ "$dep_repo" != "null" ]; then
+              echo "Adding helm repo: $dep_name ($dep_repo)"
+              helm repo add "$dep_name" "$dep_repo" --force-update
+            fi
+          done < <(yq eval '.dependencies[] | .name + "|" + (.repository // "")' charts/trento-server/Chart.yaml)
+
+          helm dependency build charts/trento-server
+          helm unittest charts/trento-server
 
   gh-release-rolling:
     name: Chart rolling release on GitHub
     needs:
       - test-helm-charts
+      - test-ci-scripts
       - paths-check
     if: github.event_name == 'push' && needs.paths-check.outputs.is-release == 'false'
     uses: ./.github/workflows/publish-oci.yaml
@@ -72,6 +114,7 @@ jobs:
     name: OBS sync
     needs:
       - test-helm-charts
+      - test-ci-scripts
       - paths-check
     if: fromJSON(vars.OBS_ENABLED) && github.event_name == 'push' && needs.paths-check.outputs.is-release == 'false'
     uses: trento-project/.github/.github/workflows/obs-sync.yaml@7ea6a8a1c3ed8a1f2185328219be4a724dd3686e # v1.8.0

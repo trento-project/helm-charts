@@ -24,3 +24,15 @@ trento-wanda:
       - secretName: trento-tls
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
+
+trento-mcp-server:
+  ingress:
+    hosts:
+      - host: ${TRENTO_WEB_ORIGIN}
+        paths:
+        - path: /mcp
+          pathType: ImplementationSpecific
+    tls:
+      - secretName: trento-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production

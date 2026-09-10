@@ -1,5 +1,86 @@
 # Changelog
 
+## [3.1.5](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.4...3.1.5) - 2026-09-10
+
+### What's Changed
+
+* Add helm/docker dependabot targets (#282) @antgamdia
+* Trigger release 3.1.4 (#266) @balanza
+* Revert "[CVE Fix] Update prometheus to v3.13.1" (#265) @balanza
+* [CVE Fix] Update prometheus to v3.13.1 (#262) @balanza
+* [CVE Fix] Update trento-web to 3.1.5 (#261) @balanza
+* [CVE Fix] Update kubectl to 1.35.4 (#260) @balanza
+* Proper name of the check container image (#255) @balanza
+* Update busybox and kubectl images to BCI (#254) @balanza
+* Add liveness and readiness probes in Web and Wanda (#253) @balanza
+* After release fixes (#256) @balanza
+* Trigger release 3.1.1 (#233) @vicenteqa
+
+#### Features
+
+* Use web and wanda LOG_LEVEL variable (#277) @arbulu89
+* Filter out "-env"-containing tags from CVE remediation (#251) @antgamdia
+* Filter out "-env" suffixed tags from CVE remediation (#245) @antgamdia
+* Check differences in OBS branches in CI (#246) @antgamdia
+* Filter out SHA OCI versions from CVE remediation (#237) @antgamdia
+* Add additional BATS tests (#227) @antgamdia
+* Add OBS upgrade case (#200) @antgamdia
+* Run BATS tests in CI (#226) @antgamdia
+* Auto bump version in CVE workflow (#225) @antgamdia
+* Add "CVE Scan - Container Images" workflow (#198) @antgamdia
+* Add upgrade chart CI pipeline (#195) @antgamdia
+* Add liveness and readiness probes in Web and Wanda (#211) @antgamdia
+* Add "CVE Scan - Pull Requests" workflow (#197) @antgamdia
+* Add mcp server ingress (#202) @antgamdia
+
+#### Bug Fixes
+
+* Fix issues with pgautoupgrade (#212) @antgamdia
+
+#### Maintenance
+
+* Enable backport action (#291) @skrech
+* Fix wrong CI error when branch exists (#273) @antgamdia
+* Increase helm upgrade test timeout in CI (#280) @arbulu89
+* Proper name of the check container image (#201) @skrech
+* [TRNT-4409] Upgrade and extract helm version to var (#196) @antgamdia
+* After release fixes (#194) @skrech
+
+#### Dependencies
+
+<details>
+<summary>27 changes</summary>
+* Bump github/codeql-action/upload-sarif from 4.37.7 to 4.37.9 (#297) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump github/codeql-action/upload-sarif from 4.37.6 to 4.37.7 (#292) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump dorny/paths-filter from 4.0.2 to 4.0.3 (#287) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump github/codeql-action/upload-sarif from 4.37.5 to 4.37.6 (#283) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump github/codeql-action/upload-sarif from 4.37.3 to 4.37.5 (#281) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump actions/checkout from 7.0.0 to 7.0.1 (#274) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump dorny/paths-filter from 4.0.1 to 4.0.2 (#268) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump softprops/action-gh-release from 3.0.1 to 3.0.2 (#271) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump github/codeql-action/upload-sarif from 4.36.2 to 4.37.3 (#275) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump actions/setup-python from 6.3.0 to 7.0.0 (#276) @[dependabot[bot]](https://github.com/apps/dependabot)
+* [CVE Fix] Update prometheus to v3.13.1 (#252) @[github-actions[bot]](https://github.com/apps/github-actions)
+* [CVE Fix] Update kubectl to 1.35.4 (#259) @[github-actions[bot]](https://github.com/apps/github-actions)
+* [CVE Fix] Update trento-web to 3.1.5 (#258) @[github-actions[bot]](https://github.com/apps/github-actions)
+* Bump azure/setup-helm from 5.0.0 to 5.0.1 (#249) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump actions/setup-python from 6.2.0 to 6.3.0 (#250) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump softprops/action-gh-release from 3.0.0 to 3.0.1 (#248) @[dependabot[bot]](https://github.com/apps/dependabot)
+* [CVE Fix] Update trento-web to 3.1.2 (#234) @[github-actions[bot]](https://github.com/apps/github-actions)
+* [CVE Fix] Update trento-checks to 1.3.1 (#215) @[github-actions[bot]](https://github.com/apps/github-actions)
+* [CVE Fix] Update mcp-server-trento to 1.1.1 (#219) @[github-actions[bot]](https://github.com/apps/github-actions)
+* Bump github/codeql-action/upload-sarif from 4.35.4 to 4.36.2 (#228) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump actions/checkout from 6.0.2 to 7.0.0 (#229) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump actions/checkout from 6.0.2 to 6.0.3 (#214) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Bump aquasecurity/setup-trivy from 0.2.6 to 0.3.1 (#213) @[dependabot[bot]](https://github.com/apps/dependabot)
+* Update busybox and kubectl images to BCI (#203) @antgamdia
+* Upgrade PostgreSQL version from 14 to 17.5 (#199) @antgamdia
+* Bump actions/checkout from 6.0.2 to 6.0.3 (#209) @[dependabot[bot]](https://github.com/apps/dependabot)
+* [TRNT-4409] Upgrade and extract helm version to var (#196) @antgamdia
+
+</details>
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.0...3.1.5
+
 ## [3.1.4](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.3...3.1.4) - 2026-07-21
 
 ### What's Changed
@@ -157,7 +238,6 @@
 - Add SAML integration [#106](https://github.com/trento-project/helm-charts/pull/106) (@arbulu89)
 - Add OAUTH2 usage [#105](https://github.com/trento-project/helm-charts/pull/105) (@arbulu89)
 - Add an argument to the install script for username [#100](https://github.com/trento-project/helm-charts/pull/100) (@bear454)
-
 ### Other Changes
 
 - Change saml.spDir default location [#115](https://github.com/trento-project/helm-charts/pull/115) (@arbulu89)
