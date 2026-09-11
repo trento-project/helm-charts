@@ -17,6 +17,8 @@ env:
   K3S_VERSION: v1.36.1+k3s1 # https://hub.docker.com/r/rancher/k3s/tags
   CERT_MANAGER_VERSION: v1.20.2 # https://github.com/cert-manager/cert-manager/releases
   HELM_VERSION: v4.2.0 # http://github.com/helm/helm/releases
+  PHOTOFINISH_VERSION: v1.4.2 # https://github.com/trento-project/photofinish/releases
+  TRENTO_WEB_FIXTURES_REF: main # trento-web ref to pull demo fixtures (.photofinish.toml) from
 
   SOURCE_SUSE_RELEASE: suse-release
   SOURCE_OSS_RELEASE: oss-release
@@ -220,6 +222,9 @@ jobs:
           kubectl apply -f hack/cert-manager/selfsigned-issuer.yaml
           kubectl apply -f hack/cert-manager/certificate.yaml
 
+      - name: Trust the test TLS certificate on this runner
+        run: bash .github/scripts/helm-upgrade-helper.sh trust-test-certificate
+
       - name: Login to GHCR
         if: contains(matrix.source, 'oss')
         run: |
@@ -259,6 +264,38 @@ jobs:
         if: always() && matrix.source != env.SOURCE_INSTALL_ONLY
         run: bash .github/scripts/helm-upgrade-helper.sh post-install-diagnostics
 
+      - name: Checkout trento-web demo fixtures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: trento-project/web
+          ref: ${{ env.TRENTO_WEB_FIXTURES_REF }}
+          sparse-checkout: |
+            .photofinish.toml
+            test/fixtures/scenarios
+          path: trento-web-fixtures
+
+      - name: Install photofinish
+        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+        with:
+          repo: trento-project/photofinish
+          tag: ${{ env.PHOTOFINISH_VERSION }}
+          cache: enable
+          chmod: 0755
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Resolve ingress host for pre-upgrade instance
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
+        run: bash .github/scripts/helm-upgrade-helper.sh resolve-ingress-host
+
+      - name: Seed pre-upgrade instance with demo data via photofinish
+        if: matrix.source != env.SOURCE_INSTALL_ONLY
+        env:
+          INGRESS_HOST: ${{ env.TRENTO_WEB_ORIGIN }}
+          TRENTO_ADMIN_PASSWORD: admin-test-password
+          FIXTURES_DIR: ${{ github.workspace }}/trento-web-fixtures
+        run: bash .github/scripts/helm-upgrade-smoke-test.sh seed
+
       - name: Build dependencies for current dev chart
         run: |
           # Dynamically add helm repos from Chart.yaml dependencies
@@ -294,6 +331,18 @@ jobs:
 
       - name: Verify upgrade
         run: bash .github/scripts/helm-upgrade-helper.sh post-upgrade-diagnostics
+
+      - name: Resolve ingress host for fresh install
+        if: matrix.source == env.SOURCE_INSTALL_ONLY
+        run: bash .github/scripts/helm-upgrade-helper.sh resolve-ingress-host
+
+      - name: Seed fresh install with demo data via photofinish
+        if: matrix.source == env.SOURCE_INSTALL_ONLY
+        env:
+          INGRESS_HOST: ${{ env.TRENTO_WEB_ORIGIN }}
+          TRENTO_ADMIN_PASSWORD: admin-test-password
+          FIXTURES_DIR: ${{ github.workspace }}/trento-web-fixtures
+        run: bash .github/scripts/helm-upgrade-smoke-test.sh seed
 
       - name: Verify API is working
         run: bash .github/scripts/helm-upgrade-helper.sh verify-api
