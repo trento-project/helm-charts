@@ -253,7 +253,59 @@ compare_container_versions() {
 }
 
 
+# === TLS Trust ===
+
+# Extract the self-signed test certificate cert-manager issued and add it to
+# the runner's system CA trust store, so plain HTTPS clients (e.g. tools that
+# have no flag to skip TLS verification) can talk to the ingress without
+# special-casing certificate validation.
+# Args: $1 (string, optional) - Certificate resource name (default: trento-certificate)
+#       $2 (string, optional) - Secret name (default: trento-tls)
+# Uses: TRENTO_NAMESPACE environment variable
+# Returns: 0 on success, 1 on failure
+trust_test_certificate() {
+  local certificate_name="${1:-trento-certificate}"
+  local secret_name="${2:-trento-tls}"
+
+  section "=== Trusting the test TLS certificate on this runner ==="
+
+  if ! kubectl wait --for=condition=Ready "certificate/${certificate_name}" \
+    -n "$TRENTO_NAMESPACE" --timeout=60s; then
+    echo "ERROR: Certificate ${certificate_name} never became Ready" >&2
+    return 1
+  fi
+
+  if ! kubectl get secret "$secret_name" -n "$TRENTO_NAMESPACE" \
+    -o jsonpath='{.data.tls\.crt}' | base64 -d \
+    | sudo tee /usr/local/share/ca-certificates/trento-test-ca.crt > /dev/null; then
+    echo "ERROR: Failed to extract ${secret_name} from namespace ${TRENTO_NAMESPACE}" >&2
+    return 1
+  fi
+
+  sudo update-ca-certificates
+}
+
 # === API Testing ===
+
+# Resolve the ingress hostname and, if a load balancer IP is already
+# assigned, point it at that IP via /etc/hosts.
+# Uses: TRENTO_NAMESPACE, TRENTO_WEB_ORIGIN environment variables
+# Outputs: The resolved ingress hostname on stdout
+resolve_ingress_host() {
+  local ingress_host="${TRENTO_WEB_ORIGIN:-trento-test.local}"
+  local ingress_ip
+  ingress_ip=$(kubectl get ingress -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+
+  if [ -n "$ingress_ip" ]; then
+    echo "Ingress IP: $ingress_ip" >&2
+    echo "Adding $ingress_ip $ingress_host to /etc/hosts" >&2
+    echo "$ingress_ip $ingress_host" | sudo tee -a /etc/hosts > /dev/null
+  else
+    echo "Using ingress hostname: $ingress_host" >&2
+  fi
+
+  echo "$ingress_host"
+}
 
 # Verify API functionality through ingress endpoint.
 # Uses: TRENTO_NAMESPACE, TRENTO_WEB_ORIGIN, REPO_ROOT environment variables
@@ -263,17 +315,8 @@ verify_api() {
   echo ""
   section "=== Testing Trento API endpoints via ingress ==="
 
-  local ingress_host="${TRENTO_WEB_ORIGIN:-trento-test.local}"
-  local ingress_ip
-  ingress_ip=$(kubectl get ingress -n "$TRENTO_NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-
-  if [ -n "$ingress_ip" ]; then
-    echo "Ingress IP: $ingress_ip"
-    echo "Adding $ingress_ip $ingress_host to /etc/hosts"
-    echo "$ingress_ip $ingress_host" | sudo tee -a /etc/hosts > /dev/null
-  else
-    echo "Using ingress hostname: $ingress_host"
-  fi
+  local ingress_host
+  ingress_host=$(resolve_ingress_host)
 
   section "=== cert-manager checks ==="
 
@@ -300,13 +343,32 @@ show_web_init_logs() {
   fi
 }
 
+# Display logs from the postgresql pod's upgrade-postgres init container, so
+# it's directly visible whether pgautoupgrade actually ran a major-version
+# upgrade or found no existing database to upgrade.
+# Uses: TRENTO_NAMESPACE environment variable
+# Outputs: Init container logs for the postgresql pod
+show_postgres_upgrade_logs() {
+  section "=== Postgresql init container logs (pgautoupgrade) ==="
+  local postgres_pod
+  postgres_pod=$(kubectl get pod -n "$TRENTO_NAMESPACE" \
+    -l "app.kubernetes.io/name=postgresql,app.kubernetes.io/instance=trento-server" \
+    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [ -n "$postgres_pod" ]; then
+    kubectl logs "$postgres_pod" -n "$TRENTO_NAMESPACE" -c upgrade-postgres || echo "Failed to get postgresql upgrade-postgres init logs"
+  else
+    echo "Failed to find postgresql pod"
+  fi
+}
+
 # Run post-upgrade diagnostic checks.
-# Outputs: Pod status, events, web init logs, and recent pod logs
+# Outputs: Pod status, events, web init logs, postgres upgrade logs, and recent pod logs
 post_upgrade_diagnostics() {
   banner "                         POST-UPGRADE DIAGNOSTICS                       "
   show_pods_status
   show_events
   show_web_init_logs
+  show_postgres_upgrade_logs
   show_pod_logs 50 "Recent "
   echo ""
   banner "                      DIAGNOSTICS COMPLETE                              "
@@ -667,6 +729,12 @@ main() {
     post-upgrade-diagnostics)
       post_upgrade_diagnostics
       ;;
+    resolve-ingress-host)
+      resolve_ingress_host
+      ;;
+    trust-test-certificate)
+      trust_test_certificate
+      ;;
     verify-api)
       verify_api
       ;;
@@ -688,6 +756,8 @@ main() {
       printf '%s\n' "  post-install-diagnostics" >&2
       printf '%s\n' "  compare-container-versions" >&2
       printf '%s\n' "  post-upgrade-diagnostics" >&2
+      printf '%s\n' "  resolve-ingress-host" >&2
+      printf '%s\n' "  trust-test-certificate" >&2
       printf '%s\n' "  verify-api" >&2
       printf '%s\n' "  failure-diagnostics" >&2
       printf '%s\n' "  process-obs-package <git-url> [workspace-dir]" >&2
