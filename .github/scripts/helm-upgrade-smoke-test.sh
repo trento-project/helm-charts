@@ -101,6 +101,30 @@ test_login() {
   return 0
 }
 
+# Fetch the generated collector API key using an authenticated access token.
+# Args: $1 (string) - Base URL for Web service
+#       $2 (string) - Access token
+# Returns: 0 on success, 1 on failure
+# Outputs: API key to stdout on success
+fetch_api_key() {
+  local web_url="$1"
+  local access_token="$2"
+  local response api_key
+
+  response=$(curl -sk -X GET "${web_url}/api/v1/settings/api_key" \
+    -H "Authorization: Bearer ${access_token}" 2>/dev/null || echo "")
+
+  api_key=$(echo "$response" | grep -o "\"generated_api_key\":\"[^\"]*\"" | cut -d'"' -f4)
+
+  if [ -z "$api_key" ]; then
+    echo "❌ Failed to fetch API key: ${response}" >&2
+    return 1
+  fi
+
+  echo "$api_key"
+  return 0
+}
+
 # === API Endpoint Tests ===
 
 # Test user profile endpoint with authentication.
@@ -126,6 +150,60 @@ test_profile_endpoint() {
     return 0
   else
     echo "❌ Profile endpoint failed"
+    return 1
+  fi
+}
+
+# Test activity log endpoint with authentication.
+# Args: $1 (string) - Base URL for Web service
+#       $2 (string) - Access token
+# Returns: 0 on success, 1 on failure
+# Outputs: Activity log verification status
+test_activity_log_endpoint() {
+  local web_url="$1"
+  local access_token="$2"
+  local response http_code
+
+  section "4b. Testing activity log endpoint..."
+  response=$(curl -sk -w '\n%{http_code}' -X GET "${web_url}/api/v1/activity_log" \
+    -H "Authorization: Bearer ${access_token}" 2>/dev/null || echo "")
+  http_code=$(echo "$response" | tail -n1)
+
+  echo "Activity log response status: $http_code"
+
+  if [ "$http_code" = "200" ]; then
+    echo "✅ Activity log endpoint working"
+    return 0
+  else
+    echo "❌ Activity log endpoint failed"
+    echo "Response: $(echo "$response" | sed '$d')"
+    return 1
+  fi
+}
+
+# Display platform info (version, component versions, subscriptions) from the
+# about endpoint, so it's obvious which version actually ended up running.
+# Args: $1 (string) - Base URL for Web service
+#       $2 (string) - Access token
+# Returns: 0 on success, 1 on failure
+# Outputs: About response status
+test_about_endpoint() {
+  local web_url="$1"
+  local access_token="$2"
+  local response http_code
+
+  section "4c. Fetching platform info..."
+  response=$(curl -sk -w '\n%{http_code}' -X GET "${web_url}/api/v1/about" \
+    -H "Authorization: Bearer ${access_token}" 2>/dev/null || echo "")
+  http_code=$(echo "$response" | tail -n1)
+
+  echo "About: $(echo "$response" | sed '$d')"
+
+  if [ "$http_code" = "200" ]; then
+    echo "✅ About endpoint working"
+    return 0
+  else
+    echo "❌ About endpoint failed (status: ${http_code})"
     return 1
   fi
 }
@@ -166,6 +244,125 @@ test_mcp_server() {
   fi
 }
 
+# === Activity Event Triggers ===
+
+# Fire a batch of authenticated API calls against already-seeded resources to
+# exercise as many distinct "connection activity" types as possible (see
+# lib/trento/activity_logging/activity_catalog.ex in trento-web) — tagging,
+# cluster/host operation requests, settings, profile, users — mirroring real
+# interactive usage instead of just the discovery-only activity photofinish's
+# fixture replay generates on its own. Best-effort: each call's outcome is
+# logged, but a single unexpected status doesn't fail the whole seed, since
+# the goal here is maximizing the variety of "type" values recorded, not
+# asserting specific behavior.
+# Args: $1 (string) - Base URL for Web service
+#       $2 (string) - Access token
+# Returns: 0 always
+trigger_activity_events() {
+  local web_url="$1"
+  local access_token="$2"
+  local auth_header="Authorization: Bearer ${access_token}"
+  local json_header="Content-Type: application/json"
+  local cluster_id host_id
+
+  section "=== Triggering additional activity events ==="
+
+  # Best-effort from here on: any individual call failing (unreachable target,
+  # unexpected status, empty jq input) must not abort the whole function.
+  set +e
+
+  cluster_id=$(curl -sk "${web_url}/api/v1/clusters" -H "$auth_header" \
+    | jq -r '.[0].id // empty' 2>/dev/null)
+  if [ -n "$cluster_id" ]; then
+    host_id=$(curl -sk "${web_url}/api/v1/hosts" -H "$auth_header" \
+      | jq -r --arg cid "$cluster_id" '[.[] | select(.cluster_id == $cid)][0].id // empty' 2>/dev/null)
+  fi
+
+  if [ -n "$cluster_id" ] && [ -n "$host_id" ]; then
+    echo "Using cluster ${cluster_id} / host ${host_id}"
+
+    for op in cluster_host_stop cluster_host_start pacemaker_disable pacemaker_enable; do
+      curl -sk -o /dev/null -w "  %{http_code} POST clusters/hosts/operations/${op}\n" \
+        -X POST "${web_url}/api/v1/clusters/${cluster_id}/hosts/${host_id}/operations/${op}" \
+        -H "$auth_header"
+    done
+
+    curl -sk -o /dev/null -w "  %{http_code} POST hosts/tags\n" \
+      -X POST "${web_url}/api/v1/hosts/${host_id}/tags" \
+      -H "$auth_header" -H "$json_header" -d '{"value":"ci-seed"}'
+
+    curl -sk -o /dev/null -w "  %{http_code} DELETE hosts/tags\n" \
+      -X DELETE "${web_url}/api/v1/hosts/${host_id}/tags/ci-seed" \
+      -H "$auth_header"
+
+    curl -sk -o /dev/null -w "  %{http_code} POST clusters/tags\n" \
+      -X POST "${web_url}/api/v1/clusters/${cluster_id}/tags" \
+      -H "$auth_header" -H "$json_header" -d '{"value":"ci-seed"}'
+
+    curl -sk -o /dev/null -w "  %{http_code} POST hosts/checks\n" \
+      -X POST "${web_url}/api/v1/hosts/${host_id}/checks" \
+      -H "$auth_header" -H "$json_header" -d '{"checks":[]}'
+  else
+    echo "No seeded cluster/host found, skipping host/cluster-scoped activity triggers"
+  fi
+
+  curl -sk -o /dev/null -w "  %{http_code} PATCH profile\n" \
+    -X PATCH "${web_url}/api/v1/profile" \
+    -H "$auth_header" -H "$json_header" -d '{"fullname":"CI Seed Admin"}'
+
+  curl -sk -o /dev/null -w "  %{http_code} PATCH settings/api_key\n" \
+    -X PATCH "${web_url}/api/v1/settings/api_key" \
+    -H "$auth_header" -H "$json_header" -d '{"expire_at":null}'
+
+  curl -sk -o /dev/null -w "  %{http_code} POST profile/tokens\n" \
+    -X POST "${web_url}/api/v1/profile/tokens" \
+    -H "$auth_header" -H "$json_header" -d '{"name":"ci-seed-token","expires_at":null}'
+
+  set -e
+  return 0
+}
+
+# === Data Seeding ===
+
+# Seed the running Trento instance with realistic demo data via photofinish, so
+# meaningful DB volume (hosts, SAP systems, HA clusters, activity logs, ...)
+# exists before a chart upgrade is exercised against it.
+# Uses: INGRESS_HOST, TRENTO_ADMIN_USER, TRENTO_ADMIN_PASSWORD, PHOTOFINISH_BIN,
+#       FIXTURES_DIR environment variables
+# Returns: 0 on success, 1 on failure
+seed_demo_data() {
+  local ingress_host="${INGRESS_HOST:-trento-test.local}"
+  local web_url="https://${ingress_host}"
+  local username="${TRENTO_ADMIN_USER:-admin}"
+  local password="${TRENTO_ADMIN_PASSWORD:-admin-test-password}"
+  local photofinish_bin="${PHOTOFINISH_BIN:-photofinish}"
+  local fixtures_dir="${FIXTURES_DIR:?FIXTURES_DIR must point at a checkout containing .photofinish.toml}"
+  local access_token api_key
+
+  banner "                         SEEDING DEMO DATA                              "
+
+  if ! access_token=$(test_login "$web_url" "$username" "$password"); then
+    return 1
+  fi
+
+  section "=== Fetching collector API key ==="
+  if ! api_key=$(fetch_api_key "$web_url" "$access_token"); then
+    return 1
+  fi
+  echo "API key obtained"
+
+  section "=== Running photofinish 'demo' scenario ==="
+  (
+    cd "$fixtures_dir"
+    "$photofinish_bin" run demo -u "${web_url}/api/v1/collect" "$api_key"
+  )
+
+  trigger_activity_events "$web_url" "$access_token"
+
+  banner "                      DEMO DATA SEEDED                                  "
+  return 0
+}
+
 # === Main Test Suite ===
 
 # Run complete API smoke test suite.
@@ -201,6 +398,14 @@ run_smoke_tests() {
     return 1
   fi
 
+  if ! test_activity_log_endpoint "$web_url" "$access_token"; then
+    return 1
+  fi
+
+  if ! test_about_endpoint "$web_url" "$access_token"; then
+    return 1
+  fi
+
   # Test MCP server
   if ! test_mcp_server "$mcp_url" "$access_token"; then
     return 1
@@ -213,6 +418,13 @@ run_smoke_tests() {
 
 # Only run when executed directly (not when sourced for tests)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  run_smoke_tests
+  case "${1:-}" in
+    seed)
+      seed_demo_data
+      ;;
+    *)
+      run_smoke_tests
+      ;;
+  esac
   exit $?
 fi

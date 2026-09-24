@@ -308,6 +308,467 @@ EOF
   rm -rf "$tmpdir"
 }
 
+@test "test_activity_log_endpoint: succeeds on HTTP 200" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/activity_log"* ]]; then
+  printf '{"data":[]}\n200\n'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_activity_log_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Activity log endpoint working"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_activity_log_endpoint: fails on non-200 status (e.g. a corrupted index causing a 500)" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/activity_log"* ]]; then
+  printf '{"error":"Internal Server Error"}\n500\n'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_activity_log_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Activity log endpoint failed"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_activity_log_endpoint: handles curl failure gracefully" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_activity_log_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+
+  rm -rf "$tmpdir"
+}
+
+@test "run_smoke_tests: fails when activity log endpoint fails" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/readyz"* ]]; then
+  echo '{"status":"ready"}'
+elif [[ "$*" == *"/api/session"* ]]; then
+  echo '{"access_token":"token"}'
+elif [[ "$*" == *"/api/v1/profile"* ]]; then
+  echo '{"username":"admin"}'
+elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
+  printf '{"error":"Internal Server Error"}\n500\n'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  export INGRESS_HOST="test.local"
+  PATH="$tmpdir:$PATH"
+  run run_smoke_tests
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Activity log endpoint failed"* ]]
+  [[ "$output" != *"API TESTS PASSED"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_about_endpoint: succeeds on HTTP 200 and displays the response" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5+git.232.1787132611.f931906fe","sles_subscriptions":49,"rabbitmq_version":"3.12.6"}\n200\n'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_about_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"About endpoint working"* ]]
+  [[ "$output" == *"3.1.5+git.232.1787132611.f931906fe"* ]]
+  [[ "$output" == *"rabbitmq_version"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_about_endpoint: fails on non-200 status" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"error":"Internal Server Error"}\n500\n'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_about_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"About endpoint failed"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "test_about_endpoint: handles curl failure gracefully" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run test_about_endpoint "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+
+  rm -rf "$tmpdir"
+}
+
+# === API Key Tests ===
+
+@test "fetch_api_key: successfully extracts the generated API key" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/settings/api_key"* ]]; then
+  echo '{"generated_api_key":"key-abc-123","expire_at":null}'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run fetch_api_key "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"key-abc-123"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "fetch_api_key: fails when no generated_api_key in response" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/v1/settings/api_key"* ]]; then
+  echo '{"error":"forbidden"}'
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run fetch_api_key "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Failed to fetch API key"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "fetch_api_key: sends authorization header correctly" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"Bearer test-token-123"* ]]; then
+  echo '{"generated_api_key":"key-xyz"}'
+  exit 0
+fi
+echo '{"error":"unauthorized"}'
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run fetch_api_key "https://test.local" "test-token-123"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"key-xyz"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "fetch_api_key: handles curl failure" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run fetch_api_key "https://test.local" "test-token"
+  [ "$status" -eq 1 ]
+
+  rm -rf "$tmpdir"
+}
+
+# === Activity Event Trigger Tests ===
+
+@test "trigger_activity_events: fires host/cluster operation and tagging calls when a cluster and host are found" {
+  tmpdir="$(mktemp -d)"
+  call_log="$tmpdir/calls.log"
+  touch "$call_log"
+
+  cat > "$tmpdir/curl" << EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$call_log"
+if [[ "\$*" == *"/api/v1/clusters"* ]] && [[ "\$*" != *"tags"* ]] && [[ "\$*" != *"hosts"* ]]; then
+  echo '[{"id":"cluster-1"}]'
+elif [[ "\$*" == *"/api/v1/hosts"* ]] && [[ "\$*" != *"tags"* ]] && [[ "\$*" != *"checks"* ]]; then
+  echo '[{"id":"host-1","cluster_id":"cluster-1"}]'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run trigger_activity_events "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+
+  grep -q "clusters/cluster-1/hosts/host-1/operations/cluster_host_stop" "$call_log"
+  grep -q "clusters/cluster-1/hosts/host-1/operations/cluster_host_start" "$call_log"
+  grep -q "clusters/cluster-1/hosts/host-1/operations/pacemaker_disable" "$call_log"
+  grep -q "clusters/cluster-1/hosts/host-1/operations/pacemaker_enable" "$call_log"
+  grep -q "hosts/host-1/tags" "$call_log"
+  grep -q "clusters/cluster-1/tags" "$call_log"
+  grep -q "hosts/host-1/checks" "$call_log"
+  grep -q "api/v1/profile" "$call_log"
+  grep -q "settings/api_key" "$call_log"
+  grep -q "profile/tokens" "$call_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "trigger_activity_events: skips host/cluster-scoped calls when no cluster is found" {
+  tmpdir="$(mktemp -d)"
+  call_log="$tmpdir/calls.log"
+  touch "$call_log"
+
+  cat > "$tmpdir/curl" << EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$call_log"
+if [[ "\$*" == *"/api/v1/clusters"* ]]; then
+  echo '[]'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  PATH="$tmpdir:$PATH"
+  run trigger_activity_events "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No seeded cluster/host found"* ]]
+
+  ! grep -q "operations/cluster_host_stop" "$call_log"
+  grep -q "api/v1/profile" "$call_log"
+  grep -q "settings/api_key" "$call_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "trigger_activity_events: always returns 0 even when every call fails" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/curl"
+
+  cat > "$tmpdir/jq" << 'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$tmpdir/jq"
+
+  PATH="$tmpdir:$PATH"
+  run trigger_activity_events "https://test.local" "test-token"
+  [ "$status" -eq 0 ]
+
+  rm -rf "$tmpdir"
+}
+
+# === Data Seeding Tests ===
+
+@test "seed_demo_data: successfully logs in, fetches API key, and runs photofinish" {
+  tmpdir="$(mktemp -d)"
+  fixtures_dir="$tmpdir/fixtures"
+  mkdir -p "$fixtures_dir"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/session"* ]]; then
+  echo '{"access_token":"seed-token"}'
+elif [[ "$*" == *"/api/v1/settings/api_key"* ]]; then
+  echo '{"generated_api_key":"seed-api-key"}'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  photofinish_log="$tmpdir/photofinish.log"
+  cat > "$tmpdir/photofinish" << EOF
+#!/usr/bin/env bash
+echo "\$@" >> "$photofinish_log"
+exit 0
+EOF
+  chmod +x "$tmpdir/photofinish"
+
+  export INGRESS_HOST="test.local"
+  export FIXTURES_DIR="$fixtures_dir"
+  PATH="$tmpdir:$PATH"
+
+  run seed_demo_data
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"DEMO DATA SEEDED"* ]]
+  grep -q "run demo -u https://test.local/api/v1/collect seed-api-key" "$photofinish_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "seed_demo_data: fails when login fails" {
+  tmpdir="$(mktemp -d)"
+  fixtures_dir="$tmpdir/fixtures"
+  mkdir -p "$fixtures_dir"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+echo '{"error":"invalid credentials"}'
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  export INGRESS_HOST="test.local"
+  export FIXTURES_DIR="$fixtures_dir"
+  PATH="$tmpdir:$PATH"
+
+  run seed_demo_data
+  [ "$status" -eq 1 ]
+
+  rm -rf "$tmpdir"
+}
+
+@test "seed_demo_data: fails when API key fetch fails" {
+  tmpdir="$(mktemp -d)"
+  fixtures_dir="$tmpdir/fixtures"
+  mkdir -p "$fixtures_dir"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/session"* ]]; then
+  echo '{"access_token":"seed-token"}'
+elif [[ "$*" == *"/api/v1/settings/api_key"* ]]; then
+  echo '{"error":"forbidden"}'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  export INGRESS_HOST="test.local"
+  export FIXTURES_DIR="$fixtures_dir"
+  PATH="$tmpdir:$PATH"
+
+  run seed_demo_data
+  [ "$status" -eq 1 ]
+
+  rm -rf "$tmpdir"
+}
+
+@test "seed_demo_data: fails fast when FIXTURES_DIR is not set" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/session"* ]]; then
+  echo '{"access_token":"seed-token"}'
+elif [[ "$*" == *"/api/v1/settings/api_key"* ]]; then
+  echo '{"generated_api_key":"seed-api-key"}'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  export INGRESS_HOST="test.local"
+  unset FIXTURES_DIR
+  PATH="$tmpdir:$PATH"
+
+  run seed_demo_data
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"FIXTURES_DIR must point at a checkout"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "seed_demo_data: uses PHOTOFINISH_BIN override when provided" {
+  tmpdir="$(mktemp -d)"
+  fixtures_dir="$tmpdir/fixtures"
+  mkdir -p "$fixtures_dir"
+
+  cat > "$tmpdir/curl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"/api/session"* ]]; then
+  echo '{"access_token":"seed-token"}'
+elif [[ "$*" == *"/api/v1/settings/api_key"* ]]; then
+  echo '{"generated_api_key":"seed-api-key"}'
+fi
+exit 0
+EOF
+  chmod +x "$tmpdir/curl"
+
+  photofinish_log="$tmpdir/custom-photofinish.log"
+  cat > "$tmpdir/custom-photofinish" << EOF
+#!/usr/bin/env bash
+echo "called" >> "$photofinish_log"
+exit 0
+EOF
+  chmod +x "$tmpdir/custom-photofinish"
+
+  export INGRESS_HOST="test.local"
+  export FIXTURES_DIR="$fixtures_dir"
+  export PHOTOFINISH_BIN="$tmpdir/custom-photofinish"
+  PATH="$tmpdir:$PATH"
+
+  run seed_demo_data
+  [ "$status" -eq 0 ]
+  [ -f "$photofinish_log" ]
+
+  rm -rf "$tmpdir"
+}
+
 # === MCP Server Tests ===
 
 @test "test_mcp_server: succeeds when MCP server responds correctly" {
@@ -423,6 +884,10 @@ elif [[ "$*" == *"/api/session"* ]]; then
   echo '{"access_token":"test-token-abc123"}'
 elif [[ "$*" == *"/api/v1/profile"* ]]; then
   echo '{"username":"admin","email":"admin@test.com"}'
+elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
+  printf '{"data":[]}\n200\n'
+elif [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "$*" == *"initialize"* ]]; then
   echo '{"result":{"serverInfo":{"name":"trento-mcp-server","version":"1.0.0"}}}'
 else
@@ -504,6 +969,10 @@ elif [[ "$*" == *"/api/session"* ]]; then
   echo '{"access_token":"token123"}'
 elif [[ "$*" == *"/api/v1/profile"* ]]; then
   echo '{"username":"customadmin"}'
+elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
+  printf '{"data":[]}\n200\n'
+elif [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "$*" == *"initialize"* ]]; then
   echo '{"result":{"serverInfo":{"name":"mcp","version":"1.0"}}}'
 fi
@@ -544,6 +1013,12 @@ elif [[ "\$*" == *"/api/session"* ]]; then
 elif [[ "\$*" == *"/api/v1/profile"* ]]; then
   echo "profile" >> "$call_log"
   echo '{"username":"admin"}'
+elif [[ "\$*" == *"/api/v1/activity_log"* ]]; then
+  echo "activity_log" >> "$call_log"
+  printf '{"data":[]}\n200\n'
+elif [[ "\$*" == *"/api/v1/about"* ]]; then
+  echo "about" >> "$call_log"
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "\$*" == *"initialize"* ]]; then
   echo "mcp" >> "$call_log"
   echo '{"result":{"serverInfo":{"name":"mcp","version":"1"}}}'
@@ -562,6 +1037,8 @@ EOF
   grep -q "wanda-health" "$call_log"
   grep -q "login" "$call_log"
   grep -q "profile" "$call_log"
+  grep -q "activity_log" "$call_log"
+  grep -q "about" "$call_log"
   grep -q "mcp" "$call_log"
 
   rm -rf "$tmpdir"
@@ -730,6 +1207,10 @@ elif [[ "$*" == *"/api/session"* ]]; then
   echo '{"access_token":"token"}'
 elif [[ "$*" == *"/api/v1/profile"* ]]; then
   echo '{"username":"admin"}'
+elif [[ "$*" == *"/api/v1/activity_log"* ]]; then
+  printf '{"data":[]}\n200\n'
+elif [[ "$*" == *"/api/v1/about"* ]]; then
+  printf '{"version":"3.1.5"}\n200\n'
 elif [[ "$*" == *"initialize"* ]]; then
   echo '{"result":{"serverInfo":{"name":"mcp","version":"1"}}}'
 fi
