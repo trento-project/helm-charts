@@ -12,7 +12,7 @@ metadata:
 spec:
   containers:
     - name: wget
-      image: registry.suse.com/bci/bci-busybox:16.0
+      image: registry.suse.com/bci/bci-busybox:16.1
       command: ['wget']
       args: ['{{ include "trento-web.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never
