@@ -1,6 +1,6 @@
 <!--
   ~ Copyright 2025 SUSE LLC
-  ~ SPDX-License-Identifier: Apache-2.0
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 # Helm package for trento-mcp-server
