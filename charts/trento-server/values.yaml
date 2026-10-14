@@ -123,6 +123,12 @@ prometheus:
     sidecarContainers:
       auth-proxy:
         image: registry.suse.com/suse/nginx:1.27
+        # Run as the image's nginx user (stable uid 499), which owns the
+        # pre-created /tmp/*_temp directories
+        securityContext:
+          runAsUser: 499
+          runAsGroup: 499
+          runAsNonRoot: true
         ports:
           - containerPort: 8081
         volumeMounts:
