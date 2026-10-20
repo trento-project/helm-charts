@@ -1,5 +1,36 @@
 # Changelog
 
+## [3.2.0](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.5...3.2.0) - 2026-10-20
+
+### What's Changed
+
+* Relicense under GPL-3.0-or-later (#314) @nelsonkopliku
+* Use automerge reusable workflow (#300) @antgamdia
+
+#### Bug Fixes
+
+* Use `stableuid` for nginx sidecar container (#315) @arbulu89
+
+#### Dependencies
+
+<details>
+<summary>12 changes</summary>
+* Bump github/codeql-action/upload-sarif from 4.38.1 to 4.38.2 (#316) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump trento-project/.github/.github/workflows/obs-sync.yaml from 1.9.0 to 1.10.0 (#313) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump github/codeql-action/upload-sarif from 4.38.0 to 4.38.1 (#310) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump trento-project/.github/.github/workflows/backport-pr.yaml from 1.9.0 to 1.10.0 (#312) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump trento-project/.github/.github/workflows/git-release.yaml from 1.9.0 to 1.10.0 (#311) [@dependabot[bot]](https://github.com/apps/dependabot)
+* [CVE Fix] Update bci-busybox to 16.1 (#309) [@github-actions[bot]](https://github.com/apps/github-actions)
+* Bump suse/kubectl from 1.35.4 to 1.37.0-1.61.13 in /charts/trento-server (#306) [@dependabot[bot]](https://github.com/apps/dependabot), @antgamdia
+* Bump github/codeql-action/upload-sarif from 4.37.9 to 4.38.0 (#307) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump trento-project/.github/.github/workflows/git-release.yaml from 1.8.0 to 1.9.0 (#302) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump apache/skywalking-eyes/header from 0.8.0 to 0.9.0 (#301) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump trento-project/.github/.github/workflows/obs-sync.yaml from 1.8.0 to 1.9.0 (#303) [@dependabot[bot]](https://github.com/apps/dependabot)
+* Bump softprops/action-gh-release from 3.0.2 to 3.0.3 (#304) [@dependabot[bot]](https://github.com/apps/dependabot)
+
+</details>
+**Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.5...3.2.0
+
 ## [3.1.5](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.4...3.1.5) - 2026-09-10
 
 ### What's Changed
@@ -77,10 +108,8 @@
 * Upgrade PostgreSQL version from 14 to 17.5 (#199) @antgamdia
 * Bump actions/checkout from 6.0.2 to 6.0.3 (#209) @[dependabot[bot]](https://github.com/apps/dependabot)
 * [TRNT-4409] Upgrade and extract helm version to var (#196) @antgamdia
-
 </details>
 **Full Changelog**: https://github.com/trento-project/helm-charts/compare/3.1.0...3.1.5
-
 ## [3.1.4](https://github.com/trento-project/helm-charts/tree/3.0.1/compare/3.1.3...3.1.4) - 2026-07-21
 
 ### What's Changed
@@ -239,7 +268,6 @@
 - Add OAUTH2 usage [#105](https://github.com/trento-project/helm-charts/pull/105) (@arbulu89)
 - Add an argument to the install script for username [#100](https://github.com/trento-project/helm-charts/pull/100) (@bear454)
 ### Other Changes
-
 - Change saml.spDir default location [#115](https://github.com/trento-project/helm-charts/pull/115) (@arbulu89)
 - Update values-overwrite.yaml [#111](https://github.com/trento-project/helm-charts/pull/111) (@dottorblaster)
 - Fix checks image tag [#109](https://github.com/trento-project/helm-charts/pull/109) (@dottorblaster)
