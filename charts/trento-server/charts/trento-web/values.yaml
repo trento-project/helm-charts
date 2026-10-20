@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # Default values for trento-web.
 # This is a YAML-formatted file.
@@ -81,7 +81,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/trento-project/trento-web
   pullPolicy: IfNotPresent
-  tag: 3.1.6
+  tag: 3.2.0
 postgresql:
   image:
     registry: registry.suse.com

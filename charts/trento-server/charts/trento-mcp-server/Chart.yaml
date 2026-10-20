@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 apiVersion: v2
 name: trento-mcp-server
@@ -9,4 +9,4 @@ home: https://www.trento-project.io/
 maintainers:
   - name: SUSE
     url: https://www.suse.com/
-version: 1.1.2
+version: 1.2.0

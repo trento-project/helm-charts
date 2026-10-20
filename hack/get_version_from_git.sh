@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # SPDX-FileCopyrightText: SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 TAG=$( git tag | grep -E "[0-9]\.[0-9]\.[0-9]" | sort -rn | head -n1 )
 

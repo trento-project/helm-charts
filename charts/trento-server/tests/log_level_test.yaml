@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # Test suite for the LOG_LEVEL entry rendered in the trento-web and
 # trento-wanda ConfigMaps, driven by global.logLevel and the per component

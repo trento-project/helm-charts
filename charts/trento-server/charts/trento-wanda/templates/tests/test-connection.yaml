@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 apiVersion: v1
 kind: Pod
@@ -12,7 +12,7 @@ metadata:
 spec:
   containers:
     - name: wget
-      image: registry.suse.com/bci/bci-busybox:16.0
+      image: registry.suse.com/bci/bci-busybox:16.1
       command: ['wget']
       args: ['{{ include "trento-wanda.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never

@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: SUSE LLC
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 {{ if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") }}
 {{- $fullName := include "trento-wanda.fullname" . -}}
