@@ -117,7 +117,7 @@ jobs:
       - test-ci-scripts
       - paths-check
     if: fromJSON(vars.OBS_ENABLED) && github.event_name == 'push' && needs.paths-check.outputs.is-release == 'false'
-    uses: trento-project/.github/.github/workflows/obs-sync.yaml@d8679bc6bc759e119793a2d59285098613f52055 # v1.10.0
+    uses: trento-project/.github/.github/workflows/obs-sync.yaml@94dac57211d792dda649383e7f23326b24a9087b # v1.11.0
     with:
       obs_project: ${{ vars.OBS_PROJECT_ROLLING }}
       obs_package: ${{ vars.OBS_PACKAGE }}
