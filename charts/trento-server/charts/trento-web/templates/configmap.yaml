@@ -77,3 +77,6 @@ data:
   SAML_SIGNED_ENVELOPES: "{{ .Values.saml.signedEnvelopes }}"
   PRUNE_EVENTS_INTERVAL: "{{ .Values.pruneEventsCronjobSchedule }}"
   PRUNE_EVENTS_OLDER_THAN: "{{ .Values.pruneEventsOlderThan }}"
+  {{- if .Values.checks.interval }}
+  CHECKS_INTERVAL: "{{ .Values.checks.interval }}"
+  {{- end }}

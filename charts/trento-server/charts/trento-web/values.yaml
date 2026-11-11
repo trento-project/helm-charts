@@ -39,6 +39,10 @@ alerting:
 adminUser:
   username: "admin"
   password: ""
+# checks: configuration options for Clusters and Hosts checks. 
+checks:
+  # interval: Minutes time interval to run checks. Defaults to `5` if not set.
+  interval: ""
 oidc:
   enabled: false
   clientId: ""
