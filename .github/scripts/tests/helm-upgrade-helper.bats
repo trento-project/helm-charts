@@ -334,6 +334,54 @@ EOF
   rm -rf "$tmpdir"
 }
 
+@test "show_postgres_upgrade_logs: displays postgresql upgrade-postgres init container logs" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "get" ] && [ "$2" = "pod" ]; then
+  echo "trento-server-postgresql-0"
+  exit 0
+elif [ "$1" = "logs" ]; then
+  echo "Existing database detected, running pgautoupgrade..."
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  export TRENTO_NAMESPACE="test-ns"
+  PATH="$tmpdir:$PATH"
+  run show_postgres_upgrade_logs
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Postgresql init container logs"* ]]
+  [[ "$output" == *"Existing database detected"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "show_postgres_upgrade_logs: handles missing postgresql pod" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "get" ] && [ "$2" = "pod" ]; then
+  echo ""
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  export TRENTO_NAMESPACE="test-ns"
+  PATH="$tmpdir:$PATH"
+  run show_postgres_upgrade_logs
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Failed to find postgresql pod"* ]]
+
+  rm -rf "$tmpdir"
+}
+
 # === Version Comparison Tests ===
 
 @test "compare_versions: shows version changes correctly" {
@@ -464,7 +512,211 @@ EOF
   rm -rf "$tmpdir"
 }
 
+# === TLS Trust Tests ===
+
+@test "trust_test_certificate: extracts the cert and installs it into the trust store" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "wait" ]; then
+  exit 0
+elif [ "$1" = "get" ] && [ "$2" = "secret" ]; then
+  # base64 for "fake-cert-content"
+  echo "ZmFrZS1jZXJ0LWNvbnRlbnQ="
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  update_ca_log="$tmpdir/update-ca.log"
+  cat > "$tmpdir/update-ca-certificates" << EOF
+#!/usr/bin/env bash
+echo "called" >> "$update_ca_log"
+exit 0
+EOF
+  chmod +x "$tmpdir/update-ca-certificates"
+
+  cert_capture="$tmpdir/captured-cert.crt"
+  cat > "$tmpdir/sudo" << EOF
+#!/usr/bin/env bash
+if [ "\$1" = "tee" ]; then
+  cat > "$cert_capture"
+  exit 0
+fi
+exec "\$@"
+EOF
+  chmod +x "$tmpdir/sudo"
+
+  export TRENTO_NAMESPACE="test-ns"
+  PATH="$tmpdir:$PATH"
+
+  run trust_test_certificate
+  [ "$status" -eq 0 ]
+  grep -q "fake-cert-content" "$cert_capture"
+  [ -f "$update_ca_log" ]
+
+  rm -rf "$tmpdir"
+}
+
+@test "trust_test_certificate: fails when the certificate never becomes Ready" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "wait" ]; then
+  exit 1
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  export TRENTO_NAMESPACE="test-ns"
+  PATH="$tmpdir:$PATH"
+
+  run trust_test_certificate
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"never became Ready"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "trust_test_certificate: accepts custom certificate and secret names" {
+  tmpdir="$(mktemp -d)"
+
+  call_log="$tmpdir/kubectl-calls.log"
+  cat > "$tmpdir/kubectl" << EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$call_log"
+if [ "\$1" = "wait" ]; then
+  exit 0
+elif [ "\$1" = "get" ] && [ "\$2" = "secret" ]; then
+  echo "ZmFrZS1jZXJ0"
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  cat > "$tmpdir/sudo" << 'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "tee" ]; then
+  cat > /dev/null
+  exit 0
+fi
+exec "$@"
+EOF
+  chmod +x "$tmpdir/sudo"
+
+  cat > "$tmpdir/update-ca-certificates" << 'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$tmpdir/update-ca-certificates"
+
+  export TRENTO_NAMESPACE="test-ns"
+  PATH="$tmpdir:$PATH"
+
+  run trust_test_certificate "custom-cert" "custom-secret"
+  [ "$status" -eq 0 ]
+  grep -q "certificate/custom-cert" "$call_log"
+  grep -q "custom-secret" "$call_log"
+
+  rm -rf "$tmpdir"
+}
+
 # === API Testing Tests ===
+
+@test "resolve_ingress_host: adds ingress IP to /etc/hosts when a load balancer IP is assigned" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"ingress"* ]]; then
+  echo "10.0.0.5"
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  sudo_log="$tmpdir/sudo.log"
+  cat > "$tmpdir/sudo" << EOF
+#!/usr/bin/env bash
+cat >> "$sudo_log"
+exit 0
+EOF
+  chmod +x "$tmpdir/sudo"
+
+  export TRENTO_NAMESPACE="test-ns"
+  export TRENTO_WEB_ORIGIN="trento.example.local"
+  PATH="$tmpdir:$PATH"
+
+  run resolve_ingress_host
+  [ "$status" -eq 0 ]
+  # The resolved hostname is the last line of stdout
+  host=$(echo "$output" | tail -1)
+  [ "$host" = "trento.example.local" ]
+  grep -q "10.0.0.5 trento.example.local" "$sudo_log"
+
+  rm -rf "$tmpdir"
+}
+
+@test "resolve_ingress_host: uses hostname directly and skips /etc/hosts when no IP is assigned" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *"ingress"* ]]; then
+  echo ""
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  cat > "$tmpdir/sudo" << 'EOF'
+#!/usr/bin/env bash
+echo "sudo should not be called" >&2
+exit 1
+EOF
+  chmod +x "$tmpdir/sudo"
+
+  export TRENTO_NAMESPACE="test-ns"
+  export TRENTO_WEB_ORIGIN="trento.example.local"
+  PATH="$tmpdir:$PATH"
+
+  run resolve_ingress_host
+  [ "$status" -eq 0 ]
+  host=$(echo "$output" | tail -1)
+  [ "$host" = "trento.example.local" ]
+  [[ "$output" == *"Using ingress hostname"* ]]
+
+  rm -rf "$tmpdir"
+}
+
+@test "resolve_ingress_host: defaults to trento-test.local when TRENTO_WEB_ORIGIN is unset" {
+  tmpdir="$(mktemp -d)"
+
+  cat > "$tmpdir/kubectl" << 'EOF'
+#!/usr/bin/env bash
+echo ""
+exit 0
+EOF
+  chmod +x "$tmpdir/kubectl"
+
+  export TRENTO_NAMESPACE="test-ns"
+  unset TRENTO_WEB_ORIGIN
+  PATH="$tmpdir:$PATH"
+
+  run resolve_ingress_host
+  [ "$status" -eq 0 ]
+  host=$(echo "$output" | tail -1)
+  [ "$host" = "trento-test.local" ]
+
+  rm -rf "$tmpdir"
+}
 
 @test "verify_api: configures ingress and runs smoke tests" {
   tmpdir="$(mktemp -d)"
